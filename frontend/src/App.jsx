@@ -4,10 +4,12 @@ import { Header } from './components/Header';
 import { StatusAlert } from './components/StatusAlert';
 import { AuthCard } from './components/AuthCard';
 import { UserSessionDashboard } from './components/UserSessionDashboard';
-import { ShieldCheck, Cpu, HardDrive, Lock } from 'lucide-react';
+import { IssuerStudio } from './components/issuer/IssuerStudio';
+import { ShieldCheck, Cpu, HardDrive, Lock, Award, Key } from 'lucide-react';
 
 function MainContent() {
   const { user, loading } = useAuth();
+  const [adminView, setAdminView] = React.useState('issuer'); // 'issuer' | 'session'
 
   if (loading) {
     return (
@@ -34,12 +36,105 @@ function MainContent() {
     );
   }
 
+  // Render role-specific content
+  const renderAuthenticatedContent = () => {
+    if (user.role === 'ISSUER') {
+      return (
+        <div>
+          {/* View switcher for Issuer to also see Token session if desired */}
+          <div style={{
+            maxWidth: '1080px',
+            margin: '0 auto 20px',
+            display: 'flex',
+            justifyContent: 'flex-end',
+            gap: '8px'
+          }}>
+            <button
+              onClick={() => setAdminView('issuer')}
+              className="btn btn-outline"
+              style={{
+                padding: '6px 12px',
+                fontSize: '0.8rem',
+                backgroundColor: adminView === 'issuer' ? 'rgba(139, 92, 246, 0.15)' : 'transparent',
+                borderColor: adminView === 'issuer' ? 'rgba(139, 92, 246, 0.4)' : 'var(--border-subtle)'
+              }}
+            >
+              <Award size={14} color="#a78bfa" />
+              <span>Issuer Studio</span>
+            </button>
+            <button
+              onClick={() => setAdminView('session')}
+              className="btn btn-outline"
+              style={{
+                padding: '6px 12px',
+                fontSize: '0.8rem',
+                backgroundColor: adminView === 'session' ? 'rgba(0, 229, 255, 0.15)' : 'transparent',
+                borderColor: adminView === 'session' ? 'var(--border-accent)' : 'var(--border-subtle)'
+              }}
+            >
+              <Key size={14} color="var(--cyan-primary)" />
+              <span>Session & Token Inspector</span>
+            </button>
+          </div>
+
+          {adminView === 'issuer' ? <IssuerStudio /> : <UserSessionDashboard />}
+        </div>
+      );
+    }
+
+    if (user.role === 'ADMIN') {
+      return (
+        <div>
+          <div style={{
+            maxWidth: '1080px',
+            margin: '0 auto 20px',
+            display: 'flex',
+            justifyContent: 'flex-end',
+            gap: '8px'
+          }}>
+            <button
+              onClick={() => setAdminView('issuer')}
+              className="btn btn-outline"
+              style={{
+                padding: '6px 12px',
+                fontSize: '0.8rem',
+                backgroundColor: adminView === 'issuer' ? 'rgba(139, 92, 246, 0.15)' : 'transparent',
+                borderColor: adminView === 'issuer' ? 'rgba(139, 92, 246, 0.4)' : 'var(--border-subtle)'
+              }}
+            >
+              <Award size={14} color="#a78bfa" />
+              <span>Issuer Studio (Admin Mode)</span>
+            </button>
+            <button
+              onClick={() => setAdminView('session')}
+              className="btn btn-outline"
+              style={{
+                padding: '6px 12px',
+                fontSize: '0.8rem',
+                backgroundColor: adminView === 'session' ? 'rgba(0, 229, 255, 0.15)' : 'transparent',
+                borderColor: adminView === 'session' ? 'var(--border-accent)' : 'var(--border-subtle)'
+              }}
+            >
+              <Key size={14} color="var(--cyan-primary)" />
+              <span>Session & Token Inspector</span>
+            </button>
+          </div>
+
+          {adminView === 'issuer' ? <IssuerStudio /> : <UserSessionDashboard />}
+        </div>
+      );
+    }
+
+    // Default: HOLDER role
+    return <UserSessionDashboard />;
+  };
+
   return (
     <main style={{ maxWidth: '1200px', margin: '0 auto', padding: '36px 20px', minHeight: 'calc(100vh - 160px)' }}>
       <StatusAlert />
 
       {user ? (
-        <UserSessionDashboard />
+        renderAuthenticatedContent()
       ) : (
         <div>
           {/* Hero Banner for Guest / Sign In */}
