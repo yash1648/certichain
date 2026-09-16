@@ -3,9 +3,9 @@ spring:
     name: certchain
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/certichain
-    username: certichain
-    password: certichain_password
+    url: ${CERT_DB_URL:jdbc:postgresql://localhost:5432/certichain}
+    username: ${CERT_DB_USERNAME:certichain}
+    password: ${CERT_DB_PASSWORD:certichain_password}
     driver-class-name: org.postgresql.Driver
 
 
