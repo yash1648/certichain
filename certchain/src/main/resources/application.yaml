@@ -34,3 +34,10 @@ certichain:
   auth:
     cookie-secure: false
     refresh-token-ttl-days: 7
+
+ssdcve:
+  keystore:
+    path: ./keystore/ssdcve.p12
+    password: ${SSDCVE_KEYSTORE_PASSWORD:change-me-keystore-password}
+  ipfs:
+    api-url: http://localhost:5001
