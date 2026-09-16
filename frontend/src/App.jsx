@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { Header } from './components/Header';
 import { StatusAlert } from './components/StatusAlert';
@@ -6,18 +6,30 @@ import { AuthCard } from './components/AuthCard';
 import { UserSessionDashboard } from './components/UserSessionDashboard';
 import { IssuerStudio } from './components/issuer/IssuerStudio';
 import { HolderWalletView } from './components/holder/HolderWalletView';
-import { ShieldCheck, Cpu, HardDrive, Lock, Award, Key, Wallet } from 'lucide-react';
+import { PublicVerifierView } from './components/verifier/PublicVerifierView';
+import { VerificationHistoryView } from './components/verifier/VerificationHistoryView';
+import { 
+  ShieldCheck, 
+  Cpu, 
+  HardDrive, 
+  Lock, 
+  Award, 
+  Key, 
+  Wallet, 
+  FileCheck, 
+  History 
+} from 'lucide-react';
 
-function MainContent() {
+function MainContent({ activeView, onNavigate }) {
   const { user, loading } = useAuth();
-  const [currentView, setCurrentView] = React.useState(null); // defaults dynamically based on role
+  const [currentTab, setCurrentTab] = useState(null);
 
-  // Set initial view based on role
-  React.useEffect(() => {
+  // Set default tab based on role whenever user changes
+  useEffect(() => {
     if (user) {
-      if (user.role === 'ISSUER') setCurrentView('issuer');
-      else if (user.role === 'HOLDER') setCurrentView('wallet');
-      else if (user.role === 'ADMIN') setCurrentView('issuer');
+      if (user.role === 'ISSUER') setCurrentTab('issuer');
+      else if (user.role === 'HOLDER') setCurrentTab('wallet');
+      else if (user.role === 'ADMIN') setCurrentTab('issuer');
     }
   }, [user?.role]);
 
@@ -46,147 +58,101 @@ function MainContent() {
     );
   }
 
-  // Render role-specific content
-  const renderAuthenticatedContent = () => {
-    // 1. ISSUER ROLE
-    if (user.role === 'ISSUER') {
-      return (
-        <div>
-          <div style={{
-            maxWidth: '1080px',
-            margin: '0 auto 20px',
-            display: 'flex',
-            justifyContent: 'flex-end',
-            gap: '8px'
-          }}>
+  // 1. If user or guest clicked "Verify Credential" from header
+  if (activeView === 'verifier') {
+    return (
+      <main style={{ maxWidth: '1200px', margin: '0 auto', padding: '36px 20px', minHeight: 'calc(100vh - 160px)' }}>
+        <StatusAlert />
+        <PublicVerifierView />
+      </main>
+    );
+  }
+
+  // 2. If authenticated, render workspace tabs based on role
+  const renderAuthenticatedWorkspaces = () => {
+    const isIssuer = user.role === 'ISSUER' || user.role === 'ADMIN';
+    const isHolder = user.role === 'HOLDER' || user.role === 'ADMIN';
+
+    return (
+      <div>
+        {/* Navigation Switcher Bar */}
+        <div style={{
+          maxWidth: '1080px',
+          margin: '0 auto 24px',
+          display: 'flex',
+          justifyContent: 'flex-end',
+          alignItems: 'center',
+          gap: '8px',
+          flexWrap: 'wrap'
+        }}>
+          {isIssuer && (
             <button
-              onClick={() => setCurrentView('issuer')}
+              onClick={() => setCurrentTab('issuer')}
               className="btn btn-outline"
               style={{
                 padding: '6px 12px',
                 fontSize: '0.8rem',
-                backgroundColor: currentView === 'issuer' ? 'rgba(139, 92, 246, 0.15)' : 'transparent',
-                borderColor: currentView === 'issuer' ? 'rgba(139, 92, 246, 0.4)' : 'var(--border-subtle)'
+                backgroundColor: currentTab === 'issuer' ? 'rgba(139, 92, 246, 0.15)' : 'transparent',
+                borderColor: currentTab === 'issuer' ? 'rgba(139, 92, 246, 0.4)' : 'var(--border-subtle)'
               }}
             >
               <Award size={14} color="#a78bfa" />
               <span>Issuer Studio</span>
             </button>
-            <button
-              onClick={() => setCurrentView('session')}
-              className="btn btn-outline"
-              style={{
-                padding: '6px 12px',
-                fontSize: '0.8rem',
-                backgroundColor: currentView === 'session' ? 'rgba(0, 229, 255, 0.15)' : 'transparent',
-                borderColor: currentView === 'session' ? 'var(--border-accent)' : 'var(--border-subtle)'
-              }}
-            >
-              <Key size={14} color="var(--cyan-primary)" />
-              <span>Session & Token Inspector</span>
-            </button>
-          </div>
+          )}
 
-          {currentView === 'session' ? <UserSessionDashboard /> : <IssuerStudio />}
-        </div>
-      );
-    }
-
-    // 2. ADMIN ROLE (Full access to all workspaces)
-    if (user.role === 'ADMIN') {
-      return (
-        <div>
-          <div style={{
-            maxWidth: '1080px',
-            margin: '0 auto 20px',
-            display: 'flex',
-            justifyContent: 'flex-end',
-            gap: '8px',
-            flexWrap: 'wrap'
-          }}>
+          {isHolder && (
             <button
-              onClick={() => setCurrentView('issuer')}
+              onClick={() => setCurrentTab('wallet')}
               className="btn btn-outline"
               style={{
                 padding: '6px 12px',
                 fontSize: '0.8rem',
-                backgroundColor: currentView === 'issuer' ? 'rgba(139, 92, 246, 0.15)' : 'transparent',
-                borderColor: currentView === 'issuer' ? 'rgba(139, 92, 246, 0.4)' : 'var(--border-subtle)'
-              }}
-            >
-              <Award size={14} color="#a78bfa" />
-              <span>Issuer Studio</span>
-            </button>
-            <button
-              onClick={() => setCurrentView('wallet')}
-              className="btn btn-outline"
-              style={{
-                padding: '6px 12px',
-                fontSize: '0.8rem',
-                backgroundColor: currentView === 'wallet' ? 'rgba(16, 185, 129, 0.15)' : 'transparent',
-                borderColor: currentView === 'wallet' ? 'var(--border-emerald)' : 'var(--border-subtle)'
+                backgroundColor: currentTab === 'wallet' ? 'rgba(16, 185, 129, 0.15)' : 'transparent',
+                borderColor: currentTab === 'wallet' ? 'var(--border-emerald)' : 'var(--border-subtle)'
               }}
             >
               <Wallet size={14} color="var(--emerald-primary)" />
-              <span>Holder Wallet</span>
+              <span>My Wallet</span>
             </button>
-            <button
-              onClick={() => setCurrentView('session')}
-              className="btn btn-outline"
-              style={{
-                padding: '6px 12px',
-                fontSize: '0.8rem',
-                backgroundColor: currentView === 'session' ? 'rgba(0, 229, 255, 0.15)' : 'transparent',
-                borderColor: currentView === 'session' ? 'var(--border-accent)' : 'var(--border-subtle)'
-              }}
-            >
-              <Key size={14} color="var(--cyan-primary)" />
-              <span>Session & Tokens</span>
-            </button>
-          </div>
-
-          {currentView === 'wallet' ? (
-            <HolderWalletView />
-          ) : currentView === 'session' ? (
-            <UserSessionDashboard />
-          ) : (
-            <IssuerStudio />
           )}
-        </div>
-      );
-    }
 
-    // 3. HOLDER ROLE (Default)
-    return (
-      <div>
-        <div style={{
-          maxWidth: '1080px',
-          margin: '0 auto 20px',
-          display: 'flex',
-          justifyContent: 'flex-end',
-          gap: '8px'
-        }}>
           <button
-            onClick={() => setCurrentView('wallet')}
+            onClick={() => setCurrentTab('verify')}
             className="btn btn-outline"
             style={{
               padding: '6px 12px',
               fontSize: '0.8rem',
-              backgroundColor: currentView !== 'session' ? 'rgba(16, 185, 129, 0.15)' : 'transparent',
-              borderColor: currentView !== 'session' ? 'var(--border-emerald)' : 'var(--border-subtle)'
+              backgroundColor: currentTab === 'verify' ? 'rgba(0, 229, 255, 0.15)' : 'transparent',
+              borderColor: currentTab === 'verify' ? 'var(--border-accent)' : 'var(--border-subtle)'
             }}
           >
-            <Wallet size={14} color="var(--emerald-primary)" />
-            <span>My Wallet</span>
+            <FileCheck size={14} color="var(--cyan-primary)" />
+            <span>Verify File</span>
           </button>
+
           <button
-            onClick={() => setCurrentView('session')}
+            onClick={() => setCurrentTab('history')}
             className="btn btn-outline"
             style={{
               padding: '6px 12px',
               fontSize: '0.8rem',
-              backgroundColor: currentView === 'session' ? 'rgba(0, 229, 255, 0.15)' : 'transparent',
-              borderColor: currentView === 'session' ? 'var(--border-accent)' : 'var(--border-subtle)'
+              backgroundColor: currentTab === 'history' ? 'rgba(245, 158, 11, 0.15)' : 'transparent',
+              borderColor: currentTab === 'history' ? 'rgba(245, 158, 11, 0.4)' : 'var(--border-subtle)'
+            }}
+          >
+            <History size={14} color="var(--amber-primary)" />
+            <span>Audit History</span>
+          </button>
+
+          <button
+            onClick={() => setCurrentTab('session')}
+            className="btn btn-outline"
+            style={{
+              padding: '6px 12px',
+              fontSize: '0.8rem',
+              backgroundColor: currentTab === 'session' ? 'rgba(0, 229, 255, 0.15)' : 'transparent',
+              borderColor: currentTab === 'session' ? 'var(--border-accent)' : 'var(--border-subtle)'
             }}
           >
             <Key size={14} color="var(--cyan-primary)" />
@@ -194,7 +160,12 @@ function MainContent() {
           </button>
         </div>
 
-        {currentView === 'session' ? <UserSessionDashboard /> : <HolderWalletView />}
+        {/* Tab Content Display */}
+        {currentTab === 'issuer' && <IssuerStudio />}
+        {currentTab === 'wallet' && <HolderWalletView />}
+        {currentTab === 'verify' && <PublicVerifierView />}
+        {currentTab === 'history' && <VerificationHistoryView />}
+        {currentTab === 'session' && <UserSessionDashboard />}
       </div>
     );
   };
@@ -204,7 +175,7 @@ function MainContent() {
       <StatusAlert />
 
       {user ? (
-        renderAuthenticatedContent()
+        renderAuthenticatedWorkspaces()
       ) : (
         <div>
           {/* Hero Banner for Guest / Sign In */}
@@ -250,7 +221,7 @@ function MainContent() {
               color: 'var(--text-secondary)',
               lineHeight: 1.6
             }}>
-              Sign in or create an identity account to interact with CertiChain's Ed25519 signature engine, refresh token rotation, and verifiable credentials.
+              Sign in or create an account to issue, store, and cryptographically verify digital credentials backed by Ed25519 signatures and IPFS content addressing.
             </p>
           </div>
 
@@ -304,12 +275,14 @@ function Footer() {
 }
 
 export default function App() {
+  const [globalView, setGlobalView] = useState('default'); // 'default' | 'verifier'
+
   return (
     <AuthProvider>
       <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-        <Header />
+        <Header activeView={globalView} onNavigate={setGlobalView} />
         <div style={{ flex: 1 }}>
-          <MainContent />
+          <MainContent activeView={globalView} onNavigate={setGlobalView} />
         </div>
         <Footer />
       </div>

@@ -2,7 +2,7 @@ import React from 'react';
 import { ShieldCheck, Server, ExternalLink, LogOut, KeyRound } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
-export function Header() {
+export function Header({ activeView, onNavigate }) {
   const { user, backendOnline, logout, checkBackendStatus } = useAuth();
 
   const getRoleBadgeClass = (role) => {
@@ -110,6 +110,23 @@ export function Header() {
                 ? 'Backend Offline (:6969)'
                 : 'Checking Backend...'}
             </span>
+          </button>
+
+          {/* Verify Credential Button (Accessible to all) */}
+          <button
+            onClick={() => onNavigate && onNavigate(activeView === 'verifier' ? 'default' : 'verifier')}
+            className="btn btn-outline"
+            style={{
+              padding: '6px 12px',
+              fontSize: '0.8rem',
+              backgroundColor: activeView === 'verifier' ? 'rgba(0, 229, 255, 0.15)' : 'rgba(255, 255, 255, 0.04)',
+              borderColor: activeView === 'verifier' ? 'var(--border-accent)' : 'var(--border-subtle)',
+              color: activeView === 'verifier' ? 'var(--cyan-primary)' : 'var(--text-secondary)',
+            }}
+            title="Public Verifier Portal (POST /api/verifier/verify)"
+          >
+            <ShieldCheck size={14} color={activeView === 'verifier' ? 'var(--cyan-primary)' : 'var(--emerald-primary)'} />
+            <span>{activeView === 'verifier' ? 'Back to App' : 'Verify Credential'}</span>
           </button>
 
           {/* Swagger UI Shortcut */}
