@@ -5,6 +5,7 @@
  * - POST /api/auth/login
  * - POST /api/auth/refresh
  * - POST /api/auth/logout
+ * - GET /v3/api-docs (health check)
  */
 
 const API_BASE = '/api/auth';
@@ -39,7 +40,9 @@ async function handleResponse(response) {
 
   if (!response.ok) {
     let errorMessage = 'An error occurred';
-    if (typeof data === 'object' && data !== null) {
+    if (response.status === 429) {
+      errorMessage = 'Too many attempts, please try again in a few minutes.';
+    } else if (typeof data === 'object' && data !== null) {
       errorMessage = data.message || data.error || (data.errors ? Object.values(data.errors).join(', ') : 'Request failed');
     } else if (typeof data === 'string' && data.length > 0) {
       errorMessage = data;
@@ -125,6 +128,7 @@ export const authService = {
 
   /**
    * Check connection to Spring Boot backend via OpenAPI endpoint
+   * GET /v3/api-docs
    */
   async checkBackendHealth() {
     try {

@@ -16,7 +16,9 @@ async function handleResponse(response) {
 
   if (!response.ok) {
     let errorMessage = 'Admin request failed';
-    if (typeof data === 'object' && data !== null) {
+    if (response.status === 429) {
+      errorMessage = 'Too many attempts, please try again in a few minutes.';
+    } else if (typeof data === 'object' && data !== null) {
       errorMessage = data.message || data.error || (data.errors ? Object.values(data.errors).join(', ') : 'Request failed');
     } else if (typeof data === 'string' && data.length > 0) {
       errorMessage = data;
@@ -33,6 +35,7 @@ async function handleResponse(response) {
 export const adminService = {
   /**
    * List all registered issuers
+   * GET /api/admin/issuers
    * @param {string} token Bearer JWT
    */
   async listIssuers(token) {
@@ -47,6 +50,7 @@ export const adminService = {
 
   /**
    * Verify and approve an issuer (verified = true)
+   * POST /api/admin/issuers/{id}/verify
    * @param {string} issuerId UUID
    * @param {string} token Bearer JWT
    */
@@ -62,6 +66,7 @@ export const adminService = {
 
   /**
    * List all users on the platform
+   * GET /api/admin/users
    * @param {string} token Bearer JWT
    */
   async listUsers(token) {
@@ -76,6 +81,7 @@ export const adminService = {
 
   /**
    * List platform-wide global verification audits
+   * GET /api/admin/verifications
    * @param {string} token Bearer JWT
    */
   async listGlobalVerifications(token) {

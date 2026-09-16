@@ -1,24 +1,29 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { History, RefreshCw, Search, ShieldCheck, ShieldAlert, AlertTriangle, Clock } from 'lucide-react';
+import { History, RefreshCw, Search } from 'lucide-react';
 import { verifierService } from '../../services/verifierService';
 import { useAuth } from '../../context/AuthContext';
+import { Button } from '../common/Button';
+import { Badge } from '../common/Badge';
+import { EmptyState } from '../common/EmptyState';
+import { ErrorState } from '../common/ErrorState';
 
 export function VerificationHistoryView() {
   const { accessToken } = useAuth();
-
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
 
   const loadHistory = useCallback(async () => {
     if (!accessToken) return;
     setLoading(true);
+    setError(null);
 
     try {
       const records = await verifierService.listVerificationHistory(accessToken);
-      setHistory(records);
+      setHistory(records || []);
     } catch (err) {
-      console.warn('Failed to load verification history', err);
+      setError(err.message || 'Failed to load verification history.');
     } finally {
       setLoading(false);
     }
@@ -34,127 +39,109 @@ export function VerificationHistoryView() {
     (item.reason && item.reason.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
-  const getResultBadge = (result) => {
-    switch (result) {
-      case 'VALID':
-        return <span className="badge badge-emerald">✓ Valid</span>;
-      case 'TAMPERED':
-        return <span className="badge" style={{ backgroundColor: 'rgba(244, 63, 94, 0.15)', color: '#fb7185', borderColor: 'rgba(244, 63, 94, 0.3)' }}>Tampered</span>;
-      case 'REVOKED':
-        return <span className="badge badge-amber">Revoked</span>;
-      case 'EXPIRED':
-        return <span className="badge badge-amber">Expired</span>;
-      case 'NOT_FOUND':
-      case 'UNAVAILABLE':
-      default:
-        return <span className="badge badge-purple">{result}</span>;
-    }
-  };
-
   return (
-    <div className="glass-panel animate-fade-in" style={{ maxWidth: '1080px', margin: '0 auto', padding: '24px 28px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '14px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <div style={{
-            width: '40px',
-            height: '40px',
-            borderRadius: '10px',
-            background: 'rgba(0, 229, 255, 0.1)',
-            border: '1px solid var(--border-accent)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: 'var(--cyan-primary)'
-          }}>
-            <History size={20} />
-          </div>
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <h2 className="font-display" style={{ fontSize: '1.25rem', fontWeight: 600 }}>
-                Verification Audit History
-              </h2>
-              <span className="badge badge-cyan" style={{ fontSize: '0.7rem' }}>
-                {history.length} Audits
-              </span>
+    <div className="animate-fade-in" style={{ maxWidth: '1000px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+      {/* Header */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div style={{
+              width: '36px',
+              height: '36px',
+              borderRadius: '10px',
+              backgroundColor: 'rgba(245, 158, 11, 0.15)',
+              border: '1px solid var(--border-amber)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'var(--amber-primary)',
+            }}>
+              <History size={20} />
             </div>
-            <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-              Logged audits queried from <code>GET /api/verifier/history</code>
-            </p>
+            <div>
+              <h1 className="font-display" style={{ fontSize: '1.65rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                Audit History
+              </h1>
+              <p style={{ fontSize: '13.5px', color: 'var(--text-secondary)' }}>
+                Ledger of verification checks performed under your account.
+              </p>
+            </div>
           </div>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <div style={{ position: 'relative', width: '240px' }}>
+          <div style={{ position: 'relative', width: '220px' }}>
             <input
               type="text"
-              placeholder="Search audit records..."
+              placeholder="Filter audit log..."
               className="input-field"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              style={{ padding: '7px 12px 7px 30px', fontSize: '0.825rem' }}
+              style={{ paddingLeft: '32px', height: '36px', fontSize: '13px' }}
             />
-            <Search size={14} color="var(--text-muted)" style={{ position: 'absolute', left: '10px', top: '10px' }} />
+            <Search size={14} color="var(--text-muted)" style={{ position: 'absolute', left: '10px', top: '11px' }} />
           </div>
 
-          <button
-            onClick={loadHistory}
-            className="btn btn-outline"
-            style={{ padding: '7px 12px', fontSize: '0.8rem' }}
-            title="Reload verification history"
-          >
-            <RefreshCw size={13} className={loading ? 'animate-spin' : ''} />
-            <span>Refresh</span>
-          </button>
+          <Button variant="secondary" size="sm" onClick={loadHistory} loading={loading} icon={RefreshCw}>
+            Refresh
+          </Button>
         </div>
       </div>
 
-      {loading ? (
-        <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--text-secondary)' }}>
-          <RefreshCw size={24} className="animate-spin" style={{ margin: '0 auto 10px', color: 'var(--cyan-primary)' }} />
-          <p style={{ fontSize: '0.85rem' }}>Loading verification records...</p>
+      {error && <ErrorState message={error} onRetry={loadHistory} />}
+
+      {/* Main Table Panel */}
+      <div className="glass-panel" style={{ padding: '24px', borderRadius: 'var(--radius-lg)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+          <h3 className="font-display" style={{ fontSize: '1.15rem', fontWeight: 600 }}>
+            Past Verifications
+          </h3>
+          <span className="badge badge-amber">
+            {history.length} Audits Logged
+          </span>
         </div>
-      ) : filteredHistory.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '48px 20px', color: 'var(--text-muted)' }}>
-          <History size={32} style={{ margin: '0 auto 10px', opacity: 0.3 }} />
-          <p style={{ fontSize: '0.9rem' }}>No verification records recorded under your account yet.</p>
-          <p style={{ fontSize: '0.78rem', marginTop: '4px' }}>
-            Verify a credential file using the Verifier Portal to generate audit records.
-          </p>
-        </div>
-      ) : (
-        <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.85rem' }}>
-            <thead>
-              <tr style={{ borderBottom: '1px solid var(--border-subtle)', color: 'var(--text-muted)' }}>
-                <th style={{ padding: '12px 10px', fontWeight: 500 }}>Credential #</th>
-                <th style={{ padding: '12px 10px', fontWeight: 500 }}>Verification Result</th>
-                <th style={{ padding: '12px 10px', fontWeight: 500 }}>Audit Notes / Reason</th>
-                <th style={{ padding: '12px 10px', fontWeight: 500, textAlign: 'right' }}>Verified At</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredHistory.map((item) => (
-                <tr key={item.id} style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.04)' }}>
-                  <td style={{ padding: '12px 10px' }}>
-                    <code className="font-mono" style={{ color: 'var(--cyan-primary)' }}>
-                      {item.credentialNumber || 'Anonymous Envelope'}
-                    </code>
-                  </td>
-                  <td style={{ padding: '12px 10px' }}>
-                    {getResultBadge(item.result)}
-                  </td>
-                  <td style={{ padding: '12px 10px', color: item.reason ? '#fb7185' : 'var(--text-muted)' }}>
-                    {item.reason || 'Cryptographic proof valid'}
-                  </td>
-                  <td style={{ padding: '12px 10px', textAlign: 'right', color: 'var(--text-secondary)' }}>
-                    {new Date(item.verifiedAt).toLocaleString()}
-                  </td>
+
+        {filteredHistory.length === 0 ? (
+          <EmptyState
+            icon={History}
+            title="No verifications yet"
+            description="Verify a credential file to see it recorded here in your audit ledger."
+          />
+        ) : (
+          <div className="table-container">
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>Credential #</th>
+                  <th>Outcome</th>
+                  <th>Reason / Details</th>
+                  <th style={{ textAlign: 'right' }}>Verified At</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+              </thead>
+              <tbody>
+                {filteredHistory.map((item) => (
+                  <tr key={item.id}>
+                    <td>
+                      <code className="font-mono" style={{ color: 'var(--cyan-primary)', fontSize: '13px', fontWeight: 600 }}>
+                        {item.credentialNumber || 'Anonymous'}
+                      </code>
+                    </td>
+                    <td>
+                      <Badge status={item.result} />
+                    </td>
+                    <td style={{ color: item.reason && item.result !== 'VALID' ? '#fb7185' : 'var(--text-secondary)' }}>
+                      {item.reason || 'Verified successfully'}
+                    </td>
+                    <td style={{ textAlign: 'right', fontSize: '13px', color: 'var(--text-muted)' }}>
+                      {item.verifiedAt ? new Date(item.verifiedAt).toLocaleString() : 'N/A'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
