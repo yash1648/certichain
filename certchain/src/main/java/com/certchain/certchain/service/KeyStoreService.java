@@ -27,12 +27,24 @@ public class KeyStoreService {
 
     private static final String STORAGE_ALGORITHM = "AES";
 
+    private static final String DEFAULT_KEYSTORE_PASSWORD =
+            "change-me-keystore-password";
+
     private final Path keystorePath;
     private final char[] keystorePassword;
 
     public KeyStoreService(
             @Value("${ssdcve.keystore.path}") String keystorePath,
             @Value("${ssdcve.keystore.password}") String keystorePassword) {
+
+        if ("production".equals(System.getenv("CERTCHAIN_ENV"))
+                && DEFAULT_KEYSTORE_PASSWORD.equals(keystorePassword)) {
+
+            throw new IllegalStateException(
+                    "ssdcve.keystore.password must be overridden "
+                            + "in production"
+            );
+        }
 
         this.keystorePath = Path.of(keystorePath);
         this.keystorePassword = keystorePassword.toCharArray();

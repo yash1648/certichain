@@ -8,6 +8,10 @@ spring:
     password: ${CERT_DB_PASSWORD:certichain_password}
     driver-class-name: org.postgresql.Driver
 
+  servlet:
+    multipart:
+      max-file-size: 2MB
+      max-request-size: 2MB
 
   jpa:
     hibernate:
@@ -20,20 +24,15 @@ spring:
 server:
   port: 6969
 
-
-
-
-
 certichain:
-  keystore:
-    path: ./keystore/ssdcve.p12
-    password: ${SSDCVE_KEYSTORE_PASSWORD:change-me-keystore-password}
   jwt:
     secret: ${SSDCVE_JWT_SECRET:change-me-in-production-minimum-32-bytes-long!!!}
     access-token-ttl-minutes: 60
   auth:
     cookie-secure: false
     refresh-token-ttl-days: 7
+  swagger:
+    enabled: true
 
 ssdcve:
   keystore:
@@ -41,10 +40,11 @@ ssdcve:
     password: ${SSDCVE_KEYSTORE_PASSWORD:change-me-keystore-password}
   ipfs:
     api-url: http://localhost:5001
-
-
+  blockchain:
+    rpc-url: ${SSDCVE_BLOCKCHAIN_RPC_URL:http://localhost:8545}
+    from-address: ${SSDCVE_BLOCKCHAIN_FROM:0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266}
+    chain-id: ${SSDCVE_BLOCKCHAIN_CHAIN_ID:31337}
 
 logging:
   level:
-    web: debug
-    db: debug
+    web: info

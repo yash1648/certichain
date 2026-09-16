@@ -16,6 +16,9 @@ import java.util.UUID;
 @Component
 public class JwtUtil {
 
+    private static final String DEFAULT_SECRET =
+            "change-me-in-production-minimum-32-bytes-long!!!";
+
     private final SecretKey key;
     private final long accessTokenTtlMinutes;
 
@@ -23,6 +26,25 @@ public class JwtUtil {
             @Value("${certichain.jwt.secret}") String secret,
             @Value("${certichain.jwt.access-token-ttl-minutes}")
             long accessTokenTtlMinutes) {
+
+        if (secret == null
+                || secret.getBytes(StandardCharsets.UTF_8).length
+                < 32) {
+
+            throw new IllegalStateException(
+                    "certichain.jwt.secret must be at least "
+                            + "32 bytes"
+            );
+        }
+
+        if ("production".equals(System.getenv("CERTCHAIN_ENV"))
+                && DEFAULT_SECRET.equals(secret)) {
+
+            throw new IllegalStateException(
+                    "certichain.jwt.secret must be overridden "
+                            + "in production"
+            );
+        }
 
         this.key =
                 Keys.hmacShaKeyFor(
