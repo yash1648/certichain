@@ -5,11 +5,21 @@ import { StatusAlert } from './components/StatusAlert';
 import { AuthCard } from './components/AuthCard';
 import { UserSessionDashboard } from './components/UserSessionDashboard';
 import { IssuerStudio } from './components/issuer/IssuerStudio';
-import { ShieldCheck, Cpu, HardDrive, Lock, Award, Key } from 'lucide-react';
+import { HolderWalletView } from './components/holder/HolderWalletView';
+import { ShieldCheck, Cpu, HardDrive, Lock, Award, Key, Wallet } from 'lucide-react';
 
 function MainContent() {
   const { user, loading } = useAuth();
-  const [adminView, setAdminView] = React.useState('issuer'); // 'issuer' | 'session'
+  const [currentView, setCurrentView] = React.useState(null); // defaults dynamically based on role
+
+  // Set initial view based on role
+  React.useEffect(() => {
+    if (user) {
+      if (user.role === 'ISSUER') setCurrentView('issuer');
+      else if (user.role === 'HOLDER') setCurrentView('wallet');
+      else if (user.role === 'ADMIN') setCurrentView('issuer');
+    }
+  }, [user?.role]);
 
   if (loading) {
     return (
@@ -38,10 +48,10 @@ function MainContent() {
 
   // Render role-specific content
   const renderAuthenticatedContent = () => {
+    // 1. ISSUER ROLE
     if (user.role === 'ISSUER') {
       return (
         <div>
-          {/* View switcher for Issuer to also see Token session if desired */}
           <div style={{
             maxWidth: '1080px',
             margin: '0 auto 20px',
@@ -50,26 +60,26 @@ function MainContent() {
             gap: '8px'
           }}>
             <button
-              onClick={() => setAdminView('issuer')}
+              onClick={() => setCurrentView('issuer')}
               className="btn btn-outline"
               style={{
                 padding: '6px 12px',
                 fontSize: '0.8rem',
-                backgroundColor: adminView === 'issuer' ? 'rgba(139, 92, 246, 0.15)' : 'transparent',
-                borderColor: adminView === 'issuer' ? 'rgba(139, 92, 246, 0.4)' : 'var(--border-subtle)'
+                backgroundColor: currentView === 'issuer' ? 'rgba(139, 92, 246, 0.15)' : 'transparent',
+                borderColor: currentView === 'issuer' ? 'rgba(139, 92, 246, 0.4)' : 'var(--border-subtle)'
               }}
             >
               <Award size={14} color="#a78bfa" />
               <span>Issuer Studio</span>
             </button>
             <button
-              onClick={() => setAdminView('session')}
+              onClick={() => setCurrentView('session')}
               className="btn btn-outline"
               style={{
                 padding: '6px 12px',
                 fontSize: '0.8rem',
-                backgroundColor: adminView === 'session' ? 'rgba(0, 229, 255, 0.15)' : 'transparent',
-                borderColor: adminView === 'session' ? 'var(--border-accent)' : 'var(--border-subtle)'
+                backgroundColor: currentView === 'session' ? 'rgba(0, 229, 255, 0.15)' : 'transparent',
+                borderColor: currentView === 'session' ? 'var(--border-accent)' : 'var(--border-subtle)'
               }}
             >
               <Key size={14} color="var(--cyan-primary)" />
@@ -77,11 +87,12 @@ function MainContent() {
             </button>
           </div>
 
-          {adminView === 'issuer' ? <IssuerStudio /> : <UserSessionDashboard />}
+          {currentView === 'session' ? <UserSessionDashboard /> : <IssuerStudio />}
         </div>
       );
     }
 
+    // 2. ADMIN ROLE (Full access to all workspaces)
     if (user.role === 'ADMIN') {
       return (
         <div>
@@ -90,43 +101,102 @@ function MainContent() {
             margin: '0 auto 20px',
             display: 'flex',
             justifyContent: 'flex-end',
-            gap: '8px'
+            gap: '8px',
+            flexWrap: 'wrap'
           }}>
             <button
-              onClick={() => setAdminView('issuer')}
+              onClick={() => setCurrentView('issuer')}
               className="btn btn-outline"
               style={{
                 padding: '6px 12px',
                 fontSize: '0.8rem',
-                backgroundColor: adminView === 'issuer' ? 'rgba(139, 92, 246, 0.15)' : 'transparent',
-                borderColor: adminView === 'issuer' ? 'rgba(139, 92, 246, 0.4)' : 'var(--border-subtle)'
+                backgroundColor: currentView === 'issuer' ? 'rgba(139, 92, 246, 0.15)' : 'transparent',
+                borderColor: currentView === 'issuer' ? 'rgba(139, 92, 246, 0.4)' : 'var(--border-subtle)'
               }}
             >
               <Award size={14} color="#a78bfa" />
-              <span>Issuer Studio (Admin Mode)</span>
+              <span>Issuer Studio</span>
             </button>
             <button
-              onClick={() => setAdminView('session')}
+              onClick={() => setCurrentView('wallet')}
               className="btn btn-outline"
               style={{
                 padding: '6px 12px',
                 fontSize: '0.8rem',
-                backgroundColor: adminView === 'session' ? 'rgba(0, 229, 255, 0.15)' : 'transparent',
-                borderColor: adminView === 'session' ? 'var(--border-accent)' : 'var(--border-subtle)'
+                backgroundColor: currentView === 'wallet' ? 'rgba(16, 185, 129, 0.15)' : 'transparent',
+                borderColor: currentView === 'wallet' ? 'var(--border-emerald)' : 'var(--border-subtle)'
+              }}
+            >
+              <Wallet size={14} color="var(--emerald-primary)" />
+              <span>Holder Wallet</span>
+            </button>
+            <button
+              onClick={() => setCurrentView('session')}
+              className="btn btn-outline"
+              style={{
+                padding: '6px 12px',
+                fontSize: '0.8rem',
+                backgroundColor: currentView === 'session' ? 'rgba(0, 229, 255, 0.15)' : 'transparent',
+                borderColor: currentView === 'session' ? 'var(--border-accent)' : 'var(--border-subtle)'
               }}
             >
               <Key size={14} color="var(--cyan-primary)" />
-              <span>Session & Token Inspector</span>
+              <span>Session & Tokens</span>
             </button>
           </div>
 
-          {adminView === 'issuer' ? <IssuerStudio /> : <UserSessionDashboard />}
+          {currentView === 'wallet' ? (
+            <HolderWalletView />
+          ) : currentView === 'session' ? (
+            <UserSessionDashboard />
+          ) : (
+            <IssuerStudio />
+          )}
         </div>
       );
     }
 
-    // Default: HOLDER role
-    return <UserSessionDashboard />;
+    // 3. HOLDER ROLE (Default)
+    return (
+      <div>
+        <div style={{
+          maxWidth: '1080px',
+          margin: '0 auto 20px',
+          display: 'flex',
+          justifyContent: 'flex-end',
+          gap: '8px'
+        }}>
+          <button
+            onClick={() => setCurrentView('wallet')}
+            className="btn btn-outline"
+            style={{
+              padding: '6px 12px',
+              fontSize: '0.8rem',
+              backgroundColor: currentView !== 'session' ? 'rgba(16, 185, 129, 0.15)' : 'transparent',
+              borderColor: currentView !== 'session' ? 'var(--border-emerald)' : 'var(--border-subtle)'
+            }}
+          >
+            <Wallet size={14} color="var(--emerald-primary)" />
+            <span>My Wallet</span>
+          </button>
+          <button
+            onClick={() => setCurrentView('session')}
+            className="btn btn-outline"
+            style={{
+              padding: '6px 12px',
+              fontSize: '0.8rem',
+              backgroundColor: currentView === 'session' ? 'rgba(0, 229, 255, 0.15)' : 'transparent',
+              borderColor: currentView === 'session' ? 'var(--border-accent)' : 'var(--border-subtle)'
+            }}
+          >
+            <Key size={14} color="var(--cyan-primary)" />
+            <span>Session & Tokens</span>
+          </button>
+        </div>
+
+        {currentView === 'session' ? <UserSessionDashboard /> : <HolderWalletView />}
+      </div>
+    );
   };
 
   return (
