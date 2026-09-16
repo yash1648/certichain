@@ -41,3 +41,10 @@ ssdcve:
     password: ${SSDCVE_KEYSTORE_PASSWORD:change-me-keystore-password}
   ipfs:
     api-url: http://localhost:5001
+
+
+
+logging:
+  level:
+    web: debug
+    db: debug
