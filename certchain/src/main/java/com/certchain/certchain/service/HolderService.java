@@ -2,10 +2,12 @@ package com.certchain.certchain.service;
 
 import com.certchain.certchain.dto.response.WalletCredentialResponse;
 import com.certchain.certchain.model.Credential;
+import com.certchain.certchain.model.CredentialAnchor;
 import com.certchain.certchain.model.CredentialStatus;
 import com.certchain.certchain.model.CredentialStatus.Status;
 import com.certchain.certchain.model.HolderWallet;
 import com.certchain.certchain.model.User;
+import com.certchain.certchain.repository.CredentialAnchorRepository;
 import com.certchain.certchain.repository.CredentialRepository;
 import com.certchain.certchain.repository.CredentialStatusRepository;
 import com.certchain.certchain.repository.HolderWalletRepository;
@@ -27,19 +29,22 @@ public class HolderService {
     private final CredentialRepository credentialRepository;
     private final CredentialStatusRepository statusRepository;
     private final IpfsService ipfsService;
+    private final CredentialAnchorRepository anchorRepository;
 
     public HolderService(
             UserRepository userRepository,
             HolderWalletRepository walletRepository,
             CredentialRepository credentialRepository,
             CredentialStatusRepository statusRepository,
-            IpfsService ipfsService) {
+            IpfsService ipfsService,
+            CredentialAnchorRepository anchorRepository) {
 
         this.userRepository = userRepository;
         this.walletRepository = walletRepository;
         this.credentialRepository = credentialRepository;
         this.statusRepository = statusRepository;
         this.ipfsService = ipfsService;
+        this.anchorRepository = anchorRepository;
     }
 
     @Transactional(readOnly = true)
@@ -179,6 +184,13 @@ public class HolderService {
                         )
                         .orElse(null);
 
+        CredentialAnchor anchor =
+                anchorRepository
+                        .findByCredentialId(
+                                credential.getId()
+                        )
+                        .orElse(null);
+
         return new WalletCredentialResponse(
                 credential.getId(),
                 credential.getCredentialNumber(),
@@ -187,6 +199,15 @@ public class HolderService {
                 credential.getIssuer().getId(),
                 credential.getIssuer().getName(),
                 credential.getIssuer().getDomain(),
+                anchor == null
+                        ? null
+                        : anchor.getTxHash(),
+                anchor == null
+                        ? null
+                        : anchor.getBlockNumber(),
+                anchor == null
+                        ? null
+                        : anchor.getChainId(),
                 credential.getIssuedAt()
                         .toInstant(ZoneOffset.UTC),
                 credential.getExpiresAt() == null

@@ -23,6 +23,49 @@ services:
     volumes:
       - certichain_ipfs_data:/data/ipfs
 
+  anvil:
+    image: ghcr.io/foundry-rs/foundry:stable
+    container_name: certichain-anvil
+    restart: unless-stopped
+    environment:
+      ANVIL_IP_ADDR: "0.0.0.0"
+    command: anvil --host 0.0.0.0 --port 8545
+    ports:
+      - "8545:8545"
+
+  backend:
+    build: ./certchain
+    container_name: certichain-backend
+    restart: unless-stopped
+    depends_on:
+      - postgres
+      - ipfs
+      - anvil
+    environment:
+      CERT_DB_URL: jdbc:postgresql://postgres:5432/certichain
+      CERT_DB_USERNAME: certichain
+      CERT_DB_PASSWORD: certichain_password
+      SSDCVE_JWT_SECRET: ${SSDCVE_JWT_SECRET:-change-me-in-production-minimum-32-bytes-long!!!}
+      SSDCVE_KEYSTORE_PASSWORD: ${SSDCVE_KEYSTORE_PASSWORD:-change-me-keystore-password}
+      SSDCVE_IPFS_API_URL: http://ipfs:5001
+      SSDCVE_BLOCKCHAIN_RPC_URL: http://anvil:8545
+      SSDCVE_BLOCKCHAIN_FROM: 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
+      SSDCVE_BLOCKCHAIN_CHAIN_ID: 31337
+    ports:
+      - "6969:6969"
+    volumes:
+      - certichain_keystore:/app/keystore
+
+  frontend:
+    build: ./frontend
+    container_name: certichain-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "5173:80"
+
 volumes:
   certichain_postgres_data:
   certichain_ipfs_data:
+  certichain_keystore:

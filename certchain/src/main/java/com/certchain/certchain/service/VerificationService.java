@@ -2,12 +2,15 @@ package com.certchain.certchain.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.certchain.certchain.dto.response.SignedCredentialEnvelope;
+import com.certchain.certchain.dto.response.AnchorLookupResponse;
 import com.certchain.certchain.dto.response.VerificationResult;
 import com.certchain.certchain.model.Credential;
+import com.certchain.certchain.model.CredentialAnchor;
 import com.certchain.certchain.model.CredentialStatus;
 import com.certchain.certchain.model.CredentialStatus.Status;
 import com.certchain.certchain.model.IssuerKey;
 import com.certchain.certchain.model.VerificationStatus;
+import com.certchain.certchain.repository.CredentialAnchorRepository;
 import com.certchain.certchain.repository.CredentialRepository;
 import com.certchain.certchain.repository.CredentialStatusRepository;
 import com.certchain.certchain.repository.IssuerKeyRepository;
@@ -30,6 +33,8 @@ public class VerificationService {
     private final IpfsService ipfsService;
     private final CanonicalizationService canonicalizationService;
     private final CryptoService cryptoService;
+    private final CredentialAnchorRepository anchorRepository;
+    private final BlockchainAnchorService blockchainAnchorService;
 
     public VerificationService(
             ObjectMapper objectMapper,
@@ -38,7 +43,9 @@ public class VerificationService {
             IssuerKeyRepository issuerKeyRepository,
             IpfsService ipfsService,
             CanonicalizationService canonicalizationService,
-            CryptoService cryptoService) {
+            CryptoService cryptoService,
+            CredentialAnchorRepository anchorRepository,
+            BlockchainAnchorService blockchainAnchorService) {
 
         this.objectMapper = objectMapper;
         this.credentialRepository = credentialRepository;
@@ -47,6 +54,8 @@ public class VerificationService {
         this.ipfsService = ipfsService;
         this.canonicalizationService = canonicalizationService;
         this.cryptoService = cryptoService;
+        this.anchorRepository = anchorRepository;
+        this.blockchainAnchorService = blockchainAnchorService;
     }
 
     @Transactional(readOnly = true)
@@ -308,11 +317,98 @@ public class VerificationService {
         );
     }
 
+    /**
+     * Public anchor lookup: anyone can check a credential's on-chain
+     * anchor by credential number, without uploading the file.
+     * Returns null when the credential or its anchor does not exist.
+     */
+    @Transactional(readOnly = true)
+    public AnchorLookupResponse lookupAnchor(
+            String credentialNumber) {
+
+        Credential credential =
+                credentialRepository
+                        .findByCredentialNumber(
+                                credentialNumber
+                        )
+                        .orElse(null);
+
+        if (credential == null) {
+            return null;
+        }
+
+        CredentialAnchor anchor =
+                anchorRepository
+                        .findByCredentialId(
+                                credential.getId()
+                        )
+                        .orElse(null);
+
+        if (anchor == null) {
+            return null;
+        }
+
+        boolean anchorVerified = false;
+
+        try {
+
+            anchorVerified =
+                    blockchainAnchorService.verifyAnchor(
+                            credential.getContentHash(),
+                            anchor.getTxHash()
+                    );
+
+        } catch (Exception ex) {
+
+            anchorVerified = false;
+        }
+
+        return new AnchorLookupResponse(
+                credential.getCredentialNumber(),
+                credential.getContentHash(),
+                anchor.getTxHash(),
+                anchor.getBlockNumber(),
+                anchor.getChainId(),
+                anchorVerified
+        );
+    }
+
     private VerificationResult success(
             Credential credential,
             SignedCredentialEnvelope envelope,
             VerificationStatus status,
             String reason) {
+
+        CredentialAnchor anchor =
+                anchorRepository
+                        .findByCredentialId(
+                                credential.getId()
+                        )
+                        .orElse(null);
+
+        /*
+         * Best-effort on-chain check: confirm the stored tx carries
+         * this content hash. If the node is unreachable, the anchor
+         * info from the DB is still shown - the chain is evidence,
+         * not a single point of failure.
+         */
+        boolean anchorVerified = false;
+
+        if (anchor != null) {
+
+            try {
+
+                anchorVerified =
+                        blockchainAnchorService.verifyAnchor(
+                                credential.getContentHash(),
+                                anchor.getTxHash()
+                        );
+
+            } catch (Exception ex) {
+
+                anchorVerified = false;
+            }
+        }
 
         return new VerificationResult(
                 status == VerificationStatus.VALID,
@@ -334,7 +430,17 @@ public class VerificationService {
                             .toInstant(
                                 ZoneOffset.UTC
                             ),
-                Instant.now()
+                Instant.now(),
+                anchor == null
+                        ? null
+                        : anchor.getTxHash(),
+                anchor == null
+                        ? null
+                        : anchor.getBlockNumber(),
+                anchor == null
+                        ? null
+                        : anchor.getChainId(),
+                anchorVerified
         );
     }
 
@@ -367,7 +473,11 @@ public class VerificationService {
                 null,
                 null,
                 null,
-                Instant.now()
+                Instant.now(),
+                null,
+                null,
+                null,
+                false
         );
     }
 }

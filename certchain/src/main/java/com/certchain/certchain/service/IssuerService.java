@@ -27,6 +27,8 @@ public class IssuerService {
     private final CredentialStatusRepository statusRepository;
     private final CredentialService credentialService;
     private final RevocationService revocationService;
+    private final CredentialAnchorRepository anchorRepository;
+    private final BlockchainAnchorService blockchainAnchorService;
     private final ObjectMapper objectMapper;
 
     public IssuerService(
@@ -38,6 +40,8 @@ public class IssuerService {
             CredentialStatusRepository statusRepository,
             CredentialService credentialService,
             RevocationService revocationService,
+            CredentialAnchorRepository anchorRepository,
+            BlockchainAnchorService blockchainAnchorService,
             ObjectMapper objectMapper) {
 
         this.userRepository = userRepository;
@@ -48,6 +52,8 @@ public class IssuerService {
         this.statusRepository = statusRepository;
         this.credentialService = credentialService;
         this.revocationService = revocationService;
+        this.anchorRepository = anchorRepository;
+        this.blockchainAnchorService = blockchainAnchorService;
         this.objectMapper = objectMapper;
     }
 
@@ -154,6 +160,29 @@ public class IssuerService {
                         subject,
                         metadataJson
                 );
+
+        /*
+         * Anchor the content hash on-chain. Failure rolls back the
+         * credential insert: every issued credential is anchored.
+         */
+        String txHash =
+                blockchainAnchorService.anchor(
+                        credential.getContentHash()
+                );
+
+        Long blockNumber =
+                blockchainAnchorService.getBlockNumber(
+                        txHash
+                );
+
+        anchorRepository.save(
+                new CredentialAnchor(
+                        credential,
+                        txHash,
+                        blockNumber,
+                        blockchainAnchorService.getChainId()
+                )
+        );
 
         return toCredentialResponse(credential);
     }
@@ -334,6 +363,13 @@ public class IssuerService {
                         )
                         .orElse(null);
 
+        CredentialAnchor anchor =
+                anchorRepository
+                        .findByCredentialId(
+                                credential.getId()
+                        )
+                        .orElse(null);
+
         return new CredentialResponse(
                 credential.getId(),
                 credential.getCredentialNumber(),
@@ -341,6 +377,15 @@ public class IssuerService {
                 credential.getTitle(),
                 credential.getContentHash(),
                 credential.getIpfsCid(),
+                anchor == null
+                        ? null
+                        : anchor.getTxHash(),
+                anchor == null
+                        ? null
+                        : anchor.getBlockNumber(),
+                anchor == null
+                        ? null
+                        : anchor.getChainId(),
                 credential.getSignature(),
                 credential.getSignatureAlgorithm(),
                 credential.getKeyId(),

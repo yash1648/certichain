@@ -21,6 +21,12 @@ public record WalletCredentialResponse(
 
         String issuerDomain,
 
+        String txHash,
+
+        Long blockNumber,
+
+        Long chainId,
+
         Instant issuedAt,
 
         Instant expiresAt,

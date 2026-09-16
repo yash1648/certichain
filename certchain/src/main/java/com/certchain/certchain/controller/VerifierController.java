@@ -1,5 +1,6 @@
 package com.certchain.certchain.controller;
 
+import com.certchain.certchain.dto.response.AnchorLookupResponse;
 import com.certchain.certchain.dto.response.VerificationHistoryResponse;
 import com.certchain.certchain.dto.response.VerificationResult;
 import com.certchain.certchain.model.VerificationStatus;
@@ -57,7 +58,11 @@ public class VerifierController {
                             null,
                             null,
                             null,
-                            Instant.now()
+                            Instant.now(),
+                            null,
+                            null,
+                            null,
+                            false
                     )
             );
         }
@@ -77,6 +82,25 @@ public class VerifierController {
         );
 
         return ResponseEntity.ok(result);
+    }
+
+    @GetMapping(
+            value = "/anchor/{credentialNumber}",
+            produces = MediaType.APPLICATION_JSON_VALUE
+    )
+    public ResponseEntity<AnchorLookupResponse> anchor(
+            @PathVariable String credentialNumber) {
+
+        AnchorLookupResponse response =
+                verificationService.lookupAnchor(
+                        credentialNumber
+                );
+
+        if (response == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping(

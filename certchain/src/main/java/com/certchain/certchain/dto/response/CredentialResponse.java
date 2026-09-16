@@ -19,6 +19,12 @@ public record CredentialResponse(
 
         String ipfsCid,
 
+        String txHash,
+
+        Long blockNumber,
+
+        Long chainId,
+
         String signature,
 
         String signatureAlgorithm,
