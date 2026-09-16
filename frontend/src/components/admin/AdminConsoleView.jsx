@@ -8,14 +8,17 @@ import {
   Search, 
   RefreshCw, 
   History, 
-  ExternalLink,
-  Clock,
-  ShieldCheck,
-  UserCheck,
+  Clock, 
+  ShieldCheck, 
+  Check, 
   Filter
 } from 'lucide-react';
 import { adminService } from '../../services/adminService';
 import { useAuth } from '../../context/AuthContext';
+import { Button } from '../common/Button';
+import { Badge } from '../common/Badge';
+import { EmptyState } from '../common/EmptyState';
+import { ErrorState } from '../common/ErrorState';
 
 export function AdminConsoleView() {
   const { accessToken, user } = useAuth();
@@ -48,9 +51,9 @@ export function AdminConsoleView() {
         adminService.listGlobalVerifications(accessToken).catch(() => []),
       ]);
 
-      setIssuers(issuersData);
-      setUsers(usersData);
-      setVerifications(verifsData);
+      setIssuers(issuersData || []);
+      setUsers(usersData || []);
+      setVerifications(verifsData || []);
     } catch (err) {
       setActionError(err.message || 'Failed to load administrative records.');
     } finally {
@@ -71,7 +74,7 @@ export function AdminConsoleView() {
     try {
       const updated = await adminService.verifyIssuer(issuerId, accessToken);
       setIssuers(issuers.map(i => i.id === issuerId ? updated : i));
-      setActionSuccess(`Issuer "${issuerName}" has been successfully approved & verified! Key creation and credential minting are now unlocked for them.`);
+      setActionSuccess(`Issuer "${issuerName}" has been successfully approved & verified! Key creation and credential minting are now unlocked.`);
     } catch (err) {
       setActionError(err.message || 'Failed to approve issuer.');
     } finally {
@@ -88,9 +91,9 @@ export function AdminConsoleView() {
 
   const filteredUsers = users.filter(u => {
     const matchesQuery = 
-      u.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      u.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      u.id.toLowerCase().includes(searchQuery.toLowerCase());
+      (u.fullName && u.fullName.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (u.email && u.email.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (u.id && u.id.toLowerCase().includes(searchQuery.toLowerCase()));
     const matchesRole = userRoleFilter === 'ALL' || u.role === userRoleFilter;
     return matchesQuery && matchesRole;
   });
@@ -101,342 +104,257 @@ export function AdminConsoleView() {
     (v.reason && v.reason.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
-  const getRoleBadge = (role) => {
-    switch (role) {
-      case 'ADMIN':
-        return <span className="badge badge-amber">ADMIN</span>;
-      case 'ISSUER':
-        return <span className="badge badge-purple">ISSUER</span>;
-      case 'VERIFIER':
-        return <span className="badge badge-cyan">VERIFIER</span>;
-      case 'HOLDER':
-      default:
-        return <span className="badge badge-emerald">HOLDER</span>;
-    }
-  };
-
-  const getVerificationBadge = (result) => {
-    switch (result) {
-      case 'VALID':
-        return <span className="badge badge-emerald">✓ Valid</span>;
-      case 'TAMPERED':
-        return <span className="badge" style={{ backgroundColor: 'rgba(244, 63, 94, 0.15)', color: '#fb7185', borderColor: 'rgba(244, 63, 94, 0.3)' }}>Tampered</span>;
-      case 'REVOKED':
-        return <span className="badge badge-amber">Revoked</span>;
-      case 'EXPIRED':
-        return <span className="badge badge-amber">Expired</span>;
-      default:
-        return <span className="badge badge-purple">{result}</span>;
-    }
-  };
-
   return (
     <div className="animate-fade-in" style={{ maxWidth: '1080px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '24px' }}>
       
       {/* Admin Banner */}
-      <div className="glass-panel glass-panel-glow" style={{ padding: '26px 28px' }}>
+      <div className="glass-panel" style={{ padding: '26px 28px', borderRadius: 'var(--radius-lg)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             <div style={{
-              width: '52px',
-              height: '52px',
+              width: '50px',
+              height: '50px',
               borderRadius: '16px',
               background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.25), rgba(139, 92, 246, 0.25))',
-              border: '1px solid rgba(245, 158, 11, 0.4)',
+              border: '1px solid var(--border-amber)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               color: 'var(--amber-primary)',
-              boxShadow: '0 0 20px rgba(245, 158, 11, 0.25)'
             }}>
-              <ShieldAlert size={28} />
+              <ShieldAlert size={26} />
             </div>
 
             <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '2px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <h1 className="font-display" style={{ fontSize: '1.6rem', fontWeight: 700 }}>
                   Network Admin Console
                 </h1>
-                <span className="badge badge-amber">
-                  <ShieldCheck size={12} />
-                  System Authority
-                </span>
+                <Badge status="ADMIN" text="System Authority" variant="amber" />
               </div>
-              <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-                Overseer: <strong style={{ color: 'var(--text-primary)' }}>{user?.fullName}</strong> — Platform Administration (/api/admin/**)
+              <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginTop: '2px' }}>
+                Overseer: <strong style={{ color: 'var(--text-primary)' }}>{user?.fullName}</strong> · Network Management & Approvals
               </p>
             </div>
           </div>
 
-          <button
+          <Button
+            variant="secondary"
+            size="sm"
             onClick={loadAdminData}
-            className="btn btn-outline"
-            style={{ padding: '8px 14px', fontSize: '0.825rem' }}
-            title="Refresh administrative data"
+            loading={loading}
+            icon={RefreshCw}
           >
-            <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
-            <span>Sync Admin State</span>
-          </button>
+            Sync State
+          </Button>
         </div>
 
         {/* KPI Metrics Summary Grid */}
         <div style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
           gap: '14px',
           marginTop: '22px',
           paddingTop: '20px',
-          borderTop: '1px solid var(--border-subtle)'
+          borderTop: '1px solid var(--border-subtle)',
         }}>
-          {/* Total Users */}
-          <div style={{
-            background: 'rgba(0, 0, 0, 0.35)',
-            border: '1px solid var(--border-subtle)',
-            borderRadius: 'var(--radius-md)',
-            padding: '14px 16px'
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-muted)', fontSize: '0.78rem', marginBottom: '4px' }}>
+          <div style={{ background: 'rgba(0, 0, 0, 0.3)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-md)', padding: '14px 16px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-muted)', fontSize: '12px', marginBottom: '4px' }}>
               <Users size={14} color="var(--cyan-primary)" />
               <span>Registered Users</span>
             </div>
-            <div className="font-mono" style={{ fontSize: '1.75rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+            <div className="font-mono" style={{ fontSize: '1.65rem', fontWeight: 700, color: 'var(--text-primary)' }}>
               {users.length}
             </div>
           </div>
 
-          {/* Registered Issuers */}
-          <div style={{
-            background: 'rgba(0, 0, 0, 0.35)',
-            border: '1px solid var(--border-subtle)',
-            borderRadius: 'var(--radius-md)',
-            padding: '14px 16px'
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-muted)', fontSize: '0.78rem', marginBottom: '4px' }}>
+          <div style={{ background: 'rgba(0, 0, 0, 0.3)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-md)', padding: '14px 16px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-muted)', fontSize: '12px', marginBottom: '4px' }}>
               <Building2 size={14} color="#a78bfa" />
-              <span>Certifying Issuers</span>
+              <span>Registered Issuers</span>
             </div>
-            <div className="font-mono" style={{ fontSize: '1.75rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+            <div className="font-mono" style={{ fontSize: '1.65rem', fontWeight: 700, color: 'var(--text-primary)' }}>
               {issuers.length}
             </div>
           </div>
 
-          {/* Pending Issuer Approvals */}
           <div style={{
-            background: 'rgba(0, 0, 0, 0.35)',
+            background: 'rgba(0, 0, 0, 0.3)',
             border: pendingApprovalsCount > 0 ? '1px solid rgba(245, 158, 11, 0.4)' : '1px solid var(--border-subtle)',
             borderRadius: 'var(--radius-md)',
-            padding: '14px 16px'
+            padding: '14px 16px',
           }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-muted)', fontSize: '0.78rem', marginBottom: '4px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-muted)', fontSize: '12px', marginBottom: '4px' }}>
               <Clock size={14} color="var(--amber-primary)" />
               <span>Pending Approvals</span>
             </div>
             <div className="font-mono" style={{
-              fontSize: '1.75rem',
+              fontSize: '1.65rem',
               fontWeight: 700,
-              color: pendingApprovalsCount > 0 ? 'var(--amber-primary)' : 'var(--text-primary)'
+              color: pendingApprovalsCount > 0 ? 'var(--amber-primary)' : 'var(--text-primary)',
             }}>
               {pendingApprovalsCount}
             </div>
           </div>
 
-          {/* Global Verifications */}
-          <div style={{
-            background: 'rgba(0, 0, 0, 0.35)',
-            border: '1px solid var(--border-subtle)',
-            borderRadius: 'var(--radius-md)',
-            padding: '14px 16px'
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-muted)', fontSize: '0.78rem', marginBottom: '4px' }}>
-              <History size={14} color="var(--emerald-primary)" />
+          <div style={{ background: 'rgba(0, 0, 0, 0.3)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-md)', padding: '14px 16px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-muted)', fontSize: '12px', marginBottom: '4px' }}>
+              <History size={14} color="var(--cyan-primary)" />
               <span>Global Audits</span>
             </div>
-            <div className="font-mono" style={{ fontSize: '1.75rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+            <div className="font-mono" style={{ fontSize: '1.65rem', fontWeight: 700, color: 'var(--text-primary)' }}>
               {verifications.length}
             </div>
           </div>
         </div>
-
       </div>
 
       {actionSuccess && (
-        <div style={{
-          backgroundColor: 'rgba(16, 185, 129, 0.12)',
-          border: '1px solid var(--border-emerald)',
+        <div className="animate-fade-in" style={{
+          padding: '12px 18px',
           borderRadius: 'var(--radius-md)',
-          padding: '12px 16px',
-          color: 'var(--emerald-primary)',
-          fontSize: '0.85rem',
+          backgroundColor: 'rgba(16, 185, 129, 0.1)',
+          border: '1px solid rgba(16, 185, 129, 0.3)',
+          color: '#34d399',
+          fontSize: '13.5px',
           display: 'flex',
           alignItems: 'center',
-          gap: '10px'
+          gap: '10px',
         }}>
-          <CheckCircle2 size={18} />
+          <CheckCircle2 size={18} style={{ flexShrink: 0 }} />
           <span>{actionSuccess}</span>
         </div>
       )}
 
       {actionError && (
-        <div style={{
-          backgroundColor: 'rgba(244, 63, 94, 0.1)',
-          border: '1px solid rgba(244, 63, 94, 0.3)',
-          borderRadius: 'var(--radius-md)',
-          padding: '12px 16px',
-          color: '#fb7185',
-          fontSize: '0.85rem'
-        }}>
-          {actionError}
-        </div>
+        <ErrorState message={actionError} onRetry={loadAdminData} />
       )}
 
-      {/* Tabs Switcher */}
+      {/* Navigation Sub-Tabs */}
       <div style={{
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
         flexWrap: 'wrap',
-        gap: '12px',
-        borderBottom: '1px solid var(--border-subtle)',
-        paddingBottom: '12px'
+        gap: '14px',
+        paddingBottom: '4px',
       }}>
-        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: '8px' }}>
           <button
-            onClick={() => { setActiveTab('issuers'); setSearchQuery(''); }}
-            className="btn"
-            style={{
-              background: activeTab === 'issuers' ? 'rgba(139, 92, 246, 0.15)' : 'transparent',
-              color: activeTab === 'issuers' ? '#a78bfa' : 'var(--text-secondary)',
-              border: activeTab === 'issuers' ? '1px solid rgba(139, 92, 246, 0.4)' : '1px solid transparent',
-              padding: '8px 16px',
-              fontSize: '0.875rem'
-            }}
+            type="button"
+            onClick={() => setActiveTab('issuers')}
+            className={`tab-btn ${activeTab === 'issuers' ? 'active-amber' : ''}`}
           >
-            <Building2 size={16} />
+            <Building2 size={15} />
             <span>Issuers Directory ({issuers.length})</span>
             {pendingApprovalsCount > 0 && (
-              <span className="badge badge-amber" style={{ fontSize: '0.65rem', padding: '1px 6px' }}>
-                {pendingApprovalsCount} Pending
+              <span className="badge badge-amber" style={{ padding: '1px 6px', fontSize: '10px' }}>
+                {pendingApprovalsCount}
               </span>
             )}
           </button>
 
           <button
-            onClick={() => { setActiveTab('users'); setSearchQuery(''); }}
-            className="btn"
-            style={{
-              background: activeTab === 'users' ? 'rgba(0, 229, 255, 0.12)' : 'transparent',
-              color: activeTab === 'users' ? 'var(--cyan-primary)' : 'var(--text-secondary)',
-              border: activeTab === 'users' ? '1px solid var(--border-accent)' : '1px solid transparent',
-              padding: '8px 16px',
-              fontSize: '0.875rem'
-            }}
+            type="button"
+            onClick={() => setActiveTab('users')}
+            className={`tab-btn ${activeTab === 'users' ? 'active-amber' : ''}`}
           >
-            <Users size={16} />
-            <span>Users Directory ({users.length})</span>
+            <Users size={15} />
+            <span>User Directory ({users.length})</span>
           </button>
 
           <button
-            onClick={() => { setActiveTab('verifications'); setSearchQuery(''); }}
-            className="btn"
-            style={{
-              background: activeTab === 'verifications' ? 'rgba(16, 185, 129, 0.12)' : 'transparent',
-              color: activeTab === 'verifications' ? 'var(--emerald-primary)' : 'var(--text-secondary)',
-              border: activeTab === 'verifications' ? '1px solid var(--border-emerald)' : '1px solid transparent',
-              padding: '8px 16px',
-              fontSize: '0.875rem'
-            }}
+            type="button"
+            onClick={() => setActiveTab('verifications')}
+            className={`tab-btn ${activeTab === 'verifications' ? 'active-amber' : ''}`}
           >
-            <History size={16} />
-            <span>Global Audits ({verifications.length})</span>
+            <History size={15} />
+            <span>Global Verifications ({verifications.length})</span>
           </button>
         </div>
 
-        {/* Search Bar */}
-        <div style={{ position: 'relative', width: '260px' }}>
+        {/* Search Input */}
+        <div style={{ position: 'relative', width: '240px' }}>
           <input
             type="text"
-            placeholder="Search records..."
             className="input-field"
+            placeholder="Search directory..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            style={{ padding: '7px 12px 7px 30px', fontSize: '0.825rem' }}
+            style={{ paddingLeft: '32px', height: '36px', fontSize: '13px' }}
           />
-          <Search size={14} color="var(--text-muted)" style={{ position: 'absolute', left: '10px', top: '10px' }} />
+          <Search size={14} color="var(--text-muted)" style={{ position: 'absolute', left: '10px', top: '11px' }} />
         </div>
       </div>
 
-      {/* ==========================================
-          TAB 1: ISSUERS DIRECTORY & APPROVALS
-          ========================================== */}
+      {/* TAB 1: Issuers Management */}
       {activeTab === 'issuers' && (
-        <div className="glass-panel animate-fade-in" style={{ padding: '24px' }}>
+        <div className="glass-panel" style={{ padding: '24px', borderRadius: 'var(--radius-lg)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
             <div>
-              <h2 className="font-display" style={{ fontSize: '1.25rem', fontWeight: 600 }}>
-                Certifying Issuers Directory
-              </h2>
-              <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                Review and approve issuer organizations to authorize Ed25519 signing keys and credential issuance
+              <h3 className="font-display" style={{ fontSize: '1.2rem', fontWeight: 600 }}>
+                Certifying Issuer Organizations
+              </h3>
+              <p style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
+                Review and approve issuer verification status to authorize Ed25519 key generation.
               </p>
             </div>
           </div>
 
           {filteredIssuers.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--text-muted)' }}>
-              <p>No issuer organizations found.</p>
-            </div>
+            <EmptyState
+              icon={Building2}
+              title="No issuers found"
+              description="No issuer authorities registered on the platform matching your criteria."
+            />
           ) : (
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.85rem' }}>
+            <div className="table-container">
+              <table className="table">
                 <thead>
-                  <tr style={{ borderBottom: '1px solid var(--border-subtle)', color: 'var(--text-muted)' }}>
-                    <th style={{ padding: '12px 10px', fontWeight: 500 }}>Organization</th>
-                    <th style={{ padding: '12px 10px', fontWeight: 500 }}>Domain</th>
-                    <th style={{ padding: '12px 10px', fontWeight: 500 }}>User UUID</th>
-                    <th style={{ padding: '12px 10px', fontWeight: 500 }}>Status</th>
-                    <th style={{ padding: '12px 10px', fontWeight: 500 }}>Registered</th>
-                    <th style={{ padding: '12px 10px', fontWeight: 500, textAlign: 'right' }}>Action</th>
+                  <tr>
+                    <th>Organization</th>
+                    <th>Verified Domain</th>
+                    <th>Status</th>
+                    <th>Registered At</th>
+                    <th style={{ textAlign: 'right' }}>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredIssuers.map((iss) => (
-                    <tr key={iss.id} style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.04)' }}>
-                      <td style={{ padding: '12px 10px', fontWeight: 600 }}>
-                        {iss.name}
+                  {filteredIssuers.map((issuer) => (
+                    <tr key={issuer.id}>
+                      <td style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
+                        {issuer.name}
                       </td>
-                      <td style={{ padding: '12px 10px' }}>
-                        <span style={{ color: 'var(--cyan-primary)' }}>{iss.domain}</span>
-                      </td>
-                      <td style={{ padding: '12px 10px' }}>
-                        <code className="font-mono" style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                          {iss.userId ? `${iss.userId.substring(0, 13)}...` : 'N/A'}
+                      <td>
+                        <code className="font-mono" style={{ color: 'var(--cyan-primary)', fontSize: '13px' }}>
+                          {issuer.domain}
                         </code>
                       </td>
-                      <td style={{ padding: '12px 10px' }}>
-                        <span className={`badge ${iss.verified ? 'badge-emerald' : 'badge-amber'}`} style={{ fontSize: '0.7rem' }}>
-                          {iss.verified ? '✓ Verified' : '⏳ Awaiting Approval'}
-                        </span>
+                      <td>
+                        <Badge
+                          status={issuer.verified ? 'VERIFIED' : 'PENDING'}
+                          text={issuer.verified ? 'Verified' : 'Pending Approval'}
+                          variant={issuer.verified ? 'emerald' : 'amber'}
+                        />
                       </td>
-                      <td style={{ padding: '12px 10px', color: 'var(--text-muted)' }}>
-                        {new Date(iss.createdAt).toLocaleDateString()}
+                      <td style={{ fontSize: '13px', color: 'var(--text-muted)' }}>
+                        {issuer.createdAt ? new Date(issuer.createdAt).toLocaleDateString() : 'N/A'}
                       </td>
-                      <td style={{ padding: '12px 10px', textAlign: 'right' }}>
-                        {iss.verified ? (
-                          <span style={{ fontSize: '0.8rem', color: 'var(--emerald-primary)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                            <CheckCircle2 size={14} />
-                            <span>Approved</span>
-                          </span>
-                        ) : (
-                          <button
-                            onClick={() => handleApproveIssuer(iss.id, iss.name)}
-                            disabled={approvingId === iss.id}
-                            className="btn btn-emerald"
-                            style={{ padding: '5px 12px', fontSize: '0.78rem' }}
-                            title="Verify and approve issuer via POST /api/admin/issuers/:id/verify"
+                      <td style={{ textAlign: 'right' }}>
+                        {!issuer.verified ? (
+                          <Button
+                            variant="primary"
+                            size="sm"
+                            icon={Check}
+                            loading={approvingId === issuer.id}
+                            onClick={() => handleApproveIssuer(issuer.id, issuer.name)}
                           >
-                            <UserCheck size={13} />
-                            <span>{approvingId === iss.id ? 'Approving...' : 'Approve & Verify'}</span>
-                          </button>
+                            Approve & Verify
+                          </Button>
+                        ) : (
+                          <span style={{ fontSize: '12px', color: 'var(--emerald-primary)', fontWeight: 500 }}>
+                            ✓ Authorized
+                          </span>
                         )}
                       </td>
                     </tr>
@@ -448,80 +366,73 @@ export function AdminConsoleView() {
         </div>
       )}
 
-      {/* ==========================================
-          TAB 2: PLATFORM USERS DIRECTORY
-          ========================================== */}
+      {/* TAB 2: User Directory */}
       {activeTab === 'users' && (
-        <div className="glass-panel animate-fade-in" style={{ padding: '24px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '12px' }}>
+        <div className="glass-panel" style={{ padding: '24px', borderRadius: 'var(--radius-lg)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '10px' }}>
             <div>
-              <h2 className="font-display" style={{ fontSize: '1.25rem', fontWeight: 600 }}>
-                Platform Users Directory
-              </h2>
-              <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                Registered holders, issuers, verifiers, and administrators queried via <code>GET /api/admin/users</code>
+              <h3 className="font-display" style={{ fontSize: '1.2rem', fontWeight: 600 }}>
+                Platform User Directory
+              </h3>
+              <p style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
+                All registered accounts and security roles across CertiChain.
               </p>
             </div>
 
-            {/* Role filter pills */}
-            <div style={{ display: 'flex', gap: '6px', background: 'rgba(0,0,0,0.3)', padding: '3px', borderRadius: 'var(--radius-sm)' }}>
-              {['ALL', 'HOLDER', 'ISSUER', 'ADMIN'].map((r) => (
-                <button
-                  key={r}
-                  type="button"
-                  onClick={() => setUserRoleFilter(r)}
-                  style={{
-                    background: userRoleFilter === r ? 'rgba(255,255,255,0.1)' : 'transparent',
-                    color: userRoleFilter === r ? 'var(--text-primary)' : 'var(--text-muted)',
-                    border: 'none',
-                    padding: '4px 10px',
-                    borderRadius: '4px',
-                    fontSize: '0.75rem',
-                    cursor: 'pointer',
-                    fontWeight: 600
-                  }}
-                >
-                  {r}
-                </button>
-              ))}
+            {/* Role Filter */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Filter size={14} color="var(--text-muted)" />
+              <select
+                className="select-field"
+                value={userRoleFilter}
+                onChange={(e) => setUserRoleFilter(e.target.value)}
+                style={{ height: '34px', padding: '4px 10px', fontSize: '12px', width: 'auto' }}
+              >
+                <option value="ALL">All Roles</option>
+                <option value="HOLDER">Holders</option>
+                <option value="ISSUER">Issuers</option>
+                <option value="ADMIN">Admins</option>
+              </select>
             </div>
           </div>
 
           {filteredUsers.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--text-muted)' }}>
-              <p>No users found matching filter criteria.</p>
-            </div>
+            <EmptyState
+              icon={Users}
+              title="No users found"
+              description="No registered platform users match your search query or filter."
+            />
           ) : (
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.85rem' }}>
+            <div className="table-container">
+              <table className="table">
                 <thead>
-                  <tr style={{ borderBottom: '1px solid var(--border-subtle)', color: 'var(--text-muted)' }}>
-                    <th style={{ padding: '12px 10px', fontWeight: 500 }}>Full Name</th>
-                    <th style={{ padding: '12px 10px', fontWeight: 500 }}>Email Address</th>
-                    <th style={{ padding: '12px 10px', fontWeight: 500 }}>Role</th>
-                    <th style={{ padding: '12px 10px', fontWeight: 500 }}>User UUID</th>
-                    <th style={{ padding: '12px 10px', fontWeight: 500, textAlign: 'right' }}>Joined Date</th>
+                  <tr>
+                    <th>User / Full Name</th>
+                    <th>Email Address</th>
+                    <th>Role</th>
+                    <th>User ID (UUID)</th>
+                    <th style={{ textAlign: 'right' }}>Joined</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredUsers.map((u) => (
-                    <tr key={u.id} style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.04)' }}>
-                      <td style={{ padding: '12px 10px', fontWeight: 600 }}>
+                    <tr key={u.id}>
+                      <td style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
                         {u.fullName}
                       </td>
-                      <td style={{ padding: '12px 10px', color: 'var(--text-secondary)' }}>
-                        {u.email}
+                      <td>
+                        <span style={{ color: 'var(--text-secondary)' }}>{u.email}</span>
                       </td>
-                      <td style={{ padding: '12px 10px' }}>
-                        {getRoleBadge(u.role)}
+                      <td>
+                        <Badge status={u.role} />
                       </td>
-                      <td style={{ padding: '12px 10px' }}>
-                        <code className="font-mono" style={{ fontSize: '0.75rem', color: 'var(--cyan-primary)' }}>
+                      <td>
+                        <code className="font-mono" style={{ fontSize: '11.5px', color: 'var(--text-muted)' }}>
                           {u.id}
                         </code>
                       </td>
-                      <td style={{ padding: '12px 10px', textAlign: 'right', color: 'var(--text-muted)' }}>
-                        {new Date(u.createdAt).toLocaleDateString()}
+                      <td style={{ textAlign: 'right', fontSize: '13px', color: 'var(--text-muted)' }}>
+                        {u.createdAt ? new Date(u.createdAt).toLocaleDateString() : 'N/A'}
                       </td>
                     </tr>
                   ))}
@@ -532,63 +443,59 @@ export function AdminConsoleView() {
         </div>
       )}
 
-      {/* ==========================================
-          TAB 3: GLOBAL VERIFICATION AUDITS
-          ========================================== */}
+      {/* TAB 3: Global Verifications Audits */}
       {activeTab === 'verifications' && (
-        <div className="glass-panel animate-fade-in" style={{ padding: '24px' }}>
+        <div className="glass-panel" style={{ padding: '24px', borderRadius: 'var(--radius-lg)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
             <div>
-              <h2 className="font-display" style={{ fontSize: '1.25rem', fontWeight: 600 }}>
-                Platform-Wide Verification Audit Ledger
-              </h2>
-              <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                Global verification checks across all public verifiers and users queried via <code>GET /api/admin/verifications</code>
+              <h3 className="font-display" style={{ fontSize: '1.2rem', fontWeight: 600 }}>
+                Global Verification Ledger
+              </h3>
+              <p style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
+                Platform-wide verification audits performed by public verifiers and accounts.
               </p>
             </div>
           </div>
 
           {filteredVerifications.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--text-muted)' }}>
-              <p>No verification ledger records logged yet.</p>
-            </div>
+            <EmptyState
+              icon={History}
+              title="No global verifications logged"
+              description="Platform verification attempts will appear in this audit trail."
+            />
           ) : (
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.85rem' }}>
+            <div className="table-container">
+              <table className="table">
                 <thead>
-                  <tr style={{ borderBottom: '1px solid var(--border-subtle)', color: 'var(--text-muted)' }}>
-                    <th style={{ padding: '12px 10px', fontWeight: 500 }}>Credential #</th>
-                    <th style={{ padding: '12px 10px', fontWeight: 500 }}>Verifier</th>
-                    <th style={{ padding: '12px 10px', fontWeight: 500 }}>Result</th>
-                    <th style={{ padding: '12px 10px', fontWeight: 500 }}>Audit Notes</th>
-                    <th style={{ padding: '12px 10px', fontWeight: 500, textAlign: 'right' }}>Audit Timestamp</th>
+                  <tr>
+                    <th>Credential Number</th>
+                    <th>Outcome</th>
+                    <th>Verifier</th>
+                    <th>Reason / Details</th>
+                    <th style={{ textAlign: 'right' }}>Timestamp</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredVerifications.map((v) => (
-                    <tr key={v.id} style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.04)' }}>
-                      <td style={{ padding: '12px 10px' }}>
-                        <code className="font-mono" style={{ color: 'var(--cyan-primary)' }}>
-                          {v.credentialNumber || 'Anonymous Envelope'}
+                    <tr key={v.id}>
+                      <td>
+                        <code className="font-mono" style={{ color: 'var(--cyan-primary)', fontSize: '13px', fontWeight: 600 }}>
+                          {v.credentialNumber || 'Anonymous'}
                         </code>
                       </td>
-                      <td style={{ padding: '12px 10px' }}>
-                        {v.verifierId ? (
-                          <code className="font-mono" style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                            {v.verifierId.substring(0, 13)}...
-                          </code>
-                        ) : (
-                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Public Guest</span>
-                        )}
+                      <td>
+                        <Badge status={v.result} />
                       </td>
-                      <td style={{ padding: '12px 10px' }}>
-                        {getVerificationBadge(v.result)}
+                      <td>
+                        <span style={{ fontSize: '12px', color: v.verifierId ? 'var(--text-secondary)' : 'var(--text-muted)' }}>
+                          {v.verifierId ? `User: ${v.verifierId.substring(0, 8)}...` : 'Public / Anonymous'}
+                        </span>
                       </td>
-                      <td style={{ padding: '12px 10px', color: v.reason ? '#fb7185' : 'var(--text-muted)' }}>
-                        {v.reason || 'Cryptographic validity confirmed'}
+                      <td style={{ color: v.reason && v.result !== 'VALID' ? '#fb7185' : 'var(--text-secondary)' }}>
+                        {v.reason || 'Cryptographic integrity verified'}
                       </td>
-                      <td style={{ padding: '12px 10px', textAlign: 'right', color: 'var(--text-secondary)' }}>
-                        {new Date(v.verifiedAt).toLocaleString()}
+                      <td style={{ textAlign: 'right', fontSize: '13px', color: 'var(--text-muted)' }}>
+                        {v.verifiedAt ? new Date(v.verifiedAt).toLocaleString() : 'N/A'}
                       </td>
                     </tr>
                   ))}
@@ -598,7 +505,6 @@ export function AdminConsoleView() {
           )}
         </div>
       )}
-
     </div>
   );
 }

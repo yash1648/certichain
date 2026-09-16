@@ -16,7 +16,9 @@ async function handleIssuerResponse(response) {
 
   if (!response.ok) {
     let errorMessage = 'Request failed';
-    if (typeof data === 'object' && data !== null) {
+    if (response.status === 429) {
+      errorMessage = 'Too many attempts, please try again in a few minutes.';
+    } else if (typeof data === 'object' && data !== null) {
       errorMessage = data.message || data.error || (data.errors ? Object.values(data.errors).join(', ') : 'Issuer request failed');
     } else if (typeof data === 'string' && data.length > 0) {
       errorMessage = data;

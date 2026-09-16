@@ -20,7 +20,9 @@ async function handleResponse(response) {
 
   if (!response.ok) {
     let errorMessage = 'Holder request failed';
-    if (typeof data === 'object' && data !== null) {
+    if (response.status === 429) {
+      errorMessage = 'Too many attempts, please try again in a few minutes.';
+    } else if (typeof data === 'object' && data !== null) {
       errorMessage = data.message || data.error || (data.errors ? Object.values(data.errors).join(', ') : 'Request failed');
     } else if (typeof data === 'string' && data.length > 0) {
       errorMessage = data;
@@ -37,6 +39,7 @@ async function handleResponse(response) {
 export const holderService = {
   /**
    * List all credentials in the user's wallet
+   * GET /api/holder/wallet
    * @param {string} token Bearer JWT
    */
   async listWallet(token) {
@@ -50,7 +53,8 @@ export const holderService = {
   },
 
   /**
-   * Add / claim an issued credential by UUID into wallet
+   * Add / claim an issued credential by UUID into wallet (Idempotent)
+   * POST /api/holder/wallet/{credentialId}
    * @param {string} credentialId UUID
    * @param {string} token Bearer JWT
    */
@@ -66,6 +70,7 @@ export const holderService = {
 
   /**
    * Remove a credential from the wallet
+   * DELETE /api/holder/wallet/{credentialId}
    * @param {string} credentialId UUID
    * @param {string} token Bearer JWT
    */
@@ -80,7 +85,8 @@ export const holderService = {
   },
 
   /**
-   * Download the exact raw signed JSON credential envelope from IPFS
+   * Download the exact raw signed JSON credential envelope
+   * GET /api/holder/credentials/{id}/download
    * @param {string} credentialId UUID
    * @param {string} token Bearer JWT
    * @param {string} suggestedFilename fallback filename
@@ -97,7 +103,6 @@ export const holderService = {
       await handleResponse(response); // Throws structured error
     }
 
-    // Extract filename from Content-Disposition header if available
     let filename = suggestedFilename;
     const disposition = response.headers.get('content-disposition');
     if (disposition && disposition.includes('filename=')) {

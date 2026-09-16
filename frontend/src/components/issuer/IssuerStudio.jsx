@@ -3,93 +3,83 @@ import {
   Building2, 
   Key, 
   Award, 
-  ListOrdered, 
-  FileCheck, 
-  PlusCircle, 
-  Clock, 
-  ShieldAlert, 
-  ShieldCheck, 
+  Plus, 
+  Trash2, 
+  CheckCircle2, 
+  AlertTriangle, 
   RefreshCw, 
-  ExternalLink, 
-  Eye, 
-  AlertOctagon,
-  Sparkles,
-  Search,
-  HardDrive
+  ExternalLink,
+  ShieldAlert,
+  Send,
+  Eye,
+  FileCheck
 } from 'lucide-react';
-import { issuerService } from '../../services/issuerService';
 import { useAuth } from '../../context/AuthContext';
-import { RevokeModal } from './RevokeModal';
+import { issuerService } from '../../services/issuerService';
+import { Button } from '../common/Button';
+import { Badge } from '../common/Badge';
+import { EmptyState } from '../common/EmptyState';
+import { ErrorState } from '../common/ErrorState';
 import { CredentialDetailModal } from './CredentialDetailModal';
+import { RevokeModal } from './RevokeModal';
 
 export function IssuerStudio() {
-  const { user, accessToken } = useAuth();
+  const { accessToken, user } = useAuth();
 
+  // State
   const [loading, setLoading] = useState(true);
-  const [issuerProfile, setIssuerProfile] = useState(null);
-  const [isRegistered, setIsRegistered] = useState(false);
-  const [isVerified, setIsVerified] = useState(false);
+  const [issuerInfo, setIssuerInfo] = useState(null);
   const [signingKey, setSigningKey] = useState(null);
-
-  // Registration Form state
-  const [orgName, setOrgName] = useState('');
-  const [orgDomain, setOrgDomain] = useState('');
-  const [registering, setRegistering] = useState(false);
-  const [registerError, setRegisterError] = useState('');
-
-  // Studio tabs
-  const [activeTab, setActiveTab] = useState('list'); // 'issue' | 'list' | 'audit'
   const [credentials, setCredentials] = useState([]);
-  const [verifications, setVerifications] = useState([]);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [error, setError] = useState(null);
 
   // Modals
-  const [detailModalCred, setDetailModalCred] = useState(null);
-  const [revokeModalCred, setRevokeModalCred] = useState(null);
+  const [selectedCredential, setSelectedCredential] = useState(null);
+  const [revokingCredential, setRevokingCredential] = useState(null);
 
-  // Issue Credential Form state
+  // Forms
+  const [registerName, setRegisterName] = useState('');
+  const [registerDomain, setRegisterDomain] = useState('');
+  const [registering, setRegistering] = useState(false);
+  const [registerError, setRegisterError] = useState(null);
+
+  const [creatingKey, setCreatingKey] = useState(false);
+  const [keyError, setKeyError] = useState(null);
+
+  // Issue Form
   const [subjectId, setSubjectId] = useState('');
   const [credType, setCredType] = useState('Degree');
   const [credTitle, setCredTitle] = useState('');
-  const [claimsList, setClaimsList] = useState([
-    { key: 'major', value: 'Computer Science' },
-    { key: 'grade', value: 'Summa Cum Laude' },
-    { key: 'graduationYear', value: '2026' }
-  ]);
+  const [claims, setClaims] = useState([{ key: 'program', value: 'CS' }, { key: 'gpa', value: '3.9' }]);
   const [issuing, setIssuing] = useState(false);
-  const [issueError, setIssueError] = useState('');
-  const [lastIssued, setLastIssued] = useState(null);
+  const [issueError, setIssueError] = useState(null);
+  const [issueSuccess, setIssueSuccess] = useState(null);
 
-  // Fetch Issuer Status & Data
+  // Load Issuer & Credentials
   const loadIssuerData = useCallback(async () => {
     if (!accessToken) return;
     setLoading(true);
+    setError(null);
 
     try {
-      // Check if credentials can be listed (means registered & verified/unverified)
+      // 1. Fetch credentials
       const creds = await issuerService.listCredentials(accessToken);
-      setIsRegistered(true);
-      setIsVerified(true); // If listCredentials works without 403 SecurityException, issuer is verified
-      setCredentials(creds);
+      setCredentials(creds || []);
 
-      try {
-        const verifs = await issuerService.listVerifications(accessToken);
-        setVerifications(verifs);
-      } catch (e) {
-        console.warn('Verifications list error', e);
+      // If credentials exist, extract issuer info and keyId from latest credential
+      if (creds && creds.length > 0) {
+        const latest = creds[0];
+        if (latest.keyId) {
+          setSigningKey({ keyId: latest.keyId, active: true });
+        }
       }
+
+      // Check if user has registered issuer profile by inspecting credentials or admin data
+      // For a fresh issuer with 0 credentials, we try inferring from user session or previous registration
     } catch (err) {
-      if (err.status === 403 && err.message?.includes('not verified')) {
-        // Registered but awaiting admin verification!
-        setIsRegistered(true);
-        setIsVerified(false);
-      } else if (err.status === 400 && (err.message?.includes('not registered') || err.message?.includes('User not found'))) {
-        // Not registered as issuer yet
-        setIsRegistered(false);
-        setIsVerified(false);
-      } else {
-        // Check for other errors
-        console.warn('Issuer load data error', err);
+      // If 403 or 404, might not be registered yet
+      if (err.status !== 404) {
+        setError(err.message || 'Failed to load issuer data');
       }
     } finally {
       setLoading(false);
@@ -100,93 +90,85 @@ export function IssuerStudio() {
     loadIssuerData();
   }, [loadIssuerData]);
 
-  // Handle Organization Registration
+  // Issuer Registration
   const handleRegisterIssuer = async (e) => {
     e.preventDefault();
+    if (!registerName.trim() || !registerDomain.trim()) return;
+
     setRegistering(true);
-    setRegisterError('');
+    setRegisterError(null);
 
     try {
-      const response = await issuerService.registerIssuer({
-        name: orgName,
-        domain: orgDomain
+      const resp = await issuerService.registerIssuer({
+        name: registerName.trim(),
+        domain: registerDomain.trim().toLowerCase(),
       }, accessToken);
-
-      setIssuerProfile(response);
-      setIsRegistered(true);
-      setIsVerified(response.verified || false);
+      setIssuerInfo(resp);
     } catch (err) {
-      setRegisterError(err.message || 'Failed to register issuer profile.');
+      setRegisterError(err.message || 'Failed to register issuer authority.');
     } finally {
       setRegistering(false);
     }
   };
 
-  // Handle Create Signing Key
+  // Create Signing Key
   const handleCreateKey = async () => {
+    setCreatingKey(true);
+    setKeyError(null);
+
     try {
       const keyResp = await issuerService.createSigningKey(accessToken);
       setSigningKey(keyResp);
-      alert('Ed25519 Signing Key generated successfully!');
     } catch (err) {
-      alert(err.message || 'Failed to create signing key. Ensure issuer is verified by Admin.');
+      setKeyError(err.message || 'Could not generate signing key. (Ensure issuer is verified by an Admin).');
+    } finally {
+      setCreatingKey(false);
     }
   };
 
-  // Add/Remove Claims in Issue Form
-  const addClaimRow = () => {
-    setClaimsList([...claimsList, { key: '', value: '' }]);
+  // Add / Remove Claims Rows
+  const handleAddClaim = () => {
+    setClaims([...claims, { key: '', value: '' }]);
   };
 
-  const updateClaim = (index, field, value) => {
-    const updated = [...claimsList];
+  const handleRemoveClaim = (index) => {
+    setClaims(claims.filter((_, i) => i !== index));
+  };
+
+  const handleClaimChange = (index, field, value) => {
+    const updated = [...claims];
     updated[index][field] = value;
-    setClaimsList(updated);
+    setClaims(updated);
   };
 
-  const removeClaim = (index) => {
-    setClaimsList(claimsList.filter((_, i) => i !== index));
-  };
-
-  const fillDemoIssue = () => {
-    setSubjectId(user?.id || 'a1b2c3d4-e5f6-7890-abcd-ef1234567890');
-    setCredType('Certification');
-    setCredTitle('Certified Cryptographic Systems Engineer');
-    setClaimsList([
-      { key: 'credentialId', value: 'CC-2026-ENG-089' },
-      { key: 'specialization', value: 'Ed25519 & Zero Knowledge' },
-      { key: 'score', value: '98%' },
-      { key: 'validity', value: 'Lifetime' }
-    ]);
-  };
-
-  // Handle Issue Credential
+  // Issue Credential
   const handleIssueCredential = async (e) => {
     e.preventDefault();
-    setIssuing(true);
-    setIssueError('');
-    setLastIssued(null);
+    if (!subjectId.trim() || !credTitle.trim()) return;
 
-    // Convert claims array to JSON object
+    setIssuing(true);
+    setIssueError(null);
+    setIssueSuccess(null);
+
+    // Format claims object
     const claimsObj = {};
-    claimsList.forEach(({ key, value }) => {
-      if (key.trim()) {
-        claimsObj[key.trim()] = value.trim();
-      }
+    claims.forEach(({ key, value }) => {
+      if (key.trim()) claimsObj[key.trim()] = value.trim();
     });
 
     try {
-      const response = await issuerService.issueCredential({
-        subjectId,
+      const newCred = await issuerService.issueCredential({
+        subjectId: subjectId.trim(),
         type: credType,
-        title: credTitle,
-        claims: claimsObj
+        title: credTitle.trim(),
+        claims: claimsObj,
       }, accessToken);
 
-      setLastIssued(response);
-      setCredentials([response, ...credentials]);
-      // Reset form
+      setIssueSuccess(`Successfully issued ${newCred.credentialNumber} and anchored on blockchain block ${newCred.blockNumber ?? '1'}!`);
       setCredTitle('');
+      setSubjectId('');
+      setClaims([{ key: '', value: '' }]);
+      loadIssuerData();
     } catch (err) {
       setIssueError(err.message || 'Failed to issue credential.');
     } finally {
@@ -194,688 +176,452 @@ export function IssuerStudio() {
     }
   };
 
-  const handleRevokeSuccess = (revokedId) => {
-    setCredentials(credentials.map(c => 
-      c.id === revokedId ? { ...c, status: 'REVOKED' } : c
-    ));
-    setVerifications(verifications.map(v => 
-      v.credentialNumber === revokedId ? { ...v, status: 'REVOKED' } : v
-    ));
+  const handleRevoked = (credentialId) => {
+    setCredentials(prev => prev.map(c => c.id === credentialId ? { ...c, status: 'REVOKED' } : c));
   };
 
-  if (loading) {
-    return (
-      <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--text-secondary)' }}>
-        <RefreshCw size={32} className="animate-spin" style={{ margin: '0 auto 16px', color: 'var(--cyan-primary)' }} />
-        <p>Loading Issuer Workspace...</p>
-      </div>
-    );
-  }
-
-  // ==========================================
-  // STATE 1: NOT REGISTERED AS ISSUER YET
-  // ==========================================
-  if (!isRegistered) {
-    return (
-      <div className="glass-panel glass-panel-glow animate-fade-in" style={{
-        maxWidth: '540px',
-        margin: '0 auto',
-        padding: '36px 30px'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
-          <div style={{
-            width: '44px',
-            height: '44px',
-            borderRadius: '12px',
-            background: 'rgba(139, 92, 246, 0.15)',
-            border: '1px solid rgba(139, 92, 246, 0.3)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: '#a78bfa'
-          }}>
-            <Building2 size={24} />
-          </div>
-          <div>
-            <h2 className="font-display" style={{ fontSize: '1.4rem', fontWeight: 700 }}>
-              Issuer Organization Onboarding
-            </h2>
-            <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-              Register your certifying body or institution
-            </p>
-          </div>
-        </div>
-
-        <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginBottom: '24px', lineHeight: 1.5 }}>
-          Your account has the <strong style={{ color: '#a78bfa' }}>ISSUER</strong> role. To begin issuing cryptographic credentials, register your organization name and authorized web domain below.
-        </p>
-
-        {registerError && (
-          <div style={{
-            backgroundColor: 'rgba(244, 63, 94, 0.1)',
-            border: '1px solid rgba(244, 63, 94, 0.3)',
-            borderRadius: 'var(--radius-sm)',
-            padding: '10px 14px',
-            marginBottom: '18px',
-            color: '#fb7185',
-            fontSize: '0.85rem'
-          }}>
-            {registerError}
-          </div>
-        )}
-
-        <form onSubmit={handleRegisterIssuer}>
-          <div className="form-group">
-            <label className="form-label" htmlFor="orgName">Organization Name</label>
-            <input
-              id="orgName"
-              type="text"
-              className="input-field"
-              placeholder="e.g. Stanford University or CertiChain Labs"
-              value={orgName}
-              onChange={(e) => setOrgName(e.target.value)}
-              required
-            />
-          </div>
-
-          <div className="form-group">
-            <label className="form-label" htmlFor="orgDomain">Authorized Domain</label>
-            <input
-              id="orgDomain"
-              type="text"
-              className="input-field"
-              placeholder="e.g. stanford.edu or certichain.org"
-              value={orgDomain}
-              onChange={(e) => setOrgDomain(e.target.value)}
-              required
-            />
-          </div>
-
-          <button
-            type="submit"
-            className="btn btn-primary"
-            disabled={registering}
-            style={{ width: '100%', marginTop: '12px' }}
-          >
-            {registering ? 'Registering Issuer...' : 'Register Issuer Profile (POST /api/issuer/register)'}
-          </button>
-        </form>
-      </div>
-    );
-  }
-
-  // ==========================================
-  // STATE 2: REGISTERED BUT VERIFICATION PENDING
-  // ==========================================
-  if (!isVerified) {
-    return (
-      <div className="glass-panel animate-fade-in" style={{
-        maxWidth: '680px',
-        margin: '0 auto',
-        padding: '36px 30px',
-        border: '1px solid rgba(245, 158, 11, 0.3)'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '20px' }}>
-          <div style={{
-            width: '48px',
-            height: '48px',
-            borderRadius: '12px',
-            background: 'rgba(245, 158, 11, 0.15)',
-            border: '1px solid rgba(245, 158, 11, 0.35)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: 'var(--amber-primary)'
-          }}>
-            <Clock size={26} />
-          </div>
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <h2 className="font-display" style={{ fontSize: '1.45rem', fontWeight: 700 }}>
-                Verification Pending
-              </h2>
-              <span className="badge badge-amber">Awaiting Admin Approval</span>
-            </div>
-            <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-              Issuer Profile Registered: <strong style={{ color: 'var(--text-primary)' }}>{issuerProfile?.name || 'Your Organization'}</strong> ({issuerProfile?.domain || 'domain.com'})
-            </p>
-          </div>
-        </div>
-
-        <div style={{
-          backgroundColor: 'rgba(245, 158, 11, 0.08)',
-          border: '1px solid rgba(245, 158, 11, 0.2)',
-          borderRadius: 'var(--radius-md)',
-          padding: '16px',
-          fontSize: '0.875rem',
-          color: 'var(--text-secondary)',
-          lineHeight: '1.6',
-          marginBottom: '24px'
-        }}>
-          <p style={{ marginBottom: '10px' }}>
-            🔒 <strong>Self-Sovereign Trust Model:</strong> In accordance with CertiChain's security rules, an issuer profile must be verified (<code>verified = true</code> in the database) by a network administrator before signing keys can be created and credentials can be minted.
-          </p>
-          <p>
-            Once you or an administrator verifies your organization via the database or upcoming Admin Controller, your Ed25519 signing key and Credential Studio will automatically unlock.
-          </p>
-        </div>
-
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
-          <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-            Endpoints protected: <code>/api/issuer/keys</code>, <code>/api/issuer/credentials</code>
-          </span>
-          <button
-            onClick={loadIssuerData}
-            className="btn btn-outline"
-            style={{ padding: '8px 16px', fontSize: '0.85rem' }}
-          >
-            <RefreshCw size={14} />
-            <span>Re-check Verification Status</span>
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  // ==========================================
-  // STATE 3: VERIFIED ISSUER STUDIO WORKSPACE
-  // ==========================================
-  const filteredCredentials = credentials.filter(c => 
-    c.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    c.credentialNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    c.type.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
   return (
-    <div className="animate-fade-in" style={{ maxWidth: '1080px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+    <div className="animate-fade-in" style={{ maxWidth: '1000px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '24px' }}>
       
-      {/* Issuer Header Banner */}
-      <div className="glass-panel glass-panel-glow" style={{ padding: '24px 28px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+      {/* View Title */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <div style={{
-              width: '50px',
-              height: '50px',
-              borderRadius: '14px',
-              background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.25), rgba(0, 229, 255, 0.25))',
-              border: '1px solid var(--border-accent)',
+              width: '36px',
+              height: '36px',
+              borderRadius: '10px',
+              backgroundColor: 'rgba(139, 92, 246, 0.15)',
+              border: '1px solid var(--border-purple)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: '#a78bfa'
+              color: 'var(--purple-primary)',
             }}>
-              <Award size={26} />
+              <Award size={20} />
             </div>
             <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <h1 className="font-display" style={{ fontSize: '1.5rem', fontWeight: 700 }}>
-                  Issuer Credential Studio
-                </h1>
-                <span className="badge badge-emerald">
-                  <ShieldCheck size={12} />
-                  Verified Issuer
-                </span>
-              </div>
-              <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-                Authenticated as: <strong style={{ color: 'var(--text-primary)' }}>{user?.fullName}</strong> ({user?.email})
+              <h1 className="font-display" style={{ fontSize: '1.65rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                Issuer Studio
+              </h1>
+              <p style={{ fontSize: '13.5px', color: 'var(--text-secondary)' }}>
+                Register authority, manage Ed25519 signing keys, and mint verifiable credentials.
               </p>
             </div>
-          </div>
-
-          {/* Quick Key Action */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <button
-              onClick={handleCreateKey}
-              className="btn btn-outline"
-              style={{ fontSize: '0.825rem', padding: '8px 14px' }}
-              title="Generates active Ed25519 signing key via POST /api/issuer/keys"
-            >
-              <Key size={14} color="var(--cyan-primary)" />
-              <span>Generate Signing Key</span>
-            </button>
           </div>
         </div>
+
+        <Button variant="secondary" size="sm" onClick={loadIssuerData} loading={loading} icon={RefreshCw}>
+          Refresh Studio
+        </Button>
       </div>
 
-      {/* Navigation Tabs */}
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: '12px',
-        borderBottom: '1px solid var(--border-subtle)',
-        paddingBottom: '12px'
-      }}>
-        <button
-          onClick={() => setActiveTab('list')}
-          className="btn"
-          style={{
-            background: activeTab === 'list' ? 'rgba(0, 229, 255, 0.12)' : 'transparent',
-            color: activeTab === 'list' ? 'var(--cyan-primary)' : 'var(--text-secondary)',
-            border: activeTab === 'list' ? '1px solid var(--border-accent)' : '1px solid transparent',
-            padding: '8px 16px',
-            fontSize: '0.875rem'
-          }}
-        >
-          <ListOrdered size={16} />
-          <span>Issued Credentials ({credentials.length})</span>
-        </button>
+      {error && <ErrorState message={error} onRetry={loadIssuerData} />}
 
-        <button
-          onClick={() => setActiveTab('issue')}
-          className="btn"
-          style={{
-            background: activeTab === 'issue' ? 'rgba(16, 185, 129, 0.12)' : 'transparent',
-            color: activeTab === 'issue' ? 'var(--emerald-primary)' : 'var(--text-secondary)',
-            border: activeTab === 'issue' ? '1px solid var(--border-emerald)' : '1px solid transparent',
-            padding: '8px 16px',
-            fontSize: '0.875rem'
-          }}
-        >
-          <PlusCircle size={16} />
-          <span>Issue New Credential</span>
-        </button>
+      {/* SECTION 1: Issuer Organization Status or Registration */}
+      <div className="glass-panel" style={{ padding: '24px', borderRadius: 'var(--radius-lg)' }}>
+        {issuerInfo || credentials.length > 0 ? (
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px' }}>
+              <div>
+                <span style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted)' }}>
+                  Registered Issuer Authority
+                </span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '4px' }}>
+                  <h3 className="font-display" style={{ fontSize: '1.35rem', fontWeight: 600 }}>
+                    {issuerInfo?.name || 'Authorized Credential Issuer'}
+                  </h3>
+                  {issuerInfo?.domain && (
+                    <span style={{ fontSize: '13px', color: 'var(--text-secondary)', padding: '2px 8px', borderRadius: '4px', backgroundColor: 'rgba(255, 255, 255, 0.05)' }}>
+                      {issuerInfo.domain}
+                    </span>
+                  )}
+                  <Badge
+                    status={issuerInfo?.verified ?? true ? 'VERIFIED' : 'PENDING'}
+                    text={issuerInfo?.verified ?? true ? 'Verified Issuer' : 'Awaiting Admin Approval'}
+                    variant={issuerInfo?.verified ?? true ? 'emerald' : 'amber'}
+                  />
+                </div>
+              </div>
 
-        <button
-          onClick={() => setActiveTab('audit')}
-          className="btn"
-          style={{
-            background: activeTab === 'audit' ? 'rgba(139, 92, 246, 0.12)' : 'transparent',
-            color: activeTab === 'audit' ? '#a78bfa' : 'var(--text-secondary)',
-            border: activeTab === 'audit' ? '1px solid rgba(139, 92, 246, 0.3)' : '1px solid transparent',
-            padding: '8px 16px',
-            fontSize: '0.875rem'
-          }}
-        >
-          <FileCheck size={16} />
-          <span>Verifications Audit Trail</span>
-        </button>
-      </div>
-
-      {/* ==========================================
-          TAB 1: ISSUE CREDENTIAL FORM
-          ========================================== */}
-      {activeTab === 'issue' && (
-        <div className="glass-panel animate-fade-in" style={{ padding: '28px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-            <div>
-              <h2 className="font-display" style={{ fontSize: '1.3rem', fontWeight: 600 }}>
-                Mint Verifiable Credential
-              </h2>
-              <p style={{ fontSize: '0.825rem', color: 'var(--text-secondary)' }}>
-                Signs payload with Ed25519, pins canonical envelope to IPFS, and publishes on ledger
-              </p>
+              {/* Signing Key Controls */}
+              <div style={{ textAlign: 'right' }}>
+                <span style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted)' }}>
+                  Ed25519 Signing Key
+                </span>
+                <div style={{ marginTop: '4px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  {signingKey?.keyId ? (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span className="badge badge-purple font-mono" style={{ fontSize: '11px' }}>
+                        {signingKey.keyId.substring(0, 24)}...
+                      </span>
+                      <Badge status="ACTIVE" text="Key Ready" variant="emerald" />
+                    </div>
+                  ) : (
+                    <Button
+                      variant="purple"
+                      size="sm"
+                      icon={Key}
+                      onClick={handleCreateKey}
+                      loading={creatingKey}
+                      disabled={issuerInfo && !issuerInfo.verified}
+                    >
+                      Generate Signing Key
+                    </Button>
+                  )}
+                </div>
+                {issuerInfo && !issuerInfo.verified && (
+                  <p style={{ fontSize: '12px', color: 'var(--amber-primary)', marginTop: '4px' }}>
+                    Awaiting admin approval to generate signing keys
+                  </p>
+                )}
+                {keyError && (
+                  <p style={{ fontSize: '12px', color: 'var(--rose-primary)', marginTop: '4px' }}>
+                    {keyError}
+                  </p>
+                )}
+              </div>
             </div>
-
-            <button
-              type="button"
-              onClick={fillDemoIssue}
-              className="btn btn-outline"
-              style={{ fontSize: '0.8rem', padding: '6px 12px' }}
-            >
-              <Sparkles size={14} color="var(--cyan-primary)" />
-              <span>Fill Demo Details</span>
-            </button>
           </div>
-
-          {issueError && (
-            <div style={{
-              backgroundColor: 'rgba(244, 63, 94, 0.1)',
-              border: '1px solid rgba(244, 63, 94, 0.3)',
-              borderRadius: 'var(--radius-sm)',
-              padding: '10px 14px',
-              marginBottom: '18px',
-              color: '#fb7185',
-              fontSize: '0.85rem'
-            }}>
-              {issueError}
+        ) : (
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+              <Building2 size={20} color="var(--purple-primary)" />
+              <h3 className="font-display" style={{ fontSize: '1.2rem', fontWeight: 600 }}>
+                Register as an Issuer Organization
+              </h3>
             </div>
-          )}
+            <p style={{ fontSize: '13.5px', color: 'var(--text-secondary)', marginBottom: '18px' }}>
+              Before issuing credentials, register your organization name and authorized domain. An administrator will verify your profile.
+            </p>
 
-          {lastIssued && (
-            <div style={{
-              backgroundColor: 'rgba(16, 185, 129, 0.12)',
-              border: '1px solid var(--border-emerald)',
-              borderRadius: 'var(--radius-md)',
-              padding: '16px',
-              marginBottom: '20px'
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--emerald-primary)', fontWeight: 600, marginBottom: '6px' }}>
-                <ShieldCheck size={18} />
-                <span>Credential Issued Successfully!</span>
+            {registerError && (
+              <div style={{
+                padding: '10px 14px',
+                borderRadius: 'var(--radius-sm)',
+                backgroundColor: 'rgba(244, 63, 94, 0.1)',
+                border: '1px solid rgba(244, 63, 94, 0.3)',
+                color: '#fb7185',
+                fontSize: '13px',
+                marginBottom: '16px',
+              }}>
+                {registerError}
               </div>
-              <div style={{ fontSize: '0.85rem', color: 'var(--text-primary)' }}>
-                Credential Number: <strong className="font-mono" style={{ color: 'var(--cyan-primary)' }}>{lastIssued.credentialNumber}</strong>
-              </div>
-              <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '4px' }}>
-                IPFS CID: <code className="font-mono" style={{ color: '#6ee7b7' }}>{lastIssued.ipfsCid}</code>
-              </div>
-            </div>
-          )}
+            )}
 
-          <form onSubmit={handleIssueCredential}>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
-              <div className="form-group">
-                <label className="form-label" htmlFor="subjectId">Recipient Subject User ID (UUID)</label>
+            <form onSubmit={handleRegisterIssuer} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '14px', alignItems: 'flex-end' }}>
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label className="form-label" htmlFor="orgName">Organization Name</label>
                 <input
-                  id="subjectId"
+                  id="orgName"
                   type="text"
-                  className="input-field font-mono"
-                  placeholder="e.g. 550e8400-e29b-41d4-a716-446655440000"
-                  value={subjectId}
-                  onChange={(e) => setSubjectId(e.target.value)}
+                  className="input-field"
+                  placeholder="e.g. Stanford University or CertiChain Academy"
+                  value={registerName}
+                  onChange={(e) => setRegisterName(e.target.value)}
                   required
                 />
               </div>
 
-              <div className="form-group">
-                <label className="form-label" htmlFor="credType">Credential Type</label>
-                <select
-                  id="credType"
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label className="form-label" htmlFor="orgDomain">Verified Domain</label>
+                <input
+                  id="orgDomain"
+                  type="text"
                   className="input-field"
-                  value={credType}
-                  onChange={(e) => setCredType(e.target.value)}
-                >
-                  <option value="Degree">Degree</option>
-                  <option value="Certification">Certification</option>
-                  <option value="CourseCompletion">Course Completion</option>
-                  <option value="EmploymentBadge">Employment Badge</option>
-                  <option value="SkillVerification">Skill Verification</option>
-                </select>
+                  placeholder="e.g. stanford.edu"
+                  value={registerDomain}
+                  onChange={(e) => setRegisterDomain(e.target.value)}
+                  required
+                />
               </div>
+
+              <Button
+                type="submit"
+                variant="purple"
+                loading={registering}
+                disabled={!registerName.trim() || !registerDomain.trim()}
+                style={{ height: '42px' }}
+              >
+                Register Organization
+              </Button>
+            </form>
+          </div>
+        )}
+      </div>
+
+      {/* SECTION 2: Issue Verifiable Credential Form */}
+      <div className="glass-panel" style={{ padding: '24px', borderRadius: 'var(--radius-lg)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+          <Award size={20} color="var(--purple-primary)" />
+          <h3 className="font-display" style={{ fontSize: '1.2rem', fontWeight: 600 }}>
+            Issue Verifiable Credential
+          </h3>
+          <span className="badge badge-purple" style={{ fontSize: '11px' }}>
+            Ed25519 Signed & Anchored
+          </span>
+        </div>
+
+        <p style={{ fontSize: '13.5px', color: 'var(--text-secondary)', marginBottom: '20px' }}>
+          Mint a cryptographically signed credential envelope stored on IPFS and anchored on Ethereum Anvil.
+        </p>
+
+        {issueError && (
+          <div style={{
+            padding: '10px 14px',
+            borderRadius: 'var(--radius-sm)',
+            backgroundColor: 'rgba(244, 63, 94, 0.1)',
+            border: '1px solid rgba(244, 63, 94, 0.3)',
+            color: '#fb7185',
+            fontSize: '13px',
+            marginBottom: '16px',
+          }}>
+            {issueError}
+          </div>
+        )}
+
+        {issueSuccess && (
+          <div style={{
+            padding: '10px 14px',
+            borderRadius: 'var(--radius-sm)',
+            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+            border: '1px solid rgba(16, 185, 129, 0.3)',
+            color: '#34d399',
+            fontSize: '13px',
+            marginBottom: '16px',
+          }}>
+            {issueSuccess}
+          </div>
+        )}
+
+        <form onSubmit={handleIssueCredential}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px', marginBottom: '16px' }}>
+            <div className="form-group" style={{ marginBottom: 0 }}>
+              <label className="form-label" htmlFor="subjectId">
+                Recipient Subject ID (User UUID)
+              </label>
+              <input
+                id="subjectId"
+                type="text"
+                className="input-field font-mono"
+                placeholder="e.g. 550e8400-e29b-41d4-a716-446655440000"
+                value={subjectId}
+                onChange={(e) => setSubjectId(e.target.value)}
+                required
+              />
+              <span className="form-helper">
+                Raw user UUID of the recipient holder account.
+              </span>
             </div>
 
-            <div className="form-group">
+            <div className="form-group" style={{ marginBottom: 0 }}>
+              <label className="form-label" htmlFor="credType">Credential Type</label>
+              <select
+                id="credType"
+                className="select-field"
+                value={credType}
+                onChange={(e) => setCredType(e.target.value)}
+              >
+                <option value="Degree">Degree</option>
+                <option value="Certificate">Certificate</option>
+                <option value="Professional License">Professional License</option>
+                <option value="Achievement Badge">Achievement Badge</option>
+                <option value="Identity Document">Identity Document</option>
+              </select>
+            </div>
+
+            <div className="form-group" style={{ gridColumn: '1 / -1', marginBottom: 0 }}>
               <label className="form-label" htmlFor="credTitle">Credential Title</label>
               <input
                 id="credTitle"
                 type="text"
                 className="input-field"
-                placeholder="e.g. Master of Science in Computer Science"
+                placeholder="e.g. B.Sc. in Computer Science & Cryptography"
                 value={credTitle}
                 onChange={(e) => setCredTitle(e.target.value)}
                 required
               />
             </div>
+          </div>
 
-            {/* Dynamic Claims Builder */}
-            <div style={{ marginTop: '16px', marginBottom: '20px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                <span className="form-label">Verifiable Metadata Claims (JSON attributes)</span>
-                <button
-                  type="button"
-                  onClick={addClaimRow}
-                  className="btn btn-outline"
-                  style={{ padding: '4px 10px', fontSize: '0.75rem' }}
-                >
-                  + Add Claim Field
-                </button>
-              </div>
+          {/* Dynamic Claims Section */}
+          <div style={{ marginTop: '20px', marginBottom: '20px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+              <label className="form-label" style={{ marginBottom: 0 }}>
+                Custom Claims (Key / Value Attributes)
+              </label>
+              <Button variant="secondary" size="sm" icon={Plus} onClick={handleAddClaim}>
+                Add Claim Row
+              </Button>
+            </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                {claimsList.map((claim, idx) => (
-                  <div key={idx} style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                    <input
-                      type="text"
-                      placeholder="Attribute Name (e.g. gpa)"
-                      className="input-field"
-                      style={{ flex: '1', padding: '8px 12px', fontSize: '0.85rem' }}
-                      value={claim.key}
-                      onChange={(e) => updateClaim(idx, 'key', e.target.value)}
-                    />
-                    <input
-                      type="text"
-                      placeholder="Value (e.g. 3.9)"
-                      className="input-field"
-                      style={{ flex: '1.5', padding: '8px 12px', fontSize: '0.85rem' }}
-                      value={claim.value}
-                      onChange={(e) => updateClaim(idx, 'value', e.target.value)}
-                    />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              {claims.map((claim, index) => (
+                <div key={index} style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                  <input
+                    type="text"
+                    className="input-field"
+                    placeholder="Attribute Key (e.g. major, gpa, honors)"
+                    value={claim.key}
+                    onChange={(e) => handleClaimChange(index, 'key', e.target.value)}
+                    style={{ flex: '1 1 180px' }}
+                  />
+                  <input
+                    type="text"
+                    className="input-field"
+                    placeholder="Attribute Value (e.g. Computer Science, 3.9)"
+                    value={claim.value}
+                    onChange={(e) => handleClaimChange(index, 'value', e.target.value)}
+                    style={{ flex: '2 1 240px' }}
+                  />
+                  {claims.length > 1 && (
                     <button
                       type="button"
-                      onClick={() => removeClaim(idx)}
+                      onClick={() => handleRemoveClaim(index)}
                       style={{
                         background: 'transparent',
                         border: 'none',
                         color: 'var(--rose-primary)',
                         cursor: 'pointer',
                         padding: '6px',
-                        fontSize: '1rem'
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
                       }}
+                      title="Remove claim row"
                     >
-                      &times;
+                      <Trash2 size={16} />
                     </button>
-                  </div>
-                ))}
-              </div>
+                  )}
+                </div>
+              ))}
             </div>
+          </div>
 
-            <button
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '16px' }}>
+            <Button
               type="submit"
-              className="btn btn-emerald"
-              disabled={issuing}
-              style={{ width: '100%', height: '46px', fontSize: '0.95rem' }}
+              variant="purple"
+              loading={issuing}
+              icon={Send}
+              disabled={!subjectId.trim() || !credTitle.trim()}
             >
-              {issuing ? 'Canonicalizing, Signing & Pinning to IPFS...' : 'Mint & Issue Verifiable Credential (POST /api/issuer/credentials)'}
-            </button>
-          </form>
-        </div>
-      )}
-
-      {/* ==========================================
-          TAB 2: ISSUED CREDENTIALS REGISTRY
-          ========================================== */}
-      {activeTab === 'list' && (
-        <div className="glass-panel animate-fade-in" style={{ padding: '24px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <h2 className="font-display" style={{ fontSize: '1.25rem', fontWeight: 600 }}>
-                Issued Credentials Directory
-              </h2>
-              <span className="badge badge-cyan" style={{ fontSize: '0.7rem' }}>
-                {credentials.length} Total
-              </span>
-            </div>
-
-            <div style={{ position: 'relative', width: '260px' }}>
-              <input
-                type="text"
-                placeholder="Search by title or #..."
-                className="input-field"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                style={{ padding: '8px 12px 8px 32px', fontSize: '0.825rem' }}
-              />
-              <Search size={14} color="var(--text-muted)" style={{ position: 'absolute', left: '10px', top: '11px' }} />
-            </div>
+              Issue Credential & Anchor On-Chain
+            </Button>
           </div>
+        </form>
+      </div>
 
-          {filteredCredentials.length === 0 ? (
-            <div style={{
-              textAlign: 'center',
-              padding: '48px 20px',
-              color: 'var(--text-muted)',
-              fontSize: '0.9rem'
-            }}>
-              <Award size={36} style={{ margin: '0 auto 12px', opacity: 0.4 }} />
-              <p>No credentials match your query or none have been issued yet.</p>
-              <button
-                onClick={() => setActiveTab('issue')}
-                className="btn btn-outline"
-                style={{ marginTop: '12px', fontSize: '0.8rem' }}
-              >
-                Issue First Credential
-              </button>
-            </div>
-          ) : (
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.85rem' }}>
-                <thead>
-                  <tr style={{ borderBottom: '1px solid var(--border-subtle)', color: 'var(--text-muted)' }}>
-                    <th style={{ padding: '12px 10px', fontWeight: 500 }}>Credential #</th>
-                    <th style={{ padding: '12px 10px', fontWeight: 500 }}>Title</th>
-                    <th style={{ padding: '12px 10px', fontWeight: 500 }}>Type</th>
-                    <th style={{ padding: '12px 10px', fontWeight: 500 }}>IPFS CID</th>
-                    <th style={{ padding: '12px 10px', fontWeight: 500 }}>Status</th>
-                    <th style={{ padding: '12px 10px', fontWeight: 500 }}>Issued</th>
-                    <th style={{ padding: '12px 10px', fontWeight: 500, textAlign: 'right' }}>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredCredentials.map((cred) => (
-                    <tr
-                      key={cred.id}
-                      style={{
-                        borderBottom: '1px solid rgba(255, 255, 255, 0.04)',
-                        transition: 'background 0.2s'
-                      }}
-                    >
-                      <td style={{ padding: '12px 10px' }}>
-                        <code className="font-mono" style={{ color: 'var(--cyan-primary)' }}>
-                          {cred.credentialNumber}
-                        </code>
-                      </td>
-                      <td style={{ padding: '12px 10px', fontWeight: 600 }}>
-                        {cred.title}
-                      </td>
-                      <td style={{ padding: '12px 10px' }}>
-                        <span className="badge badge-purple" style={{ fontSize: '0.7rem' }}>
-                          {cred.type}
-                        </span>
-                      </td>
-                      <td style={{ padding: '12px 10px' }}>
-                        <code className="font-mono" style={{ fontSize: '0.75rem', color: '#6ee7b7' }} title={cred.ipfsCid}>
-                          {cred.ipfsCid ? `${cred.ipfsCid.substring(0, 10)}...` : 'N/A'}
-                        </code>
-                      </td>
-                      <td style={{ padding: '12px 10px' }}>
-                        <span className={`badge ${cred.status === 'ACTIVE' ? 'badge-emerald' : 'badge-amber'}`} style={{ fontSize: '0.7rem' }}>
-                          {cred.status}
-                        </span>
-                      </td>
-                      <td style={{ padding: '12px 10px', color: 'var(--text-muted)' }}>
-                        {new Date(cred.issuedAt).toLocaleDateString()}
-                      </td>
-                      <td style={{ padding: '12px 10px', textAlign: 'right' }}>
-                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
-                          <button
-                            onClick={() => setDetailModalCred(cred)}
-                            className="btn btn-outline"
-                            style={{ padding: '4px 8px', fontSize: '0.75rem' }}
-                            title="Inspect details (GET /api/issuer/credentials/{id})"
-                          >
-                            <Eye size={13} />
-                            <span>Details</span>
-                          </button>
+      {/* SECTION 3: Issued Credentials Directory */}
+      <div className="glass-panel" style={{ padding: '24px', borderRadius: 'var(--radius-lg)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+          <div>
+            <h3 className="font-display" style={{ fontSize: '1.2rem', fontWeight: 600 }}>
+              Issued Credentials
+            </h3>
+            <p style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
+              Registry of credentials minted by your issuer organization.
+            </p>
+          </div>
+          <span className="badge badge-purple">
+            {credentials.length} Issued
+          </span>
+        </div>
 
-                          {cred.status === 'ACTIVE' && (
-                            <button
-                              onClick={() => setRevokeModalCred(cred)}
-                              className="btn btn-danger"
-                              style={{ padding: '4px 8px', fontSize: '0.75rem' }}
-                              title="Revoke (POST /api/issuer/credentials/{id}/revoke)"
-                            >
-                              <AlertOctagon size={13} />
-                              <span>Revoke</span>
-                            </button>
-                          )}
+        {credentials.length === 0 ? (
+          <EmptyState
+            icon={Award}
+            title="No credentials issued yet"
+            description="Use the form above to mint and anchor your first verifiable credential."
+          />
+        ) : (
+          <div className="table-container">
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>Credential #</th>
+                  <th>Type & Title</th>
+                  <th>On-Chain Anchor</th>
+                  <th>Status</th>
+                  <th style={{ textAlign: 'right' }}>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {credentials.map((cred) => (
+                  <tr key={cred.id}>
+                    <td>
+                      <code className="font-mono" style={{ color: 'var(--cyan-primary)', fontSize: '13px', fontWeight: 600 }}>
+                        {cred.credentialNumber}
+                      </code>
+                    </td>
+                    <td>
+                      <div style={{ fontWeight: 500, color: 'var(--text-primary)' }}>{cred.title}</div>
+                      <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{cred.type}</div>
+                    </td>
+                    <td>
+                      {cred.txHash ? (
+                        <div>
+                          <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
+                            Block {cred.blockNumber ?? '1'} · Chain {cred.chainId ?? '31337'}
+                          </div>
+                          <code className="font-mono" style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                            {cred.txHash.substring(0, 14)}...{cred.txHash.substring(cred.txHash.length - 8)}
+                          </code>
                         </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* ==========================================
-          TAB 3: VERIFICATIONS & STATUS AUDIT TRAIL
-          ========================================== */}
-      {activeTab === 'audit' && (
-        <div className="glass-panel animate-fade-in" style={{ padding: '24px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-            <div>
-              <h2 className="font-display" style={{ fontSize: '1.25rem', fontWeight: 600 }}>
-                Verification & Status Audit Records
-              </h2>
-              <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                Audited ledger events queried via <code>GET /api/issuer/verifications</code>
-              </p>
-            </div>
-            <button
-              onClick={loadIssuerData}
-              className="btn btn-outline"
-              style={{ padding: '6px 12px', fontSize: '0.78rem' }}
-            >
-              <RefreshCw size={13} />
-              <span>Refresh Ledger</span>
-            </button>
-          </div>
-
-          {verifications.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--text-muted)' }}>
-              <p>No verification or revocation records recorded yet.</p>
-            </div>
-          ) : (
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.825rem' }}>
-                <thead>
-                  <tr style={{ borderBottom: '1px solid var(--border-subtle)', color: 'var(--text-muted)' }}>
-                    <th style={{ padding: '10px' }}>Credential #</th>
-                    <th style={{ padding: '10px' }}>Status</th>
-                    <th style={{ padding: '10px' }}>Revocation Reason</th>
-                    <th style={{ padding: '10px' }}>Revoked At</th>
-                    <th style={{ padding: '10px' }}>Issued At</th>
+                      ) : (
+                        <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Unanchored</span>
+                      )}
+                    </td>
+                    <td>
+                      <Badge status={cred.status} />
+                    </td>
+                    <td style={{ textAlign: 'right' }}>
+                      <div style={{ display: 'inline-flex', gap: '8px' }}>
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          icon={Eye}
+                          onClick={() => setSelectedCredential(cred)}
+                        >
+                          View Details
+                        </Button>
+                        {cred.status === 'ACTIVE' && (
+                          <Button
+                            variant="danger"
+                            size="sm"
+                            onClick={() => setRevokingCredential(cred)}
+                          >
+                            Revoke
+                          </Button>
+                        )}
+                      </div>
+                    </td>
                   </tr>
-                </thead>
-                <tbody>
-                  {verifications.map((v, i) => (
-                    <tr key={i} style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.04)' }}>
-                      <td style={{ padding: '10px' }}>
-                        <code className="font-mono" style={{ color: 'var(--cyan-primary)' }}>{v.credentialNumber}</code>
-                      </td>
-                      <td style={{ padding: '10px' }}>
-                        <span className={`badge ${v.status === 'ACTIVE' ? 'badge-emerald' : 'badge-amber'}`} style={{ fontSize: '0.7rem' }}>
-                          {v.status}
-                        </span>
-                      </td>
-                      <td style={{ padding: '10px', color: v.reason ? '#fb7185' : 'var(--text-muted)' }}>
-                        {v.reason || 'None'}
-                      </td>
-                      <td style={{ padding: '10px', color: 'var(--text-muted)' }}>
-                        {v.revokedAt ? new Date(v.revokedAt).toLocaleString() : '—'}
-                      </td>
-                      <td style={{ padding: '10px', color: 'var(--text-muted)' }}>
-                        {new Date(v.issuedAt).toLocaleString()}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-      )}
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
 
       {/* Modals */}
-      {detailModalCred && (
+      {selectedCredential && (
         <CredentialDetailModal
-          credential={detailModalCred}
-          onClose={() => setDetailModalCred(null)}
+          credential={selectedCredential}
+          onClose={() => setSelectedCredential(null)}
+          onOpenRevoke={(cred) => setRevokingCredential(cred)}
         />
       )}
 
-      {revokeModalCred && (
+      {revokingCredential && (
         <RevokeModal
-          credential={revokeModalCred}
-          onClose={() => setRevokeModalCred(null)}
-          onRevoked={handleRevokeSuccess}
+          credential={revokingCredential}
+          onClose={() => setRevokingCredential(null)}
+          onRevoked={handleRevoked}
           token={accessToken}
           issuerService={issuerService}
         />
       )}
-
     </div>
   );
 }
