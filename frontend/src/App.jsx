@@ -8,6 +8,7 @@ import { IssuerStudio } from './components/issuer/IssuerStudio';
 import { HolderWalletView } from './components/holder/HolderWalletView';
 import { PublicVerifierView } from './components/verifier/PublicVerifierView';
 import { VerificationHistoryView } from './components/verifier/VerificationHistoryView';
+import { AdminConsoleView } from './components/admin/AdminConsoleView';
 import { 
   ShieldCheck, 
   Cpu, 
@@ -17,7 +18,8 @@ import {
   Key, 
   Wallet, 
   FileCheck, 
-  History 
+  History,
+  ShieldAlert
 } from 'lucide-react';
 
 function MainContent({ activeView, onNavigate }) {
@@ -27,9 +29,10 @@ function MainContent({ activeView, onNavigate }) {
   // Set default tab based on role whenever user changes
   useEffect(() => {
     if (user) {
-      if (user.role === 'ISSUER') setCurrentTab('issuer');
+      if (user.role === 'ADMIN') setCurrentTab('admin');
+      else if (user.role === 'ISSUER') setCurrentTab('issuer');
       else if (user.role === 'HOLDER') setCurrentTab('wallet');
-      else if (user.role === 'ADMIN') setCurrentTab('issuer');
+      else setCurrentTab('session');
     }
   }, [user?.role]);
 
@@ -70,8 +73,9 @@ function MainContent({ activeView, onNavigate }) {
 
   // 2. If authenticated, render workspace tabs based on role
   const renderAuthenticatedWorkspaces = () => {
-    const isIssuer = user.role === 'ISSUER' || user.role === 'ADMIN';
-    const isHolder = user.role === 'HOLDER' || user.role === 'ADMIN';
+    const isAdmin = user.role === 'ADMIN';
+    const isIssuer = user.role === 'ISSUER' || isAdmin;
+    const isHolder = user.role === 'HOLDER' || isAdmin;
 
     return (
       <div>
@@ -85,6 +89,22 @@ function MainContent({ activeView, onNavigate }) {
           gap: '8px',
           flexWrap: 'wrap'
         }}>
+          {isAdmin && (
+            <button
+              onClick={() => setCurrentTab('admin')}
+              className="btn btn-outline"
+              style={{
+                padding: '6px 12px',
+                fontSize: '0.8rem',
+                backgroundColor: currentTab === 'admin' ? 'rgba(245, 158, 11, 0.15)' : 'transparent',
+                borderColor: currentTab === 'admin' ? 'rgba(245, 158, 11, 0.4)' : 'var(--border-subtle)'
+              }}
+            >
+              <ShieldAlert size={14} color="var(--amber-primary)" />
+              <span>Admin Console</span>
+            </button>
+          )}
+
           {isIssuer && (
             <button
               onClick={() => setCurrentTab('issuer')}
@@ -161,6 +181,7 @@ function MainContent({ activeView, onNavigate }) {
         </div>
 
         {/* Tab Content Display */}
+        {currentTab === 'admin' && <AdminConsoleView />}
         {currentTab === 'issuer' && <IssuerStudio />}
         {currentTab === 'wallet' && <HolderWalletView />}
         {currentTab === 'verify' && <PublicVerifierView />}
