@@ -69,19 +69,15 @@ export function ResultCard({ result, onReset }) {
   return (
     <div className="glass-panel animate-fade-in" style={{
       borderRadius: 'var(--radius-lg)',
-      border: isValid ? '2px solid rgba(5, 150, 105, 0.4)' : '2px solid rgba(225, 29, 72, 0.4)',
-      boxShadow: isValid 
-        ? '0 12px 35px -10px rgba(5, 150, 105, 0.2)' 
-        : '0 12px 35px -10px rgba(225, 29, 72, 0.2)',
+      border: isValid ? '1px solid #bbf7d0' : '1px solid #fecaca',
+      boxShadow: 'var(--shadow-card)',
       overflow: 'hidden',
     }}>
       {/* Top Reassuring Verdict Banner */}
       <div style={{
-        padding: '28px 32px',
-        background: isValid
-          ? 'linear-gradient(135deg, rgba(5, 150, 105, 0.12) 0%, rgba(37, 99, 235, 0.08) 100%)'
-          : 'linear-gradient(135deg, rgba(225, 29, 72, 0.15) 0%, rgba(217, 119, 6, 0.1) 100%)',
-        borderBottom: '1px solid var(--border-subtle)',
+        padding: '24px 32px',
+        background: isValid ? '#f0fdf4' : '#fef2f2',
+        borderBottom: `1px solid ${isValid ? '#bbf7d0' : '#fecaca'}`,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
@@ -90,25 +86,25 @@ export function ResultCard({ result, onReset }) {
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '18px' }}>
           <div style={{
-            width: '56px',
-            height: '56px',
-            borderRadius: '16px',
-            backgroundColor: isValid ? 'rgba(5, 150, 105, 0.2)' : 'rgba(225, 29, 72, 0.2)',
+            width: '52px',
+            height: '52px',
+            borderRadius: '12px',
+            backgroundColor: isValid ? '#dcfce7' : '#fee2e2',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            color: isValid ? 'var(--emerald-primary)' : 'var(--rose-primary)',
-            boxShadow: isValid ? '0 0 20px rgba(5, 150, 105, 0.25)' : '0 0 20px rgba(225, 29, 72, 0.25)',
+            color: isValid ? '#15803d' : '#dc2626',
+            border: `1px solid ${isValid ? '#bbf7d0' : '#fecaca'}`
           }}>
-            {isValid ? <ShieldCheck size={32} /> : <ShieldAlert size={32} />}
+            {isValid ? <ShieldCheck size={28} /> : <ShieldAlert size={28} />}
           </div>
 
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
               <span className="font-display" style={{
-                fontSize: '1.65rem',
+                fontSize: '1.45rem',
                 fontWeight: 800,
-                color: isValid ? 'var(--emerald-primary)' : 'var(--rose-primary)',
+                color: isValid ? '#15803d' : '#dc2626',
                 letterSpacing: '-0.01em',
               }}>
                 {isValid ? 'OFFICIALLY VERIFIED & AUTHENTIC' : `VERIFICATION FAILED: ${status || 'INVALID'}`}
@@ -117,8 +113,8 @@ export function ResultCard({ result, onReset }) {
             </div>
 
             <p style={{
-              fontSize: '14.5px',
-              color: isValid ? 'var(--text-secondary)' : 'var(--rose-primary)',
+              fontSize: '14px',
+              color: isValid ? '#334155' : '#b91c1c',
               marginTop: '4px',
             }}>
               {isValid
@@ -159,7 +155,7 @@ export function ResultCard({ result, onReset }) {
           padding: '20px 24px',
           backgroundColor: '#f8fafc',
           borderRadius: 'var(--radius-md)',
-          border: '1px solid var(--border-subtle)',
+          border: '1px solid #e2e8f0',
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
           gap: '18px'

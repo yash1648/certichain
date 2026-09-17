@@ -120,7 +120,7 @@ export function Modal({
             gap: '12px',
             padding: '16px 24px',
             borderTop: '1px solid var(--border-subtle)',
-            backgroundColor: '#f8fafc',
+            backgroundColor: 'rgba(10, 15, 26, 0.7)',
           }}>
             {footer}
           </div>
