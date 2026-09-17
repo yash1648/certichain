@@ -1,16 +1,20 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { 
-  Wallet, 
+  Award, 
   Plus, 
   Download, 
   Trash2, 
-  ExternalLink, 
   RefreshCw, 
   Building, 
-  CheckCircle2, 
-  AlertCircle,
-  Link2,
-  FileCheck
+  Eye, 
+  Share2, 
+  Check, 
+  Search, 
+  Calendar,
+  ShieldCheck,
+  FileCheck2,
+  Sparkles,
+  ExternalLink
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { holderService } from '../../services/holderService';
@@ -19,9 +23,10 @@ import { Badge } from '../common/Badge';
 import { EmptyState } from '../common/EmptyState';
 import { ErrorState } from '../common/ErrorState';
 import { RemoveWalletModal } from './RemoveWalletModal';
+import { CertificateDiplomaModal } from '../common/CertificateDiplomaModal';
 
 export function HolderWalletView() {
-  const { accessToken } = useAuth();
+  const { accessToken, user } = useAuth();
   const [walletItems, setWalletItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -32,11 +37,16 @@ export function HolderWalletView() {
   const [addError, setAddError] = useState(null);
   const [addSuccess, setAddSuccess] = useState(null);
 
+  // Search & Filter
+  const [searchQuery, setSearchQuery] = useState('');
+
   // Downloading State
   const [downloadingId, setDownloadingId] = useState(null);
 
-  // Remove Modal State
+  // Modals State
+  const [viewingCredential, setViewingCredential] = useState(null);
   const [removingCredential, setRemovingCredential] = useState(null);
+  const [copiedId, setCopiedId] = useState(null);
 
   // Fetch Wallet Items
   const loadWallet = useCallback(async () => {
@@ -48,7 +58,7 @@ export function HolderWalletView() {
       const data = await holderService.listWallet(accessToken);
       setWalletItems(data || []);
     } catch (err) {
-      setError(err.message || 'Failed to load wallet credentials.');
+      setError(err.message || 'Failed to load your certificates. Please check connection and try again.');
     } finally {
       setLoading(false);
     }
@@ -61,19 +71,20 @@ export function HolderWalletView() {
   // Handle Add to Wallet
   const handleAddCredential = async (e) => {
     e.preventDefault();
-    if (!newCredentialId.trim()) return;
+    const cleanId = newCredentialId.trim();
+    if (!cleanId) return;
 
     setAdding(true);
     setAddError(null);
     setAddSuccess(null);
 
     try {
-      const added = await holderService.addToWallet(newCredentialId.trim(), accessToken);
-      setAddSuccess(`Credential ${added.credentialNumber || newCredentialId} successfully synced to wallet!`);
+      const added = await holderService.addToWallet(cleanId, accessToken);
+      setAddSuccess(`"${added.title || added.credentialNumber || 'Certificate'}" successfully linked to your wallet!`);
       setNewCredentialId('');
       loadWallet();
     } catch (err) {
-      setAddError(err.message || 'Failed to add credential. Please ensure the UUID is valid and exists on the platform.');
+      setAddError(err.message || 'Could not find or add credential. Please verify the ID provided by your institution.');
     } finally {
       setAdding(false);
     }
@@ -83,72 +94,142 @@ export function HolderWalletView() {
   const handleDownload = async (credential) => {
     setDownloadingId(credential.credentialId);
     try {
-      const filename = `${credential.credentialNumber || 'credential'}.json`;
+      const filename = `${credential.credentialNumber || 'certificate'}.json`;
       await holderService.downloadCredential(credential.credentialId, accessToken, filename);
     } catch (err) {
-      setError(err.message || 'Failed to download credential file.');
+      setError(err.message || 'Failed to download official credential file.');
     } finally {
       setDownloadingId(null);
     }
   };
 
-  const handleRemoved = (credentialId) => {
-    setWalletItems(prev => prev.filter(c => c.credentialId !== credentialId));
+  const handleShare = (credential) => {
+    const text = `Verify my official certificate "${credential.title}" on CertiChain (Certificate #: ${credential.credentialNumber})`;
+    navigator.clipboard.writeText(text);
+    setCopiedId(credential.credentialId);
+    setTimeout(() => setCopiedId(null), 2500);
   };
 
+  const handleRemoved = (credentialId) => {
+    setWalletItems(prev => prev.filter(c => c.credentialId !== credentialId));
+    if (viewingCredential?.credentialId === credentialId) {
+      setViewingCredential(null);
+    }
+  };
+
+  const filteredItems = walletItems.filter(item => {
+    const q = searchQuery.toLowerCase();
+    return (
+      (item.title && item.title.toLowerCase().includes(q)) ||
+      (item.credentialNumber && item.credentialNumber.toLowerCase().includes(q)) ||
+      (item.issuerName && item.issuerName.toLowerCase().includes(q)) ||
+      (item.type && item.type.toLowerCase().includes(q))
+    );
+  });
+
   return (
-    <div className="animate-fade-in" style={{ maxWidth: '960px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+    <div className="animate-fade-in" style={{ maxWidth: '1040px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '24px' }}>
       
-      {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
-        <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+      {/* Top Header & Welcome Banner */}
+      <div className="glass-panel" style={{ padding: '28px', borderRadius: 'var(--radius-lg)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '20px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             <div style={{
-              width: '36px',
-              height: '36px',
-              borderRadius: '10px',
-              backgroundColor: 'rgba(16, 185, 129, 0.15)',
-              border: '1px solid var(--border-emerald)',
+              width: '52px',
+              height: '52px',
+              borderRadius: '14px',
+              background: 'linear-gradient(135deg, rgba(37, 99, 235, 0.15) 0%, rgba(124, 58, 237, 0.15) 100%)',
+              border: '1px solid var(--border-accent)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: 'var(--emerald-primary)',
+              color: 'var(--cyan-primary)',
+              boxShadow: '0 4px 15px rgba(37, 99, 235, 0.1)'
             }}>
-              <Wallet size={20} />
+              <Award size={26} />
             </div>
+
             <div>
-              <h1 className="font-display" style={{ fontSize: '1.65rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-                My Credential Wallet
-              </h1>
-              <p style={{ fontSize: '13.5px', color: 'var(--text-secondary)' }}>
-                Your decentralized digital repository of verifiable certificates, degrees, and licenses.
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                <h1 className="font-display" style={{ fontSize: '1.65rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                  My Certificates & Credentials
+                </h1>
+                <span className="badge badge-emerald">
+                  <ShieldCheck size={12} />
+                  Verified Holder
+                </span>
+              </div>
+              <p style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>
+                Welcome back, <strong>{user?.fullName || 'Student'}</strong>. Manage, present, and share your authentic degrees and certifications.
               </p>
             </div>
           </div>
+
+          <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+            <Button variant="secondary" size="sm" onClick={loadWallet} loading={loading} icon={RefreshCw}>
+              Refresh
+            </Button>
+          </div>
         </div>
 
-        <Button variant="secondary" size="sm" onClick={loadWallet} loading={loading} icon={RefreshCw}>
-          Refresh Wallet
-        </Button>
+        {/* Quick Stats Strip */}
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+          gap: '16px',
+          marginTop: '24px',
+          paddingTop: '20px',
+          borderTop: '1px solid var(--border-subtle)'
+        }}>
+          <div style={{ padding: '12px 16px', backgroundColor: '#f8fafc', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-subtle)' }}>
+            <span style={{ fontSize: '12px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              Total Credentials
+            </span>
+            <div className="font-display" style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--text-primary)', marginTop: '2px' }}>
+              {walletItems.length}
+            </div>
+          </div>
+
+          <div style={{ padding: '12px 16px', backgroundColor: '#f8fafc', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-subtle)' }}>
+            <span style={{ fontSize: '12px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              Ledger Anchored
+            </span>
+            <div className="font-display" style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--emerald-primary)', marginTop: '2px' }}>
+              {walletItems.filter(i => i.txHash).length}
+            </div>
+          </div>
+
+          <div style={{ padding: '12px 16px', backgroundColor: '#f8fafc', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-subtle)' }}>
+            <span style={{ fontSize: '12px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              Active & Valid
+            </span>
+            <div className="font-display" style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--cyan-primary)', marginTop: '2px' }}>
+              {walletItems.filter(i => i.status === 'ACTIVE').length}
+            </div>
+          </div>
+        </div>
       </div>
 
       {error && <ErrorState message={error} onRetry={loadWallet} />}
 
-      {/* Add Credential by ID Section */}
-      <div className="glass-panel" style={{ padding: '22px 24px', borderRadius: 'var(--radius-lg)' }}>
-        <h3 className="font-display" style={{ fontSize: '1.15rem', fontWeight: 600, marginBottom: '6px' }}>
-          Add Credential to Wallet
-        </h3>
-        <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '16px' }}>
-          Claim or sync an issued credential by entering its unique UUID identifier provided by your issuing authority.
+      {/* Add a Certificate by ID / Code Section */}
+      <div className="glass-panel" style={{ padding: '24px', borderRadius: 'var(--radius-lg)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+          <Sparkles size={18} color="var(--cyan-primary)" />
+          <h3 className="font-display" style={{ fontSize: '1.15rem', fontWeight: 600 }}>
+            Add a Certificate to Your Wallet
+          </h3>
+        </div>
+        <p style={{ fontSize: '13.5px', color: 'var(--text-secondary)', marginBottom: '16px' }}>
+          Received a degree or certification? Enter your Certificate UUID provided by your issuing university or training body to link it.
         </p>
 
         {addError && (
           <div style={{
             padding: '10px 14px',
             borderRadius: 'var(--radius-sm)',
-            backgroundColor: 'rgba(244, 63, 94, 0.1)',
-            border: '1px solid rgba(244, 63, 94, 0.3)',
+            backgroundColor: 'rgba(225, 29, 72, 0.08)',
+            border: '1px solid rgba(225, 29, 72, 0.25)',
             color: 'var(--rose-primary)',
             fontSize: '13px',
             marginBottom: '14px',
@@ -161,8 +242,8 @@ export function HolderWalletView() {
           <div style={{
             padding: '10px 14px',
             borderRadius: 'var(--radius-sm)',
-            backgroundColor: 'rgba(16, 185, 129, 0.1)',
-            border: '1px solid rgba(16, 185, 129, 0.3)',
+            backgroundColor: 'rgba(5, 150, 105, 0.08)',
+            border: '1px solid rgba(5, 150, 105, 0.25)',
             color: 'var(--emerald-primary)',
             fontSize: '13px',
             marginBottom: '14px',
@@ -172,7 +253,7 @@ export function HolderWalletView() {
         )}
 
         <form onSubmit={handleAddCredential} style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-          <div style={{ flex: '1 1 320px' }}>
+          <div style={{ flex: '1 1 340px' }}>
             <input
               type="text"
               className="input-field font-mono"
@@ -180,165 +261,215 @@ export function HolderWalletView() {
               value={newCredentialId}
               onChange={(e) => setNewCredentialId(e.target.value)}
               required
-              style={{ height: '42px' }}
+              style={{ height: '44px' }}
             />
           </div>
           <Button
             type="submit"
-            variant="emerald"
+            variant="primary"
             loading={adding}
             disabled={!newCredentialId.trim()}
             icon={Plus}
-            style={{ height: '42px' }}
+            style={{ height: '44px', padding: '0 22px' }}
           >
-            Add to Wallet
+            Claim Certificate
           </Button>
         </form>
       </div>
 
-      {/* Credential Cards List */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h3 className="font-display" style={{ fontSize: '1.2rem', fontWeight: 600 }}>
-            Stored Credentials
-          </h3>
-          <span className="badge badge-emerald">
-            {walletItems.length} in Wallet
-          </span>
+      {/* Certificates Directory Header & Search */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '14px' }}>
+        <div>
+          <h2 className="font-display" style={{ fontSize: '1.3rem', fontWeight: 700 }}>
+            Your Official Credentials ({filteredItems.length})
+          </h2>
+          <p style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
+            Each certificate is cryptographically signed and permanently anchored.
+          </p>
         </div>
 
-        {walletItems.length === 0 ? (
-          <div className="glass-panel" style={{ borderRadius: 'var(--radius-lg)' }}>
-            <EmptyState
-              icon={Wallet}
-              title="Your wallet is currently empty"
-              description="Add a credential by its ID — ask your issuer for the ID to store and download it here."
+        {walletItems.length > 0 && (
+          <div style={{ position: 'relative', minWidth: '260px' }}>
+            <input
+              type="text"
+              className="input-field"
+              placeholder="Search certificates or institutions..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              style={{ paddingLeft: '36px', height: '38px', fontSize: '13px' }}
             />
+            <Search size={15} color="var(--text-muted)" style={{ position: 'absolute', left: '12px', top: '12px' }} />
           </div>
-        ) : (
-          walletItems.map((item) => (
+        )}
+      </div>
+
+      {/* Credential Cards Grid */}
+      {walletItems.length === 0 ? (
+        <div className="glass-panel" style={{ borderRadius: 'var(--radius-lg)' }}>
+          <EmptyState
+            icon={Award}
+            title="Your certificate wallet is empty"
+            description="When your university, academy, or organization issues you a credential, enter the ID above to store and view your official certificate."
+          />
+        </div>
+      ) : filteredItems.length === 0 ? (
+        <div className="glass-panel" style={{ padding: '32px', textAlign: 'center' }}>
+          <p style={{ color: 'var(--text-secondary)' }}>No certificates matched "{searchQuery}".</p>
+        </div>
+      ) : (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(460px, 1fr))', gap: '20px' }}>
+          {filteredItems.map((item) => (
             <div
               key={item.credentialId}
-              className="glass-panel"
+              className="diploma-card"
               style={{
-                padding: '24px',
-                borderRadius: 'var(--radius-lg)',
                 border: '1px solid var(--border-subtle)',
                 display: 'flex',
                 flexDirection: 'column',
-                gap: '16px',
-                transition: 'border-color 0.2s ease',
+                justifyContent: 'space-between',
               }}
             >
-              {/* Card Header Row */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px' }}>
-                <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                    <span className="badge badge-cyan" style={{ fontSize: '11px' }}>{item.type}</span>
+              {/* Card Upper Section */}
+              <div style={{ padding: '24px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px', marginBottom: '12px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span className="badge badge-cyan" style={{ fontSize: '11px', textTransform: 'uppercase' }}>
+                      {item.type || 'Degree'}
+                    </span>
                     <Badge status={item.status} />
                   </div>
 
-                  <h3 className="font-display" style={{ fontSize: '1.35rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-                    {item.title}
-                  </h3>
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    fontSize: '12.5px',
+                    fontWeight: 600,
+                    color: 'var(--text-primary)',
+                    backgroundColor: '#f8fafc',
+                    padding: '4px 10px',
+                    borderRadius: 'var(--radius-pill)',
+                    border: '1px solid var(--border-subtle)'
+                  }}>
+                    <Building size={13} color="var(--purple-primary)" />
+                    <span>{item.issuerName || 'Authorized Issuer'}</span>
+                  </div>
+                </div>
 
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
-                    <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Credential #:</span>
-                    <code className="font-mono" style={{ fontSize: '13px', color: 'var(--cyan-primary)', fontWeight: 600 }}>
+                {/* Title */}
+                <h3 className="font-display" style={{
+                  fontSize: '1.35rem',
+                  fontWeight: 700,
+                  color: 'var(--text-primary)',
+                  marginBottom: '8px',
+                  lineHeight: 1.3
+                }}>
+                  {item.title}
+                </h3>
+
+                {/* Certificate Number & Date */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap', fontSize: '12.5px', color: 'var(--text-secondary)', marginBottom: '16px' }}>
+                  <div>
+                    <span style={{ color: 'var(--text-muted)' }}>Cert #: </span>
+                    <code className="font-mono" style={{ color: 'var(--cyan-primary)', fontWeight: 600 }}>
                       {item.credentialNumber}
                     </code>
                   </div>
-                </div>
-
-                {/* Issuer Authority Chip */}
-                <div style={{
-                  padding: '8px 14px',
-                  borderRadius: 'var(--radius-md)',
-                  backgroundColor: '#f8fafc',
-                  border: '1px solid var(--border-subtle)',
-                  textAlign: 'right',
-                }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', justifyContent: 'flex-end', fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>
-                    <Building size={14} color="var(--purple-primary)" />
-                    <span>{item.issuerName || 'Authorized Issuer'}</span>
+                  <div>
+                    <span style={{ color: 'var(--text-muted)' }}>Issued: </span>
+                    <span>{item.issuedAt ? new Date(item.issuedAt).toLocaleDateString() : 'N/A'}</span>
                   </div>
-                  {item.issuerDomain && (
-                    <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '2px' }}>
-                      {item.issuerDomain}
-                    </div>
-                  )}
                 </div>
-              </div>
 
-              {/* Blockchain Anchor Row */}
-              <div style={{
-                padding: '12px 16px',
-                borderRadius: 'var(--radius-sm)',
-                backgroundColor: 'rgba(0, 229, 255, 0.04)',
-                border: '1px solid rgba(0, 229, 255, 0.15)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                flexWrap: 'wrap',
-                gap: '10px',
-              }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <Link2 size={16} color="var(--cyan-primary)" />
-                  <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
-                    {item.txHash
-                      ? `Anchored on-chain — Block ${item.blockNumber ?? '1'} · Chain ${item.chainId ?? '31337'}`
-                      : 'Legacy unanchored credential'}
+                {/* Blockchain Seal Banner */}
+                <div style={{
+                  padding: '10px 14px',
+                  borderRadius: 'var(--radius-sm)',
+                  backgroundColor: 'rgba(37, 99, 235, 0.04)',
+                  border: '1px solid rgba(37, 99, 235, 0.15)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: '8px',
+                  fontSize: '12px',
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--cyan-primary)', fontWeight: 500 }}>
+                    <ShieldCheck size={15} />
+                    <span>Anchored on Blockchain (Block #{item.blockNumber ?? '1'})</span>
+                  </div>
+                  <span style={{ color: 'var(--emerald-primary)', fontWeight: 600 }}>
+                    Tamper-Proof
                   </span>
                 </div>
-
-                {item.txHash && (
-                  <code className="font-mono" style={{ fontSize: '12px', color: 'var(--cyan-primary)' }}>
-                    {item.txHash.substring(0, 16)}...{item.txHash.substring(item.txHash.length - 8)}
-                  </code>
-                )}
               </div>
 
               {/* Card Actions Footer */}
               <div style={{
+                padding: '14px 24px',
+                backgroundColor: '#f8fafc',
+                borderTop: '1px solid var(--border-subtle)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
                 flexWrap: 'wrap',
-                gap: '12px',
-                paddingTop: '8px',
-                borderTop: '1px solid rgba(15, 23, 42, 0.06)',
+                gap: '10px'
               }}>
-                <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
-                  Issued: {item.issuedAt ? new Date(item.issuedAt).toLocaleDateString() : 'N/A'}
-                  {item.expiresAt && ` · Expires: ${new Date(item.expiresAt).toLocaleDateString()}`}
-                </div>
-
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <Button
                     variant="primary"
+                    size="sm"
+                    icon={Eye}
+                    onClick={() => setViewingCredential(item)}
+                  >
+                    View Certificate
+                  </Button>
+
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    icon={copiedId === item.credentialId ? Check : Share2}
+                    onClick={() => handleShare(item)}
+                    title="Copy verification link"
+                  >
+                    {copiedId === item.credentialId ? 'Copied' : 'Share'}
+                  </Button>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Button
+                    variant="ghost"
                     size="sm"
                     icon={Download}
                     onClick={() => handleDownload(item)}
                     loading={downloadingId === item.credentialId}
-                    title="Download the exact cryptographic envelope .json for verification"
+                    title="Download verifiable .json file for job applications"
                   >
-                    Download credential file
+                    Download File
                   </Button>
 
-                  <Button
-                    variant="danger"
-                    size="sm"
-                    icon={Trash2}
+                  <button
                     onClick={() => setRemovingCredential(item)}
+                    className="btn btn-ghost btn-sm"
+                    style={{ color: 'var(--text-muted)', padding: '6px' }}
+                    title="Remove from wallet"
                   >
-                    Remove
-                  </Button>
+                    <Trash2 size={15} />
+                  </button>
                 </div>
               </div>
             </div>
-          ))
-        )}
-      </div>
+          ))}
+        </div>
+      )}
+
+      {/* Visual Diploma Full-Screen Preview Modal */}
+      {viewingCredential && (
+        <CertificateDiplomaModal
+          credential={viewingCredential}
+          onClose={() => setViewingCredential(null)}
+          onDownload={() => handleDownload(viewingCredential)}
+        />
+      )}
 
       {/* Remove Confirmation Modal */}
       {removingCredential && (

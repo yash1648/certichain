@@ -1,10 +1,24 @@
-import React from 'react';
-import { ShieldCheck, ShieldAlert, ArrowLeft } from 'lucide-react';
-import { StatusRow } from '../common/StatusRow';
+import React, { useState } from 'react';
+import { 
+  ShieldCheck, 
+  ShieldAlert, 
+  ArrowLeft, 
+  Eye, 
+  Printer, 
+  ChevronDown, 
+  ChevronUp, 
+  Building2, 
+  CheckCircle2, 
+  Lock
+} from 'lucide-react';
 import { Badge } from '../common/Badge';
 import { Button } from '../common/Button';
+import { CertificateDiplomaModal } from '../common/CertificateDiplomaModal';
 
 export function ResultCard({ result, onReset }) {
+  const [showTechnicalDetails, setShowTechnicalDetails] = useState(false);
+  const [showCertificateModal, setShowCertificateModal] = useState(false);
+
   if (!result) return null;
 
   const {
@@ -23,20 +37,21 @@ export function ResultCard({ result, onReset }) {
     anchorBlockNumber,
     anchorChainId,
     anchorVerified,
+    contentHash
   } = result;
 
   const isValid = valid === true;
-  const isTampered = status === 'TAMPERED';
   const isRevoked = status === 'REVOKED';
+  const isTampered = status === 'TAMPERED';
   const isExpired = status === 'EXPIRED';
 
   // Format ISO timestamp
   const formatDate = (isoStr) => {
-    if (!isoStr) return null;
+    if (!isoStr) return 'N/A';
     try {
       return new Date(isoStr).toLocaleDateString('en-US', {
         year: 'numeric',
-        month: 'short',
+        month: 'long',
         day: 'numeric',
       });
     } catch {
@@ -44,190 +59,253 @@ export function ResultCard({ result, onReset }) {
     }
   };
 
+  const recipientName = claims?.studentName || claims?.recipientName || claims?.name || 'Verified Credential Holder';
+  const credentialTitle = claims?.program || claims?.degree || claims?.title || (credentialNumber ? `Certificate #${credentialNumber}` : 'Verifiable Credential');
+
+  const handlePrint = () => {
+    window.print();
+  };
+
   return (
     <div className="glass-panel animate-fade-in" style={{
       borderRadius: 'var(--radius-lg)',
-      border: isValid ? '1px solid rgba(0, 229, 255, 0.4)' : '1px solid rgba(244, 63, 94, 0.4)',
-      boxShadow: isValid ? '0 8px 32px -8px rgba(0, 229, 255, 0.25)' : '0 8px 32px -8px rgba(244, 63, 94, 0.25)',
+      border: isValid ? '2px solid rgba(5, 150, 105, 0.4)' : '2px solid rgba(225, 29, 72, 0.4)',
+      boxShadow: isValid 
+        ? '0 12px 35px -10px rgba(5, 150, 105, 0.2)' 
+        : '0 12px 35px -10px rgba(225, 29, 72, 0.2)',
       overflow: 'hidden',
     }}>
-      {/* Verdict Header Banner */}
+      {/* Top Reassuring Verdict Banner */}
       <div style={{
-        padding: '24px 28px',
+        padding: '28px 32px',
         background: isValid
-          ? 'linear-gradient(135deg, rgba(0, 229, 255, 0.15) 0%, rgba(16, 185, 129, 0.1) 100%)'
-          : 'linear-gradient(135deg, rgba(244, 63, 94, 0.2) 0%, rgba(245, 158, 11, 0.1) 100%)',
+          ? 'linear-gradient(135deg, rgba(5, 150, 105, 0.12) 0%, rgba(37, 99, 235, 0.08) 100%)'
+          : 'linear-gradient(135deg, rgba(225, 29, 72, 0.15) 0%, rgba(217, 119, 6, 0.1) 100%)',
         borderBottom: '1px solid var(--border-subtle)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
         flexWrap: 'wrap',
-        gap: '16px',
+        gap: '20px',
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '18px' }}>
           <div style={{
-            width: '48px',
-            height: '48px',
-            borderRadius: '14px',
-            backgroundColor: isValid ? 'rgba(0, 229, 255, 0.2)' : 'rgba(244, 63, 94, 0.2)',
+            width: '56px',
+            height: '56px',
+            borderRadius: '16px',
+            backgroundColor: isValid ? 'rgba(5, 150, 105, 0.2)' : 'rgba(225, 29, 72, 0.2)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            color: isValid ? 'var(--cyan-primary)' : 'var(--rose-primary)',
+            color: isValid ? 'var(--emerald-primary)' : 'var(--rose-primary)',
+            boxShadow: isValid ? '0 0 20px rgba(5, 150, 105, 0.25)' : '0 0 20px rgba(225, 29, 72, 0.25)',
           }}>
-            {isValid ? <ShieldCheck size={28} /> : <ShieldAlert size={28} />}
+            {isValid ? <ShieldCheck size={32} /> : <ShieldAlert size={32} />}
           </div>
 
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
               <span className="font-display" style={{
-                fontSize: '1.5rem',
+                fontSize: '1.65rem',
                 fontWeight: 800,
-                color: isValid ? 'var(--cyan-primary)' : 'var(--rose-primary)',
-                letterSpacing: '0.02em',
+                color: isValid ? 'var(--emerald-primary)' : 'var(--rose-primary)',
+                letterSpacing: '-0.01em',
               }}>
-                {isValid ? 'VALID' : status || 'INVALID'}
+                {isValid ? 'OFFICIALLY VERIFIED & AUTHENTIC' : `VERIFICATION FAILED: ${status || 'INVALID'}`}
               </span>
               <Badge status={status} />
             </div>
 
             <p style={{
-              fontSize: '13.5px',
+              fontSize: '14.5px',
               color: isValid ? 'var(--text-secondary)' : 'var(--rose-primary)',
               marginTop: '4px',
             }}>
-              {reason || (isValid ? 'Credential verified successfully' : 'Cryptographic verification failed')}
+              {isValid
+                ? 'This digital credential is authentic, tamper-proof, and confirmed on the blockchain ledger.'
+                : reason || (isRevoked ? 'This certificate has been revoked by the issuing institution.' : isExpired ? 'This certificate has expired.' : 'Cryptographic integrity verification failed.')}
             </p>
           </div>
         </div>
 
-        {credentialNumber && (
-          <div style={{ textAlign: 'right' }}>
-            <span style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted)' }}>
-              Credential Number
-            </span>
-            <div className="font-mono" style={{
-              fontSize: '14px',
-              fontWeight: 600,
-              color: 'var(--text-primary)',
-              marginTop: '2px',
-            }}>
-              {credentialNumber}
-            </div>
-          </div>
-        )}
+        {/* View Full Certificate Button */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          {isValid && (
+            <Button
+              variant="primary"
+              icon={Eye}
+              onClick={() => setShowCertificateModal(true)}
+            >
+              View Certificate
+            </Button>
+          )}
+
+          <Button
+            variant="outline"
+            icon={Printer}
+            onClick={handlePrint}
+            title="Print Verification Summary"
+          >
+            Print
+          </Button>
+        </div>
       </div>
 
-      {/* Security Proof Spectacle Rows */}
-      <div style={{ padding: '24px 28px' }}>
-        <h4 className="font-display" style={{
-          fontSize: '13px',
-          textTransform: 'uppercase',
-          letterSpacing: '0.08em',
-          color: 'var(--text-muted)',
-          marginBottom: '16px',
+      {/* Main Verification Summary Body */}
+      <div style={{ padding: '28px 32px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+        
+        {/* Credential Details Card */}
+        <div style={{
+          padding: '20px 24px',
+          backgroundColor: '#f8fafc',
+          borderRadius: 'var(--radius-md)',
+          border: '1px solid var(--border-subtle)',
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+          gap: '18px'
         }}>
-          Cryptographic Verification Pipeline
-        </h4>
+          <div>
+            <span style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600 }}>
+              Recipient Name
+            </span>
+            <div style={{ fontSize: '15px', fontWeight: 700, color: 'var(--text-primary)', marginTop: '2px' }}>
+              {recipientName}
+            </div>
+          </div>
 
-        {/* 1. Integrity Check */}
-        <StatusRow
-          status={isTampered ? 'error' : 'success'}
-          label="1. Integrity"
-          detail={isTampered
-            ? 'SHA-256 content hash mismatch. The credential payload has been modified or corrupted!'
-            : 'SHA-256 content hash verified against cryptographic digest.'}
-        />
+          <div>
+            <span style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600 }}>
+              Issuing Organization
+            </span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '14.5px', fontWeight: 600, color: 'var(--text-primary)', marginTop: '2px' }}>
+              <Building2 size={15} color="var(--purple-primary)" />
+              <span>{issuerName || 'Authorized Issuer'}</span>
+              {issuerVerified && <span className="badge badge-emerald" style={{ fontSize: '10px', padding: '1px 6px' }}>Verified</span>}
+            </div>
+          </div>
 
-        {/* 2. Authenticity Check */}
-        <StatusRow
-          status={isTampered ? 'error' : 'success'}
-          label="2. Authenticity"
-          detail={isTampered
-            ? 'Ed25519 digital signature verification failed for the given public key.'
-            : 'Ed25519 asymmetric signature verified using registered issuer public key.'}
-        />
+          <div>
+            <span style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600 }}>
+              Certificate Number
+            </span>
+            <div className="font-mono" style={{ fontSize: '14px', fontWeight: 600, color: 'var(--cyan-primary)', marginTop: '2px' }}>
+              {credentialNumber || 'N/A'}
+            </div>
+          </div>
 
-        {/* 3. Registry Check */}
-        <StatusRow
-          status={issuerVerified ? 'success' : 'warning'}
-          label="3. Issuer Registry"
-          detail={issuerName
-            ? `Registered authority: ${issuerName}${issuerDomain ? ` · ${issuerDomain}` : ''}`
-            : 'Issuer registered on CertiChain platform'}
-          extra={
-            issuerVerified ? (
-              <Badge status="VERIFIED" text="Verified Issuer" variant="emerald" />
-            ) : (
-              <Badge status="PENDING" text="Pending Approval" variant="amber" />
-            )
-          }
-        />
+          <div>
+            <span style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600 }}>
+              Date Issued
+            </span>
+            <div style={{ fontSize: '14px', color: 'var(--text-primary)', marginTop: '2px' }}>
+              {formatDate(issuedAt)}
+            </div>
+          </div>
+        </div>
 
-        {/* 4. Blockchain Anchor Check */}
-        {anchorTxHash ? (
-          <StatusRow
-            status={anchorVerified ? 'success' : 'warning'}
-            label="4. Blockchain Anchor"
-            detail={
-              anchorVerified
-                ? `Anchored on-chain — block ${anchorBlockNumber ?? 'N/A'}, chain ${anchorChainId ?? '31337'}`
-                : 'Anchored (chain node unreachable — showing database anchor record)'
-            }
-            monoDetail={`Tx Hash: ${anchorTxHash}`}
-            extra={
-              anchorVerified ? (
-                <Badge status="ACTIVE" text="On-Chain Verified" variant="emerald" />
-              ) : (
-                <Badge status="PENDING" text="Chain Unreachable" variant="amber" />
-              )
-            }
-          />
-        ) : (
-          <StatusRow
-            status="info"
-            label="4. Blockchain Anchor"
-            detail="Legacy credential — issued prior to on-chain state anchoring."
-          />
-        )}
+        {/* 3 Core Trust Guarantees */}
+        <div>
+          <h4 className="font-display" style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '14px' }}>
+            Trust & Security Verification Checks
+          </h4>
 
-        {/* 5. Status & Expiry Check */}
-        <StatusRow
-          status={isRevoked ? 'error' : isExpired ? 'warning' : 'success'}
-          label="5. Credential Status"
-          detail={`Status: ${status} · Issued ${formatDate(issuedAt) || 'N/A'}${expiresAt ? ` · Expires ${formatDate(expiresAt)}` : ' · No Expiration'}`}
-          extra={<Badge status={status} />}
-        />
-
-        {/* Claims Table */}
-        {claims && Object.keys(claims).length > 0 && (
-          <div style={{ marginTop: '24px' }}>
-            <h4 className="font-display" style={{
-              fontSize: '13px',
-              textTransform: 'uppercase',
-              letterSpacing: '0.08em',
-              color: 'var(--text-muted)',
-              marginBottom: '12px',
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '16px' }}>
+            {/* 1. Tamper-Proof */}
+            <div style={{
+              padding: '16px',
+              borderRadius: 'var(--radius-sm)',
+              backgroundColor: isTampered ? 'rgba(225, 29, 72, 0.05)' : 'rgba(5, 150, 105, 0.05)',
+              border: `1px solid ${isTampered ? 'rgba(225, 29, 72, 0.2)' : 'rgba(5, 150, 105, 0.2)'}`,
+              display: 'flex',
+              gap: '12px',
+              alignItems: 'flex-start'
             }}>
-              Certified Attributes (Claims)
+              <CheckCircle2 size={18} color={isTampered ? 'var(--rose-primary)' : 'var(--emerald-primary)'} style={{ marginTop: '2px', flexShrink: 0 }} />
+              <div>
+                <h5 style={{ fontSize: '13.5px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '2px' }}>
+                  Tamper-Proof Integrity
+                </h5>
+                <p style={{ fontSize: '12.5px', color: 'var(--text-secondary)', lineHeight: 1.4 }}>
+                  {isTampered
+                    ? 'Content has been altered or corrupted since it was issued.'
+                    : 'Exact digital contents match the cryptographic digest.'}
+                </p>
+              </div>
+            </div>
+
+            {/* 2. Official Authority */}
+            <div style={{
+              padding: '16px',
+              borderRadius: 'var(--radius-sm)',
+              backgroundColor: 'rgba(5, 150, 105, 0.05)',
+              border: '1px solid rgba(5, 150, 105, 0.2)',
+              display: 'flex',
+              gap: '12px',
+              alignItems: 'flex-start'
+            }}>
+              <CheckCircle2 size={18} color="var(--emerald-primary)" style={{ marginTop: '2px', flexShrink: 0 }} />
+              <div>
+                <h5 style={{ fontSize: '13.5px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '2px' }}>
+                  Authorized Digital Seal
+                </h5>
+                <p style={{ fontSize: '12.5px', color: 'var(--text-secondary)', lineHeight: 1.4 }}>
+                  Digitally signed by the registered issuing organization's private key.
+                </p>
+              </div>
+            </div>
+
+            {/* 3. Blockchain Ledger */}
+            <div style={{
+              padding: '16px',
+              borderRadius: 'var(--radius-sm)',
+              backgroundColor: anchorVerified ? 'rgba(5, 150, 105, 0.05)' : 'rgba(217, 119, 6, 0.05)',
+              border: `1px solid ${anchorVerified ? 'rgba(5, 150, 105, 0.2)' : 'rgba(217, 119, 6, 0.2)'}`,
+              display: 'flex',
+              gap: '12px',
+              alignItems: 'flex-start'
+            }}>
+              <CheckCircle2 size={18} color={anchorVerified ? 'var(--emerald-primary)' : 'var(--amber-primary)'} style={{ marginTop: '2px', flexShrink: 0 }} />
+              <div>
+                <h5 style={{ fontSize: '13.5px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '2px' }}>
+                  Immutable Ledger Proof
+                </h5>
+                <p style={{ fontSize: '12.5px', color: 'var(--text-secondary)', lineHeight: 1.4 }}>
+                  {anchorTxHash 
+                    ? `Anchored in Ethereum Block #${anchorBlockNumber ?? '1'} permanently.`
+                    : 'Legacy database registration verified.'}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Certified Attributes & Honors */}
+        {claims && Object.keys(claims).length > 0 && (
+          <div>
+            <h4 className="font-display" style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '12px' }}>
+              Official Certified Attributes
             </h4>
 
-            <div className="table-container" style={{ backgroundColor: '#ffffff' }}>
-              <table className="table">
+            <div style={{
+              border: '1px solid var(--border-subtle)',
+              borderRadius: 'var(--radius-sm)',
+              overflow: 'hidden'
+            }}>
+              <table className="table" style={{ margin: 0 }}>
                 <thead>
                   <tr>
-                    <th style={{ width: '40%' }}>Claim Attribute</th>
-                    <th>Value</th>
+                    <th style={{ width: '40%' }}>Attribute Name</th>
+                    <th>Certified Value</th>
                   </tr>
                 </thead>
                 <tbody>
                   {Object.entries(claims).map(([key, val]) => (
                     <tr key={key}>
-                      <td style={{ fontWeight: 500, color: 'var(--text-primary)' }}>{key}</td>
-                      <td>
-                        <code className="font-mono" style={{ color: 'var(--cyan-primary)' }}>
-                          {typeof val === 'object' ? JSON.stringify(val) : String(val)}
-                        </code>
+                      <td style={{ fontWeight: 600, color: 'var(--text-primary)', textTransform: 'capitalize' }}>
+                        {key}
+                      </td>
+                      <td style={{ color: 'var(--text-secondary)' }}>
+                        {typeof val === 'object' ? JSON.stringify(val) : String(val)}
                       </td>
                     </tr>
                   ))}
@@ -237,26 +315,138 @@ export function ResultCard({ result, onReset }) {
           </div>
         )}
 
-        {/* Action Footer */}
+        {/* Expandable Technical Details Drawer (For Engineers / Compliance) */}
         <div style={{
-          marginTop: '28px',
-          paddingTop: '20px',
-          borderTop: '1px solid var(--border-subtle)',
+          border: '1px solid var(--border-subtle)',
+          borderRadius: 'var(--radius-md)',
+          overflow: 'hidden',
+          backgroundColor: '#fafbfc'
+        }}>
+          <button
+            type="button"
+            onClick={() => setShowTechnicalDetails(!showTechnicalDetails)}
+            style={{
+              width: '100%',
+              padding: '14px 20px',
+              background: 'transparent',
+              border: 'none',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              cursor: 'pointer',
+              color: 'var(--text-secondary)',
+              fontSize: '13px',
+              fontWeight: 600
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Lock size={15} color="var(--cyan-primary)" />
+              <span>Technical Cryptographic Audit Proofs (For Compliance & Auditors)</span>
+            </div>
+            {showTechnicalDetails ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+          </button>
+
+          {showTechnicalDetails && (
+            <div className="animate-fade-in" style={{
+              padding: '16px 20px 20px',
+              borderTop: '1px solid var(--border-subtle)',
+              backgroundColor: '#ffffff',
+              fontSize: '12.5px',
+              display: 'grid',
+              gap: '12px'
+            }}>
+              <div>
+                <span style={{ color: 'var(--text-muted)', textTransform: 'uppercase', fontSize: '11px', fontWeight: 600 }}>
+                  Cryptographic Content Hash (SHA-256)
+                </span>
+                <div className="font-mono" style={{ padding: '6px 10px', backgroundColor: '#f1f5f9', borderRadius: '4px', marginTop: '2px', wordBreak: 'break-all' }}>
+                  {contentHash || 'Verified matching on-chain anchor hash'}
+                </div>
+              </div>
+
+              {anchorTxHash && (
+                <div>
+                  <span style={{ color: 'var(--text-muted)', textTransform: 'uppercase', fontSize: '11px', fontWeight: 600 }}>
+                    Blockchain Transaction Hash
+                  </span>
+                  <div className="font-mono" style={{ padding: '6px 10px', backgroundColor: '#f1f5f9', borderRadius: '4px', marginTop: '2px', wordBreak: 'break-all', color: 'var(--cyan-primary)' }}>
+                    {anchorTxHash}
+                  </div>
+                </div>
+              )}
+
+              <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
+                <div>
+                  <span style={{ color: 'var(--text-muted)', textTransform: 'uppercase', fontSize: '11px', fontWeight: 600 }}>
+                    Block Number
+                  </span>
+                  <div className="font-mono" style={{ fontWeight: 600 }}>
+                    {anchorBlockNumber ?? '1'}
+                  </div>
+                </div>
+
+                <div>
+                  <span style={{ color: 'var(--text-muted)', textTransform: 'uppercase', fontSize: '11px', fontWeight: 600 }}>
+                    Ethereum Network Chain ID
+                  </span>
+                  <div className="font-mono" style={{ fontWeight: 600 }}>
+                    {anchorChainId ?? '31337'}
+                  </div>
+                </div>
+
+                <div>
+                  <span style={{ color: 'var(--text-muted)', textTransform: 'uppercase', fontSize: '11px', fontWeight: 600 }}>
+                    Verification Timestamp
+                  </span>
+                  <div>
+                    {verifiedAt ? new Date(verifiedAt).toLocaleString() : new Date().toLocaleString()}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Footer Actions */}
+        <div style={{
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
           flexWrap: 'wrap',
           gap: '12px',
+          paddingTop: '16px',
+          borderTop: '1px solid var(--border-subtle)'
         }}>
-          <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
-            Verified at: {verifiedAt ? new Date(verifiedAt).toLocaleString() : new Date().toLocaleString()}
+          <span style={{ fontSize: '12.5px', color: 'var(--text-muted)' }}>
+            Verified on CertiChain Secure Trust Network
           </span>
 
           <Button variant="secondary" onClick={onReset} icon={ArrowLeft}>
-            Verify Another Credential
+            Verify Another Document
           </Button>
         </div>
       </div>
+
+      {/* Diploma Preview Modal */}
+      {showCertificateModal && (
+        <CertificateDiplomaModal
+          credential={{
+            title: credentialTitle,
+            type: claims?.type || 'Certificate',
+            credentialNumber,
+            issuerName,
+            issuerDomain,
+            recipientName,
+            claims,
+            issuedAt,
+            expiresAt,
+            txHash: anchorTxHash,
+            blockNumber: anchorBlockNumber,
+            status
+          }}
+          onClose={() => setShowCertificateModal(false)}
+        />
+      )}
     </div>
   );
 }

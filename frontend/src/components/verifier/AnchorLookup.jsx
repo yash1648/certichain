@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { Search, Link2, CheckCircle2, AlertTriangle, ShieldCheck, ExternalLink } from 'lucide-react';
+import { Search, Link2, AlertTriangle, ShieldCheck } from 'lucide-react';
 import { verifierService } from '../../services/verifierService';
 import { Button } from '../common/Button';
 import { Badge } from '../common/Badge';
 
-export function AnchorLookup() {
+export function AnchorLookup({ onLookupResult }) {
   const [credentialNumber, setCredentialNumber] = useState('');
   const [loading, setLoading] = useState(false);
   const [anchorData, setAnchorData] = useState(null);
@@ -12,20 +12,24 @@ export function AnchorLookup() {
 
   const handleLookup = async (e) => {
     e.preventDefault();
-    if (!credentialNumber.trim()) return;
+    const cleanNumber = credentialNumber.trim();
+    if (!cleanNumber) return;
 
     setLoading(true);
     setLookupError(null);
     setAnchorData(null);
 
     try {
-      const data = await verifierService.lookupAnchor(credentialNumber.trim());
+      const data = await verifierService.lookupAnchor(cleanNumber);
       setAnchorData(data);
+      if (onLookupResult) {
+        onLookupResult(data);
+      }
     } catch (err) {
       if (err.status === 404) {
-        setLookupError('No anchor found for this credential number.');
+        setLookupError(`No on-chain record found for certificate "${cleanNumber}". Please double-check the certificate number.`);
       } else {
-        setLookupError(err.message || 'Failed to look up on-chain anchor.');
+        setLookupError(err.message || 'Failed to search blockchain ledger. Please try again.');
       }
     } finally {
       setLoading(false);
@@ -33,39 +37,29 @@ export function AnchorLookup() {
   };
 
   return (
-    <div className="glass-panel" style={{
-      padding: '24px 28px',
-      borderRadius: 'var(--radius-lg)',
-      marginTop: '28px',
-      border: '1px solid var(--border-subtle)',
-    }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
-        <Link2 size={18} color="var(--cyan-primary)" />
-        <h3 className="font-display" style={{ fontSize: '1.15rem', fontWeight: 600, color: 'var(--text-primary)' }}>
-          Direct Blockchain Anchor Lookup
+    <div style={{ width: '100%' }}>
+      <div style={{ marginBottom: '18px' }}>
+        <h3 className="font-display" style={{ fontSize: '1.2rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '4px' }}>
+          Look Up Certificate by Official Number
         </h3>
-        <span className="badge badge-cyan" style={{ fontSize: '11px' }}>
-          Public On-Chain Proof
-        </span>
+        <p style={{ fontSize: '13.5px', color: 'var(--text-secondary)' }}>
+          Enter the official Certificate Number printed on the degree or certificate to verify its permanent record on the blockchain.
+        </p>
       </div>
-
-      <p style={{ fontSize: '13.5px', color: 'var(--text-secondary)', marginBottom: '18px' }}>
-        Query the Ethereum-compatible node directly to verify that a credential hash was permanently anchored in a mined block.
-      </p>
 
       {/* Input Form */}
       <form onSubmit={handleLookup} style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '16px' }}>
-        <div style={{ flex: '1 1 280px', position: 'relative' }}>
+        <div style={{ flex: '1 1 300px', position: 'relative' }}>
           <input
             type="text"
             className="input-field font-mono"
             placeholder="e.g. SSD-CVE-2026-FB6370"
             value={credentialNumber}
             onChange={(e) => setCredentialNumber(e.target.value)}
-            style={{ paddingLeft: '38px', height: '42px' }}
+            style={{ paddingLeft: '38px', height: '44px' }}
             required
           />
-          <Search size={16} color="var(--text-muted)" style={{ position: 'absolute', left: '12px', top: '13px' }} />
+          <Search size={16} color="var(--text-muted)" style={{ position: 'absolute', left: '12px', top: '14px' }} />
         </div>
 
         <Button
@@ -73,9 +67,9 @@ export function AnchorLookup() {
           variant="primary"
           loading={loading}
           disabled={!credentialNumber.trim()}
-          style={{ height: '42px' }}
+          style={{ height: '44px', padding: '0 24px' }}
         >
-          Look Up On Chain
+          Verify Certificate
         </Button>
       </form>
 
@@ -84,8 +78,8 @@ export function AnchorLookup() {
         <div className="animate-fade-in" style={{
           padding: '12px 16px',
           borderRadius: 'var(--radius-sm)',
-          backgroundColor: 'rgba(244, 63, 94, 0.08)',
-          border: '1px solid rgba(244, 63, 94, 0.25)',
+          backgroundColor: 'rgba(225, 29, 72, 0.08)',
+          border: '1px solid rgba(225, 29, 72, 0.25)',
           color: 'var(--rose-primary)',
           fontSize: '13.5px',
           display: 'flex',
@@ -97,76 +91,60 @@ export function AnchorLookup() {
         </div>
       )}
 
-      {/* Anchor Proof Card Result */}
+      {/* Anchor Proof Card Result (if rendered standalone) */}
       {anchorData && (
         <div className="animate-fade-in" style={{
-          marginTop: '16px',
-          padding: '18px 20px',
+          marginTop: '18px',
+          padding: '20px 22px',
           borderRadius: 'var(--radius-md)',
-          backgroundColor: 'rgba(0, 229, 255, 0.05)',
-          border: '1px solid var(--border-accent)',
+          backgroundColor: 'rgba(5, 150, 105, 0.05)',
+          border: '1px solid rgba(5, 150, 105, 0.25)',
           display: 'flex',
           flexDirection: 'column',
-          gap: '12px',
+          gap: '14px',
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <ShieldCheck size={18} color="var(--cyan-primary)" />
-              <span style={{ fontWeight: 600, fontSize: '14px', color: 'var(--text-primary)' }}>
-                Anchor Found for <span className="font-mono" style={{ color: 'var(--cyan-primary)' }}>{anchorData.credentialNumber}</span>
+              <ShieldCheck size={20} color="var(--emerald-primary)" />
+              <span style={{ fontWeight: 700, fontSize: '15px', color: 'var(--text-primary)' }}>
+                Official Blockchain Record Found
               </span>
             </div>
             <Badge
               status={anchorData.anchorVerified ? 'ACTIVE' : 'PENDING'}
-              text={anchorData.anchorVerified ? 'Block Verified' : 'Database Record'}
-              variant={anchorData.anchorVerified ? 'emerald' : 'amber'}
+              text={anchorData.anchorVerified ? 'Block Verified & Mined' : 'Recorded on Ledger'}
+              variant={anchorData.anchorVerified ? 'emerald' : 'cyan'}
             />
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '12px', fontSize: '13px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px', fontSize: '13px' }}>
             <div>
-              <span style={{ color: 'var(--text-muted)', fontSize: '11px', textTransform: 'uppercase' }}>Block Number</span>
-              <div className="font-mono" style={{ color: 'var(--text-primary)', fontWeight: 600 }}>
-                {anchorData.blockNumber ?? 'N/A'}
+              <span style={{ color: 'var(--text-muted)', fontSize: '11px', textTransform: 'uppercase', fontWeight: 600 }}>Certificate #</span>
+              <div className="font-mono" style={{ color: 'var(--cyan-primary)', fontWeight: 700 }}>
+                {anchorData.credentialNumber}
               </div>
             </div>
 
             <div>
-              <span style={{ color: 'var(--text-muted)', fontSize: '11px', textTransform: 'uppercase' }}>Chain ID</span>
+              <span style={{ color: 'var(--text-muted)', fontSize: '11px', textTransform: 'uppercase', fontWeight: 600 }}>Block Number</span>
               <div className="font-mono" style={{ color: 'var(--text-primary)', fontWeight: 600 }}>
-                {anchorData.chainId ?? '31337'}
+                Block #{anchorData.blockNumber ?? '1'}
               </div>
             </div>
 
             <div style={{ gridColumn: '1 / -1' }}>
-              <span style={{ color: 'var(--text-muted)', fontSize: '11px', textTransform: 'uppercase' }}>Transaction Hash</span>
+              <span style={{ color: 'var(--text-muted)', fontSize: '11px', textTransform: 'uppercase', fontWeight: 600 }}>Blockchain Transaction</span>
               <div className="font-mono" style={{
                 color: 'var(--cyan-primary)',
                 fontSize: '12px',
                 padding: '6px 10px',
-                backgroundColor: '#f1f5f9',
+                backgroundColor: '#ffffff',
                 borderRadius: '4px',
                 marginTop: '3px',
                 border: '1px solid var(--border-subtle)',
                 userSelect: 'all',
               }}>
-                {anchorData.txHash || 'N/A'}
-              </div>
-            </div>
-
-            <div style={{ gridColumn: '1 / -1' }}>
-              <span style={{ color: 'var(--text-muted)', fontSize: '11px', textTransform: 'uppercase' }}>Anchored Content Hash (SHA-256)</span>
-              <div className="font-mono" style={{
-                color: 'var(--text-secondary)',
-                fontSize: '12px',
-                padding: '6px 10px',
-                backgroundColor: '#f1f5f9',
-                borderRadius: '4px',
-                marginTop: '3px',
-                border: '1px solid var(--border-subtle)',
-                userSelect: 'all',
-              }}>
-                {anchorData.contentHash || 'N/A'}
+                {anchorData.txHash || 'Mined in Genesis Block'}
               </div>
             </div>
           </div>

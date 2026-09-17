@@ -158,7 +158,7 @@ export function AdminConsoleView() {
           paddingTop: '20px',
           borderTop: '1px solid var(--border-subtle)',
         }}>
-          <div style={{ background: 'rgba(0, 0, 0, 0.3)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-md)', padding: '14px 16px' }}>
+          <div style={{ background: '#f8fafc', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-md)', padding: '14px 16px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-muted)', fontSize: '12px', marginBottom: '4px' }}>
               <Users size={14} color="var(--cyan-primary)" />
               <span>Registered Users</span>
@@ -168,7 +168,7 @@ export function AdminConsoleView() {
             </div>
           </div>
 
-          <div style={{ background: 'rgba(0, 0, 0, 0.3)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-md)', padding: '14px 16px' }}>
+          <div style={{ background: '#f8fafc', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-md)', padding: '14px 16px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-muted)', fontSize: '12px', marginBottom: '4px' }}>
               <Building2 size={14} color="#a78bfa" />
               <span>Registered Issuers</span>
@@ -179,8 +179,8 @@ export function AdminConsoleView() {
           </div>
 
           <div style={{
-            background: 'rgba(0, 0, 0, 0.3)',
-            border: pendingApprovalsCount > 0 ? '1px solid rgba(245, 158, 11, 0.4)' : '1px solid var(--border-subtle)',
+            background: '#f8fafc',
+            border: pendingApprovalsCount > 0 ? '1px solid rgba(217, 119, 6, 0.4)' : '1px solid var(--border-subtle)',
             borderRadius: 'var(--radius-md)',
             padding: '14px 16px',
           }}>
@@ -197,7 +197,7 @@ export function AdminConsoleView() {
             </div>
           </div>
 
-          <div style={{ background: 'rgba(0, 0, 0, 0.3)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-md)', padding: '14px 16px' }}>
+          <div style={{ background: '#f8fafc', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-md)', padding: '14px 16px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-muted)', fontSize: '12px', marginBottom: '4px' }}>
               <History size={14} color="var(--cyan-primary)" />
               <span>Global Audits</span>
