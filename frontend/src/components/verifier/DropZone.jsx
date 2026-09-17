@@ -113,14 +113,14 @@ export function DropZone({ onFileSelected, loading = false, disabled = false }) 
 
         <h3 className="font-display" style={{ fontSize: '1.25rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '8px' }}>
           {loading
-            ? 'Cryptographically verifying credential envelope...'
+            ? 'Verifying credential on blockchain ledger...'
             : selectedFileName
             ? `Ready to verify: ${selectedFileName}`
-            : 'Drop credential file here, or click to browse'}
+            : 'Drop certificate file here, or click to browse'}
         </h3>
 
-        <p style={{ fontSize: '14px', color: 'var(--text-secondary)', maxWidth: '420px', lineHeight: 1.5, marginBottom: '16px' }}>
-          Select the downloaded <code className="font-mono" style={{ color: 'var(--cyan-primary)' }}>.json</code> envelope file signed with Ed25519. Max file size: 2MB.
+        <p style={{ fontSize: '14px', color: 'var(--text-secondary)', maxWidth: '440px', lineHeight: 1.5, marginBottom: '16px' }}>
+          Select or drop the official <code className="font-mono" style={{ color: 'var(--cyan-primary)' }}>.json</code> credential document issued to the student.
         </p>
 
         <Button
