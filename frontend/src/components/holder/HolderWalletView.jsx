@@ -10,11 +10,8 @@ import {
   Share2, 
   Check, 
   Search, 
-  Calendar,
   ShieldCheck,
-  FileCheck2,
-  Sparkles,
-  ExternalLink
+  Sparkles
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { holderService } from '../../services/holderService';

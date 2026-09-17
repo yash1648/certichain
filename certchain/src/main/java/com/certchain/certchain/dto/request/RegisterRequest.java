@@ -20,6 +20,11 @@ public record RegisterRequest(
 
         @NotBlank(message = "Full name is required")
         @Size(max = 255)
-        String fullName
+        String fullName,
+
+        String role
 ) {
+    public RegisterRequest(String email, String password, String fullName) {
+        this(email, password, fullName, null);
+    }
 }

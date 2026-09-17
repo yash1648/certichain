@@ -87,9 +87,10 @@ export function CertificateDiplomaModal({ credential, onClose, onDownload }) {
           maxWidth: '860px',
           maxHeight: '92vh',
           overflowY: 'auto',
-          backgroundColor: '#ffffff',
+          backgroundColor: 'var(--bg-card-elevated)',
+          border: '1px solid var(--border-subtle)',
           borderRadius: 'var(--radius-lg)',
-          boxShadow: '0 25px 60px -15px rgba(0, 0, 0, 0.4)',
+          boxShadow: '0 25px 60px -15px rgba(0, 0, 0, 0.8), 0 0 30px rgba(0, 240, 255, 0.15)',
           display: 'flex',
           flexDirection: 'column',
         }}
@@ -103,7 +104,7 @@ export function CertificateDiplomaModal({ credential, onClose, onDownload }) {
           justifyContent: 'space-between',
           flexWrap: 'wrap',
           gap: '12px',
-          backgroundColor: '#f8fafc',
+          backgroundColor: 'var(--bg-card-hover)',
           borderTopLeftRadius: 'var(--radius-lg)',
           borderTopRightRadius: 'var(--radius-lg)'
         }}>

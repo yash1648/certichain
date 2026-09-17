@@ -41,12 +41,14 @@ function LoginGate({ children, requiredRole = null }) {
             width: '56px',
             height: '56px',
             borderRadius: '16px',
-            backgroundColor: 'rgba(37, 99, 235, 0.1)',
+            backgroundColor: 'rgba(0, 240, 255, 0.1)',
+            border: '1px solid var(--border-accent)',
             color: 'var(--cyan-primary)',
             display: 'inline-flex',
             alignItems: 'center',
             justifyContent: 'center',
-            marginBottom: '16px'
+            marginBottom: '16px',
+            boxShadow: '0 0 20px rgba(0, 240, 255, 0.25)'
           }}>
             <Lock size={28} />
           </div>
@@ -137,7 +139,7 @@ function Footer() {
     <footer style={{
       borderTop: '1px solid var(--border-subtle)',
       padding: '24px',
-      backgroundColor: '#ffffff',
+      backgroundColor: 'rgba(2, 4, 10, 0.95)',
       fontSize: '13px',
       color: 'var(--text-muted)',
       marginTop: 'auto'
@@ -153,7 +155,7 @@ function Footer() {
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <ShieldCheck size={18} color="var(--cyan-primary)" />
-          <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>CertiChain</span>
+          <span style={{ fontWeight: 600, color: '#ffffff' }}>CertiChain</span>
           <span>&copy; 2026 · Verifiable Digital Credentials</span>
         </div>
 
@@ -166,7 +168,7 @@ function Footer() {
             <ShieldCheck size={14} color="var(--emerald-primary)" />
             <span>Ethereum Blockchain Ledger</span>
           </span>
-          <a href="#/verify" style={{ color: 'var(--text-secondary)', textDecoration: 'none' }}>
+          <a href="#/verify" style={{ color: 'var(--cyan-primary)', textDecoration: 'none' }}>
             Verify Document
           </a>
         </div>

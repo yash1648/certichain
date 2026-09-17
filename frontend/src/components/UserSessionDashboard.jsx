@@ -115,7 +115,7 @@ export function UserSessionDashboard() {
               onClick={handleManualRefresh}
               disabled={refreshing}
               className="btn btn-outline"
-              title="Sends POST /api/auth/refresh with httpOnly cookie to rotate refresh token"
+              title="Rotate session credentials and renew token"
               style={{ padding: '8px 16px', fontSize: '0.85rem' }}
             >
               <RefreshCw size={15} className={refreshing ? 'animate-spin' : ''} />
@@ -125,7 +125,7 @@ export function UserSessionDashboard() {
             <button
               onClick={logout}
               className="btn btn-danger"
-              title="Calls POST /api/auth/logout to revoke refresh token and clear cookie"
+              title="Sign out and terminate active session"
               style={{ padding: '8px 16px', fontSize: '0.85rem' }}
             >
               <LogOut size={15} />
@@ -178,7 +178,7 @@ export function UserSessionDashboard() {
 
           <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
             <p>
-              🔒 <strong>Refresh Token Rotation:</strong> When <code>/api/auth/refresh</code> is called, the current refresh token is immediately revoked, marked with <code>replaced_by</code>, and a brand new token is issued to prevent replay attacks.
+              🔒 <strong>Refresh Token Rotation:</strong> Whenever the session is refreshed, the active token is cryptographically renewed to prevent replay attacks and safeguard your credentials.
             </p>
           </div>
         </div>
@@ -287,83 +287,6 @@ export function UserSessionDashboard() {
           </code>
         </div>
       </div>
-
-      {/* Systematic Backend Endpoints Architecture Reference */}
-      <div className="glass-panel" style={{ padding: '22px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-          <Server size={18} color="var(--cyan-primary)" />
-          <h3 className="font-display" style={{ fontSize: '1.05rem', fontWeight: 600 }}>
-            Active Backend Endpoints (Systematic Integration Status)
-          </h3>
-        </div>
-
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-          gap: '12px'
-        }}>
-          <div style={{
-            background: 'rgba(0, 0, 0, 0.25)',
-            border: '1px solid var(--border-subtle)',
-            borderRadius: 'var(--radius-md)',
-            padding: '12px'
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-              <span className="badge badge-emerald" style={{ fontSize: '0.68rem' }}>POST</span>
-              <code className="font-mono" style={{ fontSize: '0.8rem', color: '#f8fafc' }}>/api/auth/register</code>
-            </div>
-            <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-              Registers new user in PostgreSQL with BCrypt password hash and assigns HOLDER role.
-            </p>
-          </div>
-
-          <div style={{
-            background: 'rgba(0, 0, 0, 0.25)',
-            border: '1px solid var(--border-subtle)',
-            borderRadius: 'var(--radius-md)',
-            padding: '12px'
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-              <span className="badge badge-cyan" style={{ fontSize: '0.68rem' }}>POST</span>
-              <code className="font-mono" style={{ fontSize: '0.8rem', color: '#f8fafc' }}>/api/auth/login</code>
-            </div>
-            <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-              Authenticates credentials, returns 60-min JWT access token, and sets httpOnly refresh cookie.
-            </p>
-          </div>
-
-          <div style={{
-            background: 'rgba(0, 0, 0, 0.25)',
-            border: '1px solid var(--border-subtle)',
-            borderRadius: 'var(--radius-md)',
-            padding: '12px'
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-              <span className="badge badge-purple" style={{ fontSize: '0.68rem' }}>POST</span>
-              <code className="font-mono" style={{ fontSize: '0.8rem', color: '#f8fafc' }}>/api/auth/refresh</code>
-            </div>
-            <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-              Verifies refresh token cookie, rotates token family with replaced_by link, and issues fresh JWT.
-            </p>
-          </div>
-
-          <div style={{
-            background: 'rgba(0, 0, 0, 0.25)',
-            border: '1px solid var(--border-subtle)',
-            borderRadius: 'var(--radius-md)',
-            padding: '12px'
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-              <span className="badge badge-amber" style={{ fontSize: '0.68rem' }}>POST</span>
-              <code className="font-mono" style={{ fontSize: '0.8rem', color: '#f8fafc' }}>/api/auth/logout</code>
-            </div>
-            <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-              Revokes refresh token in database (sets revoked_at timestamp) and clears the cookie.
-            </p>
-          </div>
-        </div>
-      </div>
-
     </div>
   );
 }

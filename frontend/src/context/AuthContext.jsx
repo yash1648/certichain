@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
-import { authService, AuthApiError } from '../services/authService';
+import { authService } from '../services/authService';
 
 const AuthContext = createContext(null);
 
@@ -34,6 +34,7 @@ export function AuthProvider({ children }) {
   const [lastActionStatus, setLastActionStatus] = useState(null);
 
   const refreshTimeoutRef = useRef(null);
+  const refreshSessionRef = useRef(null);
 
   // Ping backend status
   const checkBackendStatus = useCallback(async () => {
@@ -77,7 +78,7 @@ export function AuthProvider({ children }) {
     const timeUntilRefresh = Math.max(10000, (expiresInSeconds - 60) * 1000);
     refreshTimeoutRef.current = setTimeout(() => {
       console.log('CertiChain: Triggering automatic silent refresh rotation...');
-      refreshSession(true);
+      refreshSessionRef.current?.(true);
     }, timeUntilRefresh);
   }, []);
 
@@ -89,7 +90,7 @@ export function AuthProvider({ children }) {
     if (refreshTimeoutRef.current) clearTimeout(refreshTimeoutRef.current);
     try {
       localStorage.removeItem(STORAGE_KEY);
-    } catch (e) {
+    } catch {
       // ignore
     }
   }, []);
@@ -121,6 +122,10 @@ export function AuthProvider({ children }) {
     }
   }, [handleAuthSuccess, clearAuthState]);
 
+  useEffect(() => {
+    refreshSessionRef.current = refreshSession;
+  }, [refreshSession]);
+
   // Login handler
   const login = async ({ email, password }) => {
     try {
@@ -141,12 +146,12 @@ export function AuthProvider({ children }) {
   };
 
   // Register handler
-  const register = async ({ email, password, fullName }) => {
+  const register = async ({ email, password, fullName, role = 'HOLDER' }) => {
     try {
-      const user = await authService.register({ email, password, fullName });
+      const user = await authService.register({ email, password, fullName, role });
       setLastActionStatus({
         type: 'success',
-        message: `Account created for ${user.fullName}! You can now sign in.`,
+        message: `Account created for ${user.fullName} (${user.role})! You can now sign in.`,
       });
       return user;
     } catch (err) {
@@ -156,6 +161,48 @@ export function AuthProvider({ children }) {
       });
       throw err;
     }
+  };
+
+  // Instant Demo Authentication for Admin, Institution & Holder
+  const loginDemoUser = ({ role = 'HOLDER', email, fullName }) => {
+    const normalizedRole = String(role || 'HOLDER').toUpperCase();
+    const defaultData = {
+      ADMIN: {
+        userId: '00000000-0000-0000-0000-000000000001',
+        email: email || 'admin@certichain.org',
+        fullName: fullName || 'System Administrator',
+        role: 'ADMIN',
+      },
+      ISSUER: {
+        userId: '00000000-0000-0000-0000-000000000002',
+        email: email || 'registrar@mit.edu',
+        fullName: fullName || 'Massachusetts Institute of Technology',
+        role: 'ISSUER',
+      },
+      HOLDER: {
+        userId: '00000000-0000-0000-0000-000000000003',
+        email: email || 'alex.mercer@alumni.org',
+        fullName: fullName || 'Alex Mercer',
+        role: 'HOLDER',
+      }
+    };
+
+    const target = defaultData[normalizedRole] || defaultData.HOLDER;
+    const demoPayload = {
+      accessToken: `demo_jwt_${target.role.toLowerCase()}_${Date.now()}`,
+      expiresInSeconds: 86400,
+      userId: target.userId,
+      email: target.email,
+      fullName: target.fullName,
+      role: target.role
+    };
+
+    handleAuthSuccess(demoPayload);
+    setLastActionStatus({
+      type: 'success',
+      message: `Signed in as Demo ${target.role} (${target.fullName})!`,
+    });
+    return demoPayload;
   };
 
   // Logout handler
@@ -239,6 +286,7 @@ export function AuthProvider({ children }) {
         lastActionStatus,
         login,
         register,
+        loginDemoUser,
         refreshSession,
         logout,
         checkBackendStatus,

@@ -4,12 +4,10 @@ import {
   Users, 
   Building2, 
   CheckCircle2, 
-  AlertCircle, 
   Search, 
   RefreshCw, 
   History, 
   Clock, 
-  ShieldCheck, 
   Check, 
   Filter
 } from 'lucide-react';
@@ -158,7 +156,7 @@ export function AdminConsoleView() {
           paddingTop: '20px',
           borderTop: '1px solid var(--border-subtle)',
         }}>
-          <div style={{ background: '#f8fafc', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-md)', padding: '14px 16px' }}>
+          <div style={{ background: 'var(--bg-card-hover)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-md)', padding: '14px 16px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-muted)', fontSize: '12px', marginBottom: '4px' }}>
               <Users size={14} color="var(--cyan-primary)" />
               <span>Registered Users</span>
@@ -168,7 +166,7 @@ export function AdminConsoleView() {
             </div>
           </div>
 
-          <div style={{ background: '#f8fafc', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-md)', padding: '14px 16px' }}>
+          <div style={{ background: 'var(--bg-card-hover)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-md)', padding: '14px 16px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-muted)', fontSize: '12px', marginBottom: '4px' }}>
               <Building2 size={14} color="#a78bfa" />
               <span>Registered Issuers</span>
@@ -179,7 +177,7 @@ export function AdminConsoleView() {
           </div>
 
           <div style={{
-            background: '#f8fafc',
+            background: 'var(--bg-card-hover)',
             border: pendingApprovalsCount > 0 ? '1px solid rgba(217, 119, 6, 0.4)' : '1px solid var(--border-subtle)',
             borderRadius: 'var(--radius-md)',
             padding: '14px 16px',
@@ -197,7 +195,7 @@ export function AdminConsoleView() {
             </div>
           </div>
 
-          <div style={{ background: '#f8fafc', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-md)', padding: '14px 16px' }}>
+          <div style={{ background: 'var(--bg-card-hover)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-md)', padding: '14px 16px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-muted)', fontSize: '12px', marginBottom: '4px' }}>
               <History size={14} color="var(--cyan-primary)" />
               <span>Global Audits</span>

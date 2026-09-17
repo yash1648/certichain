@@ -56,9 +56,9 @@ async function handleResponse(response) {
 export const authService = {
   /**
    * Register a new user
-   * @param {Object} payload { email, password, fullName }
+   * @param {Object} payload { email, password, fullName, role }
    */
-  async register({ email, password, fullName }) {
+  async register({ email, password, fullName, role = 'HOLDER' }) {
     const response = await fetch(`${API_BASE}/register`, {
       method: 'POST',
       headers: {
@@ -68,6 +68,7 @@ export const authService = {
         email: email.trim().toLowerCase(),
         password,
         fullName: fullName.trim(),
+        role: role.toUpperCase(),
       }),
     });
     return handleResponse(response);
