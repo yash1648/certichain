@@ -38,27 +38,26 @@ function LoginGate({ children, requiredRole = null }) {
       <main className="main-content">
         <div className="glass-panel" style={{ maxWidth: '460px', margin: '48px auto', padding: '36px 32px', textAlign: 'center', borderRadius: 'var(--radius-lg)' }}>
           <div style={{
-            width: '56px',
-            height: '56px',
-            borderRadius: '16px',
-            backgroundColor: 'rgba(0, 240, 255, 0.1)',
-            border: '1px solid var(--border-accent)',
-            color: 'var(--cyan-primary)',
+            width: '48px',
+            height: '48px',
+            borderRadius: '12px',
+            backgroundColor: '#eff6ff',
+            border: '1px solid #bfdbfe',
+            color: '#1d4ed8',
             display: 'inline-flex',
             alignItems: 'center',
             justifyContent: 'center',
             marginBottom: '16px',
-            boxShadow: '0 0 20px rgba(0, 240, 255, 0.25)'
           }}>
-            <Lock size={28} />
+            <Lock size={24} />
           </div>
-          <h2 className="font-display" style={{ fontSize: '1.45rem', fontWeight: 700, marginBottom: '8px' }}>
+          <h2 className="font-display" style={{ fontSize: '1.4rem', fontWeight: 700, color: '#0f172a', marginBottom: '8px' }}>
             Authentication Required
           </h2>
-          <p style={{ fontSize: '14px', color: 'var(--text-secondary)', marginBottom: '24px', lineHeight: 1.5 }}>
+          <p style={{ fontSize: '14px', color: '#475569', marginBottom: '24px', lineHeight: 1.5 }}>
             Please sign in to access your secure credential workspace.
           </p>
-          <a className="btn btn-primary" href="#/login" style={{ textDecoration: 'none', padding: '12px 24px' }}>
+          <a className="btn btn-primary" href="#/login" style={{ textDecoration: 'none', padding: '10px 22px' }}>
             <LogIn size={16} />
             <span>Sign In to CertiChain</span>
           </a>
@@ -137,15 +136,15 @@ function LoginPage() {
 function Footer() {
   return (
     <footer style={{
-      borderTop: '1px solid var(--border-subtle)',
+      borderTop: '1px solid #e2e8f0',
       padding: '24px',
-      backgroundColor: 'rgba(2, 4, 10, 0.95)',
+      backgroundColor: '#ffffff',
       fontSize: '13px',
-      color: 'var(--text-muted)',
+      color: '#64748b',
       marginTop: 'auto'
     }}>
       <div style={{
-        maxWidth: '1200px',
+        maxWidth: '1240px',
         margin: '0 auto',
         display: 'flex',
         alignItems: 'center',
@@ -154,21 +153,21 @@ function Footer() {
         gap: '16px',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <ShieldCheck size={18} color="var(--cyan-primary)" />
-          <span style={{ fontWeight: 600, color: '#ffffff' }}>CertiChain</span>
+          <ShieldCheck size={18} color="#1d4ed8" />
+          <span style={{ fontWeight: 600, color: '#0f172a' }}>CertiChain</span>
           <span>&copy; 2026 · Verifiable Digital Credentials</span>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '20px', flexWrap: 'wrap' }}>
           <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <Lock size={14} color="var(--cyan-primary)" />
+            <Lock size={14} color="#1d4ed8" />
             <span>Ed25519 Cryptography</span>
           </span>
           <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <ShieldCheck size={14} color="var(--emerald-primary)" />
+            <ShieldCheck size={14} color="#15803d" />
             <span>Ethereum Blockchain Ledger</span>
           </span>
-          <a href="#/verify" style={{ color: 'var(--cyan-primary)', textDecoration: 'none' }}>
+          <a href="#/verify" style={{ color: '#1d4ed8', textDecoration: 'none', fontWeight: 500 }}>
             Verify Document
           </a>
         </div>

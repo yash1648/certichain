@@ -7,13 +7,13 @@ import {
   Building2, 
   ShieldAlert, 
   User, 
-  LogIn 
+  LogIn
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { Badge } from './common/Badge';
 
 export function Header() {
-  const { user, logout } = useAuth();
+  const { user, logout, backendOnline } = useAuth();
   const route = window.location.hash.replace(/^#/, '') || '/';
 
   const navLink = (href, label, Icon, active) => (
@@ -24,17 +24,16 @@ export function Header() {
       style={{
         display: 'inline-flex',
         alignItems: 'center',
-        gap: '6px',
+        gap: '7px',
         fontSize: '13.5px',
-        fontWeight: active ? 700 : 500,
-        color: active ? 'var(--cyan-primary)' : 'var(--text-secondary)',
-        padding: '6px 12px',
+        fontWeight: active ? 600 : 500,
+        color: active ? '#1d4ed8' : '#475569',
+        padding: '7px 13px',
         borderRadius: 'var(--radius-sm)',
         textDecoration: 'none',
-        background: active ? 'rgba(0, 240, 255, 0.1)' : 'transparent',
-        border: active ? '1px solid rgba(0, 240, 255, 0.3)' : '1px solid transparent',
-        boxShadow: active ? '0 0 12px rgba(0, 240, 255, 0.18)' : 'none',
-        transition: 'all 0.2s ease',
+        background: active ? '#eff6ff' : 'transparent',
+        border: active ? '1px solid #bfdbfe' : '1px solid transparent',
+        transition: 'all 0.15s ease',
       }}
     >
       <Icon size={16} />
@@ -48,62 +47,61 @@ export function Header() {
 
   return (
     <header style={{
-      borderBottom: '1px solid var(--border-subtle)',
-      backgroundColor: 'rgba(2, 4, 10, 0.88)',
-      backdropFilter: 'blur(20px)',
-      WebkitBackdropFilter: 'blur(20px)',
+      borderBottom: '1px solid #e2e8f0',
+      backgroundColor: '#ffffff',
       position: 'sticky',
       top: 0,
       zIndex: 50,
       padding: '12px 24px',
+      boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)'
     }}>
       <div style={{
-        maxWidth: '1200px',
+        maxWidth: '1240px',
         margin: '0 auto',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
         flexWrap: 'wrap',
-        gap: '14px',
+        gap: '16px',
       }}>
         {/* Brand */}
         <a href="#/" style={{ display: 'flex', alignItems: 'center', gap: '12px', textDecoration: 'none' }}>
           <div style={{
-            width: '38px',
-            height: '38px',
-            borderRadius: '10px',
-            background: 'radial-gradient(circle, #00f0ff 0%, #0369a1 100%)',
+            width: '36px',
+            height: '36px',
+            borderRadius: '8px',
+            background: '#1d4ed8',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            color: '#02040a',
-            boxShadow: '0 0 16px rgba(0, 240, 255, 0.45)',
+            color: '#ffffff',
+            boxShadow: '0 1px 3px rgba(29, 78, 216, 0.3)',
           }}>
-            <ShieldCheck size={22} strokeWidth={2.5} />
+            <ShieldCheck size={22} strokeWidth={2.4} />
           </div>
 
           <div>
-            <div className="font-display" style={{ fontSize: '1.25rem', fontWeight: 800, letterSpacing: '-0.02em', color: '#ffffff' }}>
-              Certi<span style={{ color: 'var(--cyan-primary)', textShadow: '0 0 12px rgba(0, 240, 255, 0.4)' }}>Chain</span>
+            <div className="font-display" style={{ fontSize: '1.25rem', fontWeight: 800, letterSpacing: '-0.02em', color: '#0f172a' }}>
+              Certi<span style={{ color: '#1d4ed8' }}>Chain</span>
             </div>
-            <p style={{ fontSize: '10.5px', color: 'var(--text-muted)', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
-              Verifiable Credentials
+            <p style={{ fontSize: '10.5px', color: '#64748b', letterSpacing: '0.04em', textTransform: 'uppercase', fontWeight: 600 }}>
+              Verifiable Credential Registry
             </p>
           </div>
         </a>
 
-        {/* Center Role-Aware Navigation */}
+        {/* Center Navigation */}
         <nav style={{ display: 'flex', alignItems: 'center', gap: '4px', flexWrap: 'wrap' }}>
-          {navLink('#/', 'Home', ShieldCheck, route === '/')}
+          {navLink('#/', 'Overview', ShieldCheck, route === '/')}
           
           {/* Holder / Student Navigation */}
           {user && (isHolder || isAdmin) && (
-            navLink('#/wallet', 'My Certificates', Award, route === '/wallet')
+            navLink('#/wallet', 'Credential Wallet', Award, route === '/wallet')
           )}
 
           {/* Issuer Navigation */}
           {user && (isIssuer || isAdmin) && (
-            navLink('#/issuer', 'Credential Studio', Building2, route === '/issuer')
+            navLink('#/issuer', 'Issuer Studio', Building2, route === '/issuer')
           )}
 
           {/* Admin Navigation */}
@@ -112,35 +110,48 @@ export function Header() {
           )}
 
           {/* Public Verification */}
-          {navLink('#/verify', 'Verify Certificate', FileCheck, route === '/verify')}
+          {navLink('#/verify', 'Verify Credential', FileCheck, route === '/verify')}
 
           {/* Account Profile */}
           {user && (
-            navLink('#/account', 'My Account', User, route === '/account')
+            navLink('#/account', 'Settings', User, route === '/account')
           )}
         </nav>
 
-        {/* Right Side: Account or Sign In */}
+        {/* Right Side: Status & Account or Sign In */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
           {user ? (
-            <>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <a
                 href="#/account"
                 style={{
                   display: 'flex',
                   alignItems: 'center',
                   gap: '8px',
-                  padding: '6px 14px',
+                  padding: '5px 12px',
                   borderRadius: 'var(--radius-pill)',
-                  backgroundColor: 'rgba(0, 240, 255, 0.08)',
-                  border: '1px solid var(--border-accent)',
+                  backgroundColor: '#f8fafc',
+                  border: '1px solid #e2e8f0',
                   textDecoration: 'none',
                   color: 'inherit',
-                  transition: 'background 0.2s ease',
-                  boxShadow: '0 0 12px rgba(0, 240, 255, 0.15)'
+                  transition: 'background 0.15s ease',
                 }}
               >
-                <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>
+                <div style={{
+                  width: '24px',
+                  height: '24px',
+                  borderRadius: '50%',
+                  backgroundColor: '#1d4ed8',
+                  color: '#ffffff',
+                  fontSize: '12px',
+                  fontWeight: 700,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}>
+                  {user.fullName ? user.fullName[0].toUpperCase() : 'U'}
+                </div>
+                <span style={{ fontSize: '13px', fontWeight: 600, color: '#0f172a' }}>
                   {user.fullName}
                 </span>
                 <Badge status={user.role} />
@@ -151,24 +162,19 @@ export function Header() {
                 onClick={logout}
                 className="btn btn-sm btn-outline"
                 title="Sign out of CertiChain"
+                style={{ padding: '6px 10px' }}
               >
-                <LogOut size={13} />
-                <span>Sign Out</span>
+                <LogOut size={14} />
               </button>
-            </>
+            </div>
           ) : (
             <a 
               className="btn btn-sm btn-primary" 
               href="#/login" 
-              style={{ 
-                textDecoration: 'none',
-                letterSpacing: '0.04em',
-                fontWeight: 700,
-                padding: '7px 16px'
-              }}
+              style={{ textDecoration: 'none', padding: '7px 16px' }}
             >
-              <LogIn size={14} />
-              <span>SIGN IN •</span>
+              <LogIn size={15} />
+              <span>Sign In</span>
             </a>
           )}
         </div>

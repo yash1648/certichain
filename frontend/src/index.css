@@ -1,37 +1,40 @@
 :root {
-  /* Surface & Background - Deep Obsidian & Cyber Dark */
-  --bg-dark: #02040a;
-  --bg-card: #070d18;
-  --bg-card-hover: #0c1628;
-  --bg-card-elevated: #0a1222;
-  --bg-input: #040812;
-  --border-subtle: rgba(0, 240, 255, 0.12);
-  --border-accent: rgba(0, 240, 255, 0.45);
-  --border-purple: rgba(168, 85, 247, 0.35);
-  --border-emerald: rgba(16, 185, 129, 0.35);
-  --border-amber: rgba(245, 158, 11, 0.35);
-  --border-rose: rgba(244, 63, 94, 0.35);
+  /* Clean Professional Enterprise Palette - High Contrast & Simple Neutrals */
+  --bg-dark: #f8fafc;
+  --bg-surface: #ffffff;
+  --bg-card: #ffffff;
+  --bg-card-hover: #f1f5f9;
+  --bg-card-elevated: #ffffff;
+  --bg-input: #ffffff;
 
-  /* Workspace Semantic Colors - Vibrant Electric Cyan Primary */
-  --cyan-primary: #00f0ff;
-  --cyan-glow: rgba(0, 240, 255, 0.35);
-  --purple-primary: #a855f7;
-  --purple-glow: rgba(168, 85, 247, 0.25);
-  --emerald-primary: #10b981;
-  --emerald-glow: rgba(16, 185, 129, 0.25);
-  --amber-primary: #f59e0b;
-  --amber-glow: rgba(245, 158, 11, 0.25);
-  --rose-primary: #f43f5e;
-  --rose-glow: rgba(244, 63, 94, 0.25);
+  /* Subtle Crisp Neutral Borders */
+  --border-subtle: #e2e8f0;
+  --border-accent: #2563eb;
+  --border-hover: #94a3b8;
+  --border-blue: #bfdbfe;
+  --border-purple: #e9d5ff;
+  --border-emerald: #bbf7d0;
+  --border-amber: #fde68a;
+  --border-rose: #fecaca;
 
-  /* Typography */
-  --text-primary: #ffffff;
-  --text-secondary: #94a3b8;
+  /* Restrained Professional Accents */
+  --blue-primary: #1d4ed8;
+  --blue-hover: #1e40af;
+  --blue-glow: rgba(29, 78, 216, 0.15);
+  --cyan-primary: #0284c7;
+  --purple-primary: #7c3aed;
+  --emerald-primary: #16a34a;
+  --amber-primary: #d97706;
+  --rose-primary: #dc2626;
+
+  /* High-Contrast Typography */
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
   --text-muted: #64748b;
 
-  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --font-display: 'Outfit', sans-serif;
-  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+  --font-sans: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-display: 'Plus Jakarta Sans', 'Inter', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
 
   /* Spacing Scale */
   --space-1: 4px;
@@ -46,15 +49,18 @@
   /* Geometry */
   --radius-sm: 6px;
   --radius-md: 10px;
-  --radius-lg: 16px;
+  --radius-lg: 14px;
+  --radius-xl: 18px;
   --radius-pill: 9999px;
   --radius-full: 9999px;
 
-  /* Shadows & Focus */
-  --shadow-card: 0 4px 24px -2px rgba(0, 0, 0, 0.7), 0 0 0 1px var(--border-subtle);
-  --shadow-modal: 0 24px 60px rgba(0, 0, 0, 0.85), 0 0 0 1px var(--border-subtle), 0 0 40px -10px var(--cyan-glow);
-  --shadow-glow: 0 0 25px var(--cyan-glow);
-  --focus-ring: 0 0 0 3px rgba(0, 240, 255, 0.3);
+  /* Natural Clean Shadows */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-card: 0 1px 3px 0 rgba(0, 0, 0, 0.06), 0 1px 2px -1px rgba(0, 0, 0, 0.06);
+  --shadow-card-hover: 0 4px 12px -2px rgba(0, 0, 0, 0.08), 0 2px 6px -2px rgba(0, 0, 0, 0.04);
+  --shadow-modal: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  --shadow-glow: 0 0 0 1px #2563eb;
+  --focus-ring: 0 0 0 3px rgba(37, 99, 235, 0.18);
 }
 
 * {
@@ -71,37 +77,33 @@ body {
   line-height: 1.5;
   font-size: 15px;
   overflow-x: hidden;
-  background-image:
-    radial-gradient(circle 800px at 85% 15%, rgba(0, 240, 255, 0.08), transparent 60%),
-    radial-gradient(circle 600px at 15% 45%, rgba(14, 165, 233, 0.05), transparent 50%),
-    radial-gradient(circle 900px at 50% 100%, rgba(2, 6, 23, 0.9), transparent 70%);
-  background-attachment: fixed;
+  -webkit-font-smoothing: antialiased;
 }
 
-/* Subtle Scrollbar */
+/* Scrollbar */
 ::-webkit-scrollbar {
-  width: 7px;
-  height: 7px;
+  width: 8px;
+  height: 8px;
 }
 ::-webkit-scrollbar-track {
-  background: var(--bg-dark);
+  background: #f1f5f9;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(0, 240, 255, 0.2);
+  background: #cbd5e1;
   border-radius: var(--radius-pill);
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--cyan-primary);
+  background: #94a3b8;
 }
 
 a {
-  color: var(--cyan-primary);
+  color: var(--blue-primary);
   text-decoration: none;
-  transition: all 0.2s ease;
+  transition: color 0.15s ease;
 }
 a:hover {
+  color: var(--blue-hover);
   text-decoration: underline;
-  filter: drop-shadow(0 0 8px var(--cyan-glow));
 }
 
 /* Typography Helpers */
@@ -120,16 +122,16 @@ a:hover {
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-card);
-  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .glass-panel:hover {
-  border-color: rgba(0, 240, 255, 0.25);
+  border-color: #cbd5e1;
 }
 
 .glass-panel-glow {
-  border-color: var(--border-accent);
-  box-shadow: var(--shadow-card), var(--shadow-glow);
+  border-color: #bfdbfe;
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.1);
 }
 
 /* Buttons */
@@ -138,13 +140,13 @@ a:hover {
   align-items: center;
   justify-content: center;
   gap: var(--space-2);
-  padding: 10px 18px;
+  padding: 9px 16px;
   border-radius: var(--radius-sm);
   font-family: var(--font-sans);
-  font-size: 0.925rem;
+  font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.15s ease;
   border: 1px solid transparent;
   outline: none;
   white-space: nowrap;
@@ -155,75 +157,68 @@ a:hover {
 }
 
 .btn:disabled {
-  opacity: 0.45;
+  opacity: 0.55;
   cursor: not-allowed;
   pointer-events: none;
 }
 
 .btn-sm {
   padding: 6px 12px;
-  font-size: 0.8rem;
+  font-size: 0.825rem;
   border-radius: var(--radius-sm);
 }
 
-/* Iconic Electric Cyan Primary Button matching the uploaded design */
+/* Professional Solid Blue Primary Button */
 .btn-primary {
-  background: var(--cyan-primary);
-  color: #02040a;
-  font-weight: 700;
-  box-shadow: 0 0 20px rgba(0, 240, 255, 0.35);
-  border: 1px solid transparent;
+  background: #1d4ed8;
+  color: #ffffff;
+  border: 1px solid #1e40af;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 .btn-primary:hover:not(:disabled) {
-  background: #38bdf8;
-  box-shadow: 0 0 30px rgba(0, 240, 255, 0.6);
-  transform: translateY(-1px);
+  background: #1e40af;
+  border-color: #1e3a8a;
+  text-decoration: none;
 }
 
 .btn-secondary, .btn-outline {
-  background: rgba(10, 19, 34, 0.7);
-  color: #ffffff;
-  border: 1px solid rgba(0, 240, 255, 0.25);
+  background: #ffffff;
+  color: #0f172a;
+  border: 1px solid #cbd5e1;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 .btn-secondary:hover:not(:disabled), .btn-outline:hover:not(:disabled) {
-  background: rgba(0, 240, 255, 0.12);
-  border-color: var(--cyan-primary);
-  color: var(--cyan-primary);
-  box-shadow: 0 0 15px rgba(0, 240, 255, 0.2);
+  background: #f8fafc;
+  border-color: #94a3b8;
+  text-decoration: none;
 }
 
 .btn-danger {
-  background: rgba(244, 63, 94, 0.12);
-  color: var(--rose-primary);
-  border: 1px solid rgba(244, 63, 94, 0.35);
+  background: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
 }
 .btn-danger:hover:not(:disabled) {
-  background: rgba(244, 63, 94, 0.22);
-  border-color: var(--rose-primary);
-  box-shadow: 0 0 15px rgba(244, 63, 94, 0.25);
+  background: #fecaca;
+  color: #7f1d1d;
 }
 
 .btn-emerald {
-  background: var(--emerald-primary);
-  color: #02040a;
-  font-weight: 700;
-  box-shadow: 0 0 20px rgba(16, 185, 129, 0.35);
+  background: #16a34a;
+  color: #ffffff;
+  border: 1px solid #15803d;
 }
 .btn-emerald:hover:not(:disabled) {
-  background: #34d399;
-  box-shadow: 0 0 25px rgba(16, 185, 129, 0.5);
-  transform: translateY(-1px);
+  background: #15803d;
 }
 
 .btn-purple {
-  background: var(--purple-primary);
+  background: #7c3aed;
   color: #ffffff;
-  box-shadow: 0 0 20px rgba(168, 85, 247, 0.35);
+  border: 1px solid #6d28d9;
 }
 .btn-purple:hover:not(:disabled) {
-  background: #c084fc;
-  box-shadow: 0 0 25px rgba(168, 85, 247, 0.5);
-  transform: translateY(-1px);
+  background: #6d28d9;
 }
 
 /* Forms & Inputs */
@@ -236,8 +231,8 @@ a:hover {
 
 .form-label {
   font-size: 13px;
-  font-weight: 500;
-  color: var(--text-secondary);
+  font-weight: 600;
+  color: #334155;
 }
 
 .form-helper {
@@ -252,34 +247,34 @@ a:hover {
 
 .input-field, .select-field, .textarea-field {
   width: 100%;
-  padding: 10px 12px;
-  background: var(--bg-input);
-  border: 1px solid rgba(0, 240, 255, 0.16);
+  padding: 9px 12px;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
   border-radius: var(--radius-sm);
-  color: var(--text-primary);
+  color: #0f172a;
   font-family: var(--font-sans);
   font-size: 14px;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
   outline: none;
 }
 
 .input-field:focus, .select-field:focus, .textarea-field:focus {
-  border-color: var(--cyan-primary);
+  border-color: #2563eb;
   box-shadow: var(--focus-ring);
-  background: #070e1c;
 }
 
 .input-field::placeholder, .textarea-field::placeholder {
-  color: var(--text-muted);
+  color: #94a3b8;
 }
 
-/* Table */
+/* Tables */
 .table-container {
   width: 100%;
   overflow-x: auto;
   border-radius: var(--radius-md);
   border: 1px solid var(--border-subtle);
-  background: var(--bg-card);
+  background: #ffffff;
+  box-shadow: var(--shadow-card);
 }
 
 .table {
@@ -295,15 +290,15 @@ a:hover {
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: var(--text-muted);
-  background: #060c18;
+  color: #475569;
+  background: #f8fafc;
   border-bottom: 1px solid var(--border-subtle);
 }
 
 .table td {
   padding: 14px 16px;
-  border-bottom: 1px solid rgba(0, 240, 255, 0.06);
-  color: var(--text-secondary);
+  border-bottom: 1px solid #f1f5f9;
+  color: #334155;
   vertical-align: middle;
 }
 
@@ -312,19 +307,18 @@ a:hover {
 }
 
 .table tr:hover td {
-  background: rgba(0, 240, 255, 0.03);
+  background: #f8fafc;
 }
 
-/* Badges */
+/* Clean Badges */
 .badge {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 3px 10px;
+  padding: 3px 9px;
   border-radius: var(--radius-pill);
   font-size: 12px;
   font-weight: 600;
-  letter-spacing: 0.02em;
   white-space: nowrap;
 }
 
@@ -335,62 +329,57 @@ a:hover {
 }
 
 .badge-emerald {
-  background: rgba(16, 185, 129, 0.12);
-  color: #34d399;
-  border: 1px solid rgba(16, 185, 129, 0.35);
+  background: #f0fdf4;
+  color: #15803d;
+  border: 1px solid #bbf7d0;
 }
 .badge-emerald .badge-dot {
-  background: #34d399;
-  box-shadow: 0 0 6px #10b981;
+  background: #16a34a;
 }
 
-.badge-cyan {
-  background: rgba(0, 240, 255, 0.12);
-  color: var(--cyan-primary);
-  border: 1px solid rgba(0, 240, 255, 0.35);
+.badge-cyan, .badge-blue {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
 }
-.badge-cyan .badge-dot {
-  background: var(--cyan-primary);
-  box-shadow: 0 0 8px var(--cyan-primary);
+.badge-cyan .badge-dot, .badge-blue .badge-dot {
+  background: #2563eb;
 }
 
 .badge-purple {
-  background: rgba(168, 85, 247, 0.12);
-  color: #c084fc;
-  border: 1px solid rgba(168, 85, 247, 0.35);
+  background: #faf5ff;
+  color: #6b21a8;
+  border: 1px solid #e9d5ff;
 }
 .badge-purple .badge-dot {
-  background: #c084fc;
-  box-shadow: 0 0 6px #a855f7;
+  background: #7c3aed;
 }
 
 .badge-amber {
-  background: rgba(245, 158, 11, 0.12);
-  color: #fbbf24;
-  border: 1px solid rgba(245, 158, 11, 0.35);
+  background: #fffbeb;
+  color: #b45309;
+  border: 1px solid #fde68a;
 }
 .badge-amber .badge-dot {
-  background: #fbbf24;
-  box-shadow: 0 0 6px #f59e0b;
+  background: #d97706;
 }
 
 .badge-rose {
-  background: rgba(244, 63, 94, 0.12);
-  color: #fb7185;
-  border: 1px solid rgba(244, 63, 94, 0.35);
+  background: #fef2f2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
 }
 .badge-rose .badge-dot {
-  background: #fb7185;
-  box-shadow: 0 0 6px #f43f5e;
+  background: #dc2626;
 }
 
 .badge-muted {
-  background: rgba(255, 255, 255, 0.05);
-  color: var(--text-muted);
-  border: 1px solid var(--border-subtle);
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid #e2e8f0;
 }
 .badge-muted .badge-dot {
-  background: var(--text-muted);
+  background: #64748b;
 }
 
 /* Animations */
@@ -400,131 +389,95 @@ a:hover {
 }
 
 .spinner {
-  width: 16px;
-  height: 16px;
-  border: 2px solid rgba(0, 240, 255, 0.2);
-  border-top-color: var(--cyan-primary);
+  width: 18px;
+  height: 18px;
+  border: 2px solid #e2e8f0;
+  border-top-color: #1d4ed8;
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(6px); }
+  from { opacity: 0; transform: translateY(4px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
 .animate-fade-in {
-  animation: fadeIn 0.25s ease-out forwards;
+  animation: fadeIn 0.2s ease-out forwards;
 }
 
-/* ==========================================================================
-   Photo-Inspired Cyber Aesthetics & Dynamic Orbits
-   ========================================================================== */
-
-/* Concentric Cyber Orbit Waves (Top right of photo) */
-.cyber-orbit-container {
-  position: absolute;
-  top: -40px;
-  right: -80px;
-  width: 600px;
-  height: 600px;
-  pointer-events: none;
-  z-index: 0;
-  overflow: hidden;
+/* Modern Enterprise Feature & Step Cards */
+.feature-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 20px;
 }
 
-.cyber-orbit-ring {
-  position: absolute;
-  border-radius: 50%;
-  border: 1px solid rgba(0, 240, 255, 0.18);
-  box-shadow: inset 0 0 15px rgba(0, 240, 255, 0.05);
-  transition: all 0.5s ease;
-}
-
-.cyber-orbit-ring.active-arc {
-  border-right-color: #00f0ff;
-  border-top-color: #00f0ff;
-  border-right-width: 3px;
-  border-top-width: 2px;
-  box-shadow: 0 0 20px rgba(0, 240, 255, 0.35);
-}
-
-.cyber-orbit-node {
-  position: absolute;
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  background: #030712;
-  border: 1px solid rgba(0, 240, 255, 0.5);
-  color: #00f0ff;
-  font-size: 13px;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 0 12px rgba(0, 240, 255, 0.4);
-}
-
-/* Cyber List Items / Accordion (As in the photo) */
-.cyber-accordion-item {
-  padding: 18px 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  cursor: pointer;
+.feature-card {
+  background: #ffffff;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 24px;
+  box-shadow: var(--shadow-card);
   transition: all 0.2s ease;
 }
 
-.cyber-accordion-item:hover {
-  border-bottom-color: rgba(0, 240, 255, 0.35);
+.feature-card:hover {
+  border-color: #cbd5e1;
+  box-shadow: var(--shadow-card-hover);
 }
 
-.cyber-accordion-item.active {
-  border-bottom-color: var(--cyan-primary);
+.step-card {
+  background: #ffffff;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 24px;
+  box-shadow: var(--shadow-card);
+  transition: all 0.2s ease;
 }
 
-.cyber-accordion-item .item-title {
-  font-size: 1.05rem;
-  font-weight: 600;
-  color: #ffffff;
-  display: flex;
-  align-items: center;
-  gap: 10px;
+.step-card:hover {
+  border-color: #cbd5e1;
 }
 
-.cyber-accordion-item.active .item-title {
-  color: var(--cyan-primary);
-  text-shadow: 0 0 12px rgba(0, 240, 255, 0.4);
+.step-number {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: #1d4ed8;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  display: inline-block;
+  margin-bottom: 12px;
 }
 
-/* ==========================================================================
-   Certificate Diploma Styling (Print & Digital Preview)
-   ========================================================================== */
-
+/* Certificate Diploma Styling */
 .diploma-card {
-  background: var(--bg-card);
+  background: #ffffff;
   border-radius: var(--radius-lg);
   position: relative;
   overflow: hidden;
-  box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.7), 0 0 0 1px var(--border-subtle);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: var(--shadow-card);
+  border: 1px solid var(--border-subtle);
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
 .diploma-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 16px 45px -10px rgba(0, 240, 255, 0.2), 0 0 0 1px var(--border-accent);
+  box-shadow: var(--shadow-card-hover);
+  border-color: #cbd5e1;
 }
 
 .diploma-canvas {
-  background: linear-gradient(135deg, #070d18 0%, #030712 100%);
-  border: 8px solid #0e1b2f;
-  box-shadow: inset 0 0 0 2px rgba(0, 240, 255, 0.4), 0 15px 45px rgba(0, 0, 0, 0.8);
+  background: #ffffff;
+  border: 8px solid #0f172a;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
   border-radius: 6px;
   position: relative;
   padding: 48px 40px;
   text-align: center;
-  color: #ffffff;
+  color: #0f172a;
 }
 
 .diploma-canvas::before {
@@ -534,7 +487,7 @@ a:hover {
   left: 10px;
   right: 10px;
   bottom: 10px;
-  border: 1px solid rgba(0, 240, 255, 0.25);
+  border: 1px solid #cbd5e1;
   pointer-events: none;
 }
 
@@ -542,12 +495,12 @@ a:hover {
   width: 76px;
   height: 76px;
   border-radius: 50%;
-  background: radial-gradient(circle, #00f0ff 0%, #0284c7 100%);
-  color: #02040a;
+  background: #1d4ed8;
+  color: #ffffff;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 0 25px rgba(0, 240, 255, 0.5), inset 0 0 0 3px rgba(255, 255, 255, 0.6);
+  box-shadow: 0 4px 12px rgba(29, 78, 216, 0.25);
 }
 
 .font-diploma-serif {
@@ -558,10 +511,7 @@ a:hover {
   font-family: 'Cinzel', serif;
 }
 
-/* ==========================================================================
-   Guided Issuance Wizard Steps
-   ========================================================================== */
-
+/* Wizard Steps */
 .wizard-nav {
   display: flex;
   align-items: center;
@@ -579,51 +529,46 @@ a:hover {
   cursor: pointer;
   padding: 8px 12px;
   border-radius: var(--radius-sm);
-  transition: all 0.2s ease;
+  transition: all 0.15s ease;
 }
 
 .wizard-step-item.active .wizard-step-circle {
-  background: var(--cyan-primary);
-  color: #02040a;
-  box-shadow: 0 0 15px var(--cyan-glow);
+  background: #1d4ed8;
+  color: #ffffff;
+  border-color: #1e40af;
 }
 
 .wizard-step-item.completed .wizard-step-circle {
-  background: var(--emerald-primary);
-  color: #02040a;
-  box-shadow: 0 0 15px var(--emerald-glow);
+  background: #16a34a;
+  color: #ffffff;
+  border-color: #15803d;
 }
 
 .wizard-step-circle {
-  width: 32px;
-  height: 32px;
+  width: 30px;
+  height: 30px;
   border-radius: 50%;
-  background: #0d172a;
-  border: 1px solid var(--border-subtle);
-  color: var(--text-secondary);
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  color: #475569;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 700;
   font-size: 13px;
-  transition: all 0.2s ease;
 }
 
-/* ==========================================================================
-   Print Stylesheet for Certificates
-   ========================================================================== */
-
+/* Print Stylesheet */
 @media print {
   body {
     background: #ffffff !important;
-    background-image: none !important;
     color: #000000 !important;
   }
   header, footer, .no-print, button:not(.print-keep) {
     display: none !important;
   }
   .diploma-canvas {
-    border: 8px solid #000000 !important;
+    border: 6px solid #000000 !important;
     box-shadow: none !important;
     margin: 0 !important;
     padding: 30px !important;

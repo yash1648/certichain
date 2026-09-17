@@ -24,12 +24,12 @@ export function EmptyState({
         width: '56px',
         height: '56px',
         borderRadius: '16px',
-        backgroundColor: '#f8fafc',
-        border: '1px solid var(--border-subtle)',
+        backgroundColor: 'rgba(37, 99, 235, 0.12)',
+        border: '1px solid rgba(59, 130, 246, 0.3)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        color: 'var(--text-muted)',
+        color: '#60a5fa',
         marginBottom: '16px',
       }}>
         <Icon size={28} />

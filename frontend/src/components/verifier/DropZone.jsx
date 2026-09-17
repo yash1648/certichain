@@ -67,14 +67,13 @@ export function DropZone({ onFileSelected, loading = false, disabled = false }) 
         onDrop={handleDrop}
         onClick={() => !loading && !disabled && fileInputRef.current?.click()}
         style={{
-          border: `2px dashed ${isDragOver ? 'var(--cyan-primary)' : 'var(--border-accent)'}`,
+          border: `2px dashed ${isDragOver ? '#1d4ed8' : '#cbd5e1'}`,
           borderRadius: 'var(--radius-lg)',
-          backgroundColor: isDragOver ? 'rgba(0, 240, 255, 0.12)' : 'rgba(5, 10, 20, 0.75)',
-          padding: '40px 24px',
+          backgroundColor: isDragOver ? '#eff6ff' : '#f8fafc',
+          padding: '44px 24px',
           textAlign: 'center',
           cursor: disabled || loading ? 'not-allowed' : 'pointer',
-          transition: 'all 0.25s ease',
-          boxShadow: isDragOver ? '0 0 25px rgba(0, 240, 255, 0.35)' : 'none',
+          transition: 'all 0.15s ease',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
@@ -91,36 +90,36 @@ export function DropZone({ onFileSelected, loading = false, disabled = false }) 
         />
 
         <div style={{
-          width: '64px',
-          height: '64px',
-          borderRadius: '20px',
-          backgroundColor: 'rgba(0, 229, 255, 0.1)',
-          border: '1px solid var(--border-accent)',
+          width: '56px',
+          height: '56px',
+          borderRadius: '12px',
+          backgroundColor: '#eff6ff',
+          border: '1px solid #bfdbfe',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          color: 'var(--cyan-primary)',
+          color: '#1d4ed8',
           marginBottom: '16px',
         }}>
           {loading ? (
-            <span className="spinner" style={{ width: '28px', height: '28px', borderWidth: '3px' }} />
+            <span className="spinner" style={{ width: '24px', height: '24px', borderWidth: '3px' }} />
           ) : selectedFileName ? (
-            <FileCheck2 size={32} />
+            <FileCheck2 size={28} />
           ) : (
-            <UploadCloud size={32} />
+            <UploadCloud size={28} />
           )}
         </div>
 
-        <h3 className="font-display" style={{ fontSize: '1.25rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '8px' }}>
+        <h3 className="font-display" style={{ fontSize: '1.15rem', fontWeight: 700, color: '#0f172a', marginBottom: '8px' }}>
           {loading
-            ? 'Verifying credential on blockchain ledger...'
+            ? 'Verifying credential with cryptographic ledger...'
             : selectedFileName
             ? `Ready to verify: ${selectedFileName}`
-            : 'Drop certificate file here, or click to browse'}
+            : 'Drop certificate file here, or browse files'}
         </h3>
 
-        <p style={{ fontSize: '14px', color: 'var(--text-secondary)', maxWidth: '440px', lineHeight: 1.5, marginBottom: '16px' }}>
-          Select or drop the official <code className="font-mono" style={{ color: 'var(--cyan-primary)' }}>.json</code> credential document issued to the student.
+        <p style={{ fontSize: '14px', color: '#475569', maxWidth: '440px', lineHeight: 1.5, marginBottom: '18px' }}>
+          Upload an official <code className="font-mono" style={{ color: '#1d4ed8', fontWeight: 600 }}>.json</code> credential envelope for instant verification.
         </p>
 
         <Button
@@ -132,7 +131,7 @@ export function DropZone({ onFileSelected, loading = false, disabled = false }) 
             fileInputRef.current?.click();
           }}
         >
-          {selectedFileName ? 'Choose a Different File' : 'Browse Files'}
+          {selectedFileName ? 'Select Another File' : 'Browse Local Files'}
         </Button>
       </div>
 
@@ -141,9 +140,9 @@ export function DropZone({ onFileSelected, loading = false, disabled = false }) 
           marginTop: '12px',
           padding: '10px 14px',
           borderRadius: 'var(--radius-sm)',
-          backgroundColor: 'rgba(244, 63, 94, 0.1)',
-          border: '1px solid rgba(244, 63, 94, 0.3)',
-          color: 'var(--rose-primary)',
+          backgroundColor: '#fef2f2',
+          border: '1px solid #fecaca',
+          color: '#b91c1c',
           fontSize: '13px',
           display: 'flex',
           alignItems: 'center',
