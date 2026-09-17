@@ -13,7 +13,7 @@ import { useAuth } from '../context/AuthContext';
 import { Badge } from './common/Badge';
 
 export function Header() {
-  const { user, logout, backendOnline } = useAuth();
+  const { user, logout } = useAuth();
   const route = window.location.hash.replace(/^#/, '') || '/';
 
   const navLink = (href, label, Icon, active) => (

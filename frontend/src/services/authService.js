@@ -127,20 +127,4 @@ export const authService = {
     }
   },
 
-  /**
-   * Check connection to Spring Boot backend via OpenAPI endpoint
-   * GET /v3/api-docs
-   */
-  async checkBackendHealth() {
-    try {
-      const res = await fetch('/v3/api-docs', {
-        method: 'GET',
-        headers: { 'Accept': 'application/json' },
-        cache: 'no-cache',
-      });
-      return res.ok;
-    } catch {
-      return false;
-    }
-  },
 };
