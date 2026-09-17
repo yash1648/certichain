@@ -31,9 +31,9 @@ export function StatusAlert() {
     : 'var(--cyan-primary)';
 
   const textColor = isSuccess
-    ? '#34d399'
+    ? 'var(--emerald-primary)'
     : isError
-    ? '#fb7185'
+    ? 'var(--rose-primary)'
     : 'var(--cyan-primary)';
 
   const Icon = isSuccess ? CheckCircle2 : isError ? AlertCircle : Info;
@@ -58,7 +58,7 @@ export function StatusAlert() {
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
         <Icon size={18} color={textColor} style={{ flexShrink: 0 }} />
-        <span style={{ fontSize: '13.5px', color: '#f8fafc', fontWeight: 500 }}>
+        <span style={{ fontSize: '13.5px', color: 'var(--text-primary)', fontWeight: 500 }}>
           {lastActionStatus.message}
         </span>
       </div>

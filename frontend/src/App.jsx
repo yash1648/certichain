@@ -9,27 +9,80 @@ import { HolderWalletView } from './components/holder/HolderWalletView';
 import { PublicVerifierView } from './components/verifier/PublicVerifierView';
 import { VerificationHistoryView } from './components/verifier/VerificationHistoryView';
 import { AdminConsoleView } from './components/admin/AdminConsoleView';
-import { 
-  ShieldCheck, 
-  Cpu, 
-  HardDrive, 
-  Lock, 
-  Award, 
-  Key, 
-  Wallet, 
-  FileCheck, 
-  History,
+import { Landing } from './components/Landing';
+import {
   ShieldAlert,
+  Award,
+  Wallet,
+  FileCheck,
+  History,
+  Key,
   WifiOff,
-  Link2
+  Lock,
+  ShieldCheck,
+  ArrowRight,
+  LogIn
 } from 'lucide-react';
 import './App.css';
 
-function MainContent({ activeView }) {
+function useHashRoute() {
+  const [route, setRoute] = useState(() => window.location.hash.replace(/^#/, '') || '/');
+  useEffect(() => {
+    const onHashChange = () => setRoute(window.location.hash.replace(/^#/, '') || '/');
+    window.addEventListener('hashchange', onHashChange);
+    return () => window.removeEventListener('hashchange', onHashChange);
+  }, []);
+  const navigate = (path) => { window.location.hash = path; };
+  return [route, navigate];
+}
+
+function LoginGate({ children }) {
   const { user, loading } = useAuth();
+  if (loading) return <LoadingScreen />;
+  if (!user) {
+    return (
+      <main className="main-content">
+        <div className="glass-panel" style={{ maxWidth: '460px', margin: '48px auto', padding: '32px', textAlign: 'center' }}>
+          <Lock size={28} color="var(--cyan-primary)" style={{ marginBottom: '12px' }} />
+          <h2 className="font-display" style={{ fontSize: '1.4rem', fontWeight: 700, marginBottom: '8px' }}>
+            Sign in required
+          </h2>
+          <p style={{ fontSize: '14px', color: 'var(--text-secondary)', marginBottom: '20px' }}>
+            This area is available to authenticated users only.
+          </p>
+          <a className="btn btn-primary" href="#/login" style={{ textDecoration: 'none' }}>
+            <LogIn size={16} />
+            <span>Go to Sign In</span>
+          </a>
+        </div>
+      </main>
+    );
+  }
+  return children;
+}
+
+function LoadingScreen() {
+  return (
+    <div style={{
+      minHeight: '60vh',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: '16px',
+    }}>
+      <div className="spinner" style={{ width: '40px', height: '40px', borderWidth: '3px', borderTopColor: 'var(--cyan-primary)' }} />
+      <span style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>
+        Loading CertiChain...
+      </span>
+    </div>
+  );
+}
+
+function ConsoleWorkspace() {
+  const { user } = useAuth();
   const [currentTab, setCurrentTab] = useState(null);
 
-  // Set default tab based on role whenever user logs in or role changes
   useEffect(() => {
     if (user) {
       if (user.role === 'ADMIN') setCurrentTab('admin');
@@ -39,165 +92,126 @@ function MainContent({ activeView }) {
     }
   }, [user?.role]);
 
-  if (loading) {
-    return (
-      <div style={{
-        minHeight: '60vh',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: '16px',
-      }}>
-        <div className="spinner" style={{ width: '40px', height: '40px', borderWidth: '3px', borderTopColor: 'var(--cyan-primary)' }} />
-        <span style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>
-          Hydrating cryptographic session...
-        </span>
-      </div>
-    );
-  }
+  if (!user) return null;
 
-  // 1. If public verifier view is active
-  if (activeView === 'verifier') {
-    return (
-      <main className="main-content">
-        <StatusAlert />
-        <PublicVerifierView />
-      </main>
-    );
-  }
+  const isAdmin = user.role === 'ADMIN';
+  const isIssuer = user.role === 'ISSUER' || isAdmin;
+  const isHolder = user.role === 'HOLDER' || isAdmin;
 
-  // 2. If authenticated, render workspace navigation & active tab
-  if (user) {
-    const isAdmin = user.role === 'ADMIN';
-    const isIssuer = user.role === 'ISSUER' || isAdmin;
-    const isHolder = user.role === 'HOLDER' || isAdmin;
-
-    return (
-      <main className="main-content">
-        <StatusAlert />
-
-        {/* Role-Gated Workspace Tab Switcher */}
-        <nav className="workspace-nav-bar" aria-label="Workspace tabs">
-          {isAdmin && (
-            <button
-              type="button"
-              onClick={() => setCurrentTab('admin')}
-              className={`tab-btn ${currentTab === 'admin' ? 'active-amber' : ''}`}
-            >
-              <ShieldAlert size={15} color="var(--amber-primary)" />
-              <span>Admin Console</span>
-            </button>
-          )}
-
-          {isIssuer && (
-            <button
-              type="button"
-              onClick={() => setCurrentTab('issuer')}
-              className={`tab-btn ${currentTab === 'issuer' ? 'active-purple' : ''}`}
-            >
-              <Award size={15} color="#a78bfa" />
-              <span>Issuer Studio</span>
-            </button>
-          )}
-
-          {isHolder && (
-            <button
-              type="button"
-              onClick={() => setCurrentTab('wallet')}
-              className={`tab-btn ${currentTab === 'wallet' ? 'active-emerald' : ''}`}
-            >
-              <Wallet size={15} color="var(--emerald-primary)" />
-              <span>My Wallet</span>
-            </button>
-          )}
-
-          <button
-            type="button"
-            onClick={() => setCurrentTab('verify')}
-            className={`tab-btn ${currentTab === 'verify' ? 'active-cyan' : ''}`}
-          >
-            <FileCheck size={15} color="var(--cyan-primary)" />
-            <span>Verify File</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setCurrentTab('history')}
-            className={`tab-btn ${currentTab === 'history' ? 'active-amber' : ''}`}
-          >
-            <History size={15} color="var(--amber-primary)" />
-            <span>Audit History</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setCurrentTab('session')}
-            className={`tab-btn ${currentTab === 'session' ? 'active-cyan' : ''}`}
-          >
-            <Key size={15} color="var(--cyan-primary)" />
-            <span>Session & Tokens</span>
-          </button>
-        </nav>
-
-        {/* Tab View Content */}
-        {currentTab === 'admin' && <AdminConsoleView />}
-        {currentTab === 'issuer' && <IssuerStudio />}
-        {currentTab === 'wallet' && <HolderWalletView />}
-        {currentTab === 'verify' && <PublicVerifierView />}
-        {currentTab === 'history' && <VerificationHistoryView />}
-        {currentTab === 'session' && <UserSessionDashboard />}
-      </main>
-    );
-  }
-
-  // 3. Guest View: Hero + AuthCard
   return (
     <main className="main-content">
       <StatusAlert />
 
-      <div style={{ textAlign: 'center', maxWidth: '680px', margin: '0 auto 36px' }}>
-        <div style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: '8px',
-          padding: '6px 14px',
-          borderRadius: 'var(--radius-pill)',
-          background: 'rgba(0, 229, 255, 0.08)',
-          border: '1px solid var(--border-accent)',
-          color: 'var(--cyan-primary)',
-          fontSize: '13px',
-          fontWeight: 600,
-          marginBottom: '16px',
-          boxShadow: '0 0 15px rgba(0, 229, 255, 0.15)',
-        }}>
-          <ShieldCheck size={16} />
-          <span>Verifiable Credential Verification Engine</span>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px', marginBottom: '8px' }}>
+        <div>
+          <h1 className="font-display" style={{ fontSize: '1.5rem', fontWeight: 700 }}>
+            Workspace Console
+          </h1>
+          <p style={{ fontSize: '13.5px', color: 'var(--text-secondary)' }}>
+            Administrative tools for issuers, holders, and network admins.
+          </p>
         </div>
-
-        <h1 className="font-display" style={{
-          fontSize: 'clamp(2rem, 4vw, 2.75rem)',
-          fontWeight: 800,
-          letterSpacing: '-0.03em',
-          lineHeight: 1.15,
-          marginBottom: '14px',
-        }}>
-          Decentralized Identity & <span style={{
-            background: 'linear-gradient(135deg, #00e5ff 0%, #10b981 100%)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-          }}>Cryptographic Proof</span>
-        </h1>
-
-        <p style={{
-          fontSize: '15px',
-          color: 'var(--text-secondary)',
-          lineHeight: 1.6,
-        }}>
-          Authenticate to issue, hold, and verify digital credentials backed by Ed25519 signatures, IPFS decentralized storage, and Ethereum blockchain anchoring.
-        </p>
+        <a className="btn btn-outline btn-sm" href="#/" style={{ textDecoration: 'none' }}>
+          <ArrowRight size={14} style={{ transform: 'rotate(180deg)' }} />
+          <span>Back to Site</span>
+        </a>
       </div>
 
+      {/* Role-Gated Workspace Tab Switcher */}
+      <nav className="workspace-nav-bar" aria-label="Workspace tabs">
+        {isAdmin && (
+          <button
+            type="button"
+            onClick={() => setCurrentTab('admin')}
+            className={`tab-btn ${currentTab === 'admin' ? 'active-amber' : ''}`}
+          >
+            <ShieldAlert size={15} color="var(--amber-primary)" />
+            <span>Admin Console</span>
+          </button>
+        )}
+
+        {isIssuer && (
+          <button
+            type="button"
+            onClick={() => setCurrentTab('issuer')}
+            className={`tab-btn ${currentTab === 'issuer' ? 'active-purple' : ''}`}
+          >
+            <Award size={15} color="var(--purple-primary)" />
+            <span>Issuer Studio</span>
+          </button>
+        )}
+
+        {isHolder && (
+          <button
+            type="button"
+            onClick={() => setCurrentTab('wallet')}
+            className={`tab-btn ${currentTab === 'wallet' ? 'active-emerald' : ''}`}
+          >
+            <Wallet size={15} color="var(--emerald-primary)" />
+            <span>My Wallet</span>
+          </button>
+        )}
+
+        <button
+          type="button"
+          onClick={() => setCurrentTab('verify')}
+          className={`tab-btn ${currentTab === 'verify' ? 'active-cyan' : ''}`}
+        >
+          <FileCheck size={15} color="var(--cyan-primary)" />
+          <span>Verify File</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setCurrentTab('history')}
+          className={`tab-btn ${currentTab === 'history' ? 'active-amber' : ''}`}
+        >
+          <History size={15} color="var(--amber-primary)" />
+          <span>Audit History</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setCurrentTab('session')}
+          className={`tab-btn ${currentTab === 'session' ? 'active-cyan' : ''}`}
+        >
+          <Key size={15} color="var(--cyan-primary)" />
+          <span>Session & Tokens</span>
+        </button>
+      </nav>
+
+      {/* Tab View Content */}
+      {currentTab === 'admin' && <AdminConsoleView />}
+      {currentTab === 'issuer' && <IssuerStudio />}
+      {currentTab === 'wallet' && <HolderWalletView />}
+      {currentTab === 'verify' && <PublicVerifierView />}
+      {currentTab === 'history' && <VerificationHistoryView />}
+      {currentTab === 'session' && <UserSessionDashboard />}
+    </main>
+  );
+}
+
+function LoginPage() {
+  const { user, loading } = useAuth();
+  if (loading) return <LoadingScreen />;
+  if (user) {
+    // Already signed in — send to the right place
+    const target = user.role === 'ADMIN' || user.role === 'ISSUER' ? '#/console' : '#/wallet';
+    return (
+      <main className="main-content" style={{ textAlign: 'center', paddingTop: '64px' }}>
+        <p style={{ color: 'var(--text-secondary)', marginBottom: '16px' }}>
+          You are already signed in as <strong>{user.fullName}</strong>.
+        </p>
+        <a className="btn btn-primary" href={target} style={{ textDecoration: 'none' }}>
+          <ShieldCheck size={16} />
+          <span>Continue to your workspace</span>
+        </a>
+      </main>
+    );
+  }
+  return (
+    <main className="main-content">
+      <StatusAlert />
       <AuthCard />
     </main>
   );
@@ -208,7 +222,7 @@ function Footer() {
     <footer style={{
       borderTop: '1px solid var(--border-subtle)',
       padding: '20px 24px',
-      backgroundColor: 'rgba(5, 8, 16, 0.95)',
+      backgroundColor: '#ffffff',
       fontSize: '12.5px',
       color: 'var(--text-muted)',
     }}>
@@ -223,26 +237,21 @@ function Footer() {
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <ShieldCheck size={16} color="var(--cyan-primary)" />
-          <span>CertiChain (SSD-CVE) Platform &copy; 2026</span>
+          <span>CertiChain &copy; 2026</span>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '20px', flexWrap: 'wrap' }}>
           <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <Cpu size={14} color="var(--cyan-primary)" />
-            <span>Ed25519 & JJWT 0.12</span>
+            <Lock size={14} color="var(--cyan-primary)" />
+            <span>Ed25519 Signatures</span>
           </span>
           <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <HardDrive size={14} color="var(--emerald-primary)" />
-            <span>IPFS Kubo v0.36</span>
+            <ShieldCheck size={14} color="var(--emerald-primary)" />
+            <span>Blockchain Anchored</span>
           </span>
-          <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <Link2 size={14} color="var(--purple-primary)" />
-            <span>Ethereum Anvil Anchoring</span>
-          </span>
-          <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <Lock size={14} color="var(--amber-primary)" />
-            <span>PostgreSQL 16</span>
-          </span>
+          <a href="#/console" style={{ color: 'var(--text-muted)', textDecoration: 'none' }}>
+            Console
+          </a>
         </div>
       </div>
     </footer>
@@ -250,16 +259,16 @@ function Footer() {
 }
 
 export default function App() {
-  const [globalView, setGlobalView] = useState('default'); // 'default' | 'verifier'
+  const [route] = useHashRoute();
 
   return (
     <AuthProvider>
-      <AppShell globalView={globalView} setGlobalView={setGlobalView} />
+      <AppShell route={route} />
     </AuthProvider>
   );
 }
 
-function AppShell({ globalView, setGlobalView }) {
+function AppShell({ route }) {
   const { backendOnline } = useAuth();
 
   return (
@@ -272,10 +281,34 @@ function AppShell({ globalView, setGlobalView }) {
         </div>
       )}
 
-      <Header activeView={globalView} onNavigate={setGlobalView} />
-      <div style={{ flex: 1 }}>
-        <MainContent activeView={globalView} onNavigate={setGlobalView} />
-      </div>
+      <Header />
+
+      {route === '/verify' && (
+        <main className="main-content">
+          <StatusAlert />
+          <PublicVerifierView />
+        </main>
+      )}
+
+      {route === '/login' && <LoginPage />}
+
+      {route === '/wallet' && (
+        <LoginGate>
+          <main className="main-content">
+            <StatusAlert />
+            <HolderWalletView />
+          </main>
+        </LoginGate>
+      )}
+
+      {route === '/console' && (
+        <LoginGate>
+          <ConsoleWorkspace />
+        </LoginGate>
+      )}
+
+      {route === '/' && <Landing />}
+
       <Footer />
     </div>
   );

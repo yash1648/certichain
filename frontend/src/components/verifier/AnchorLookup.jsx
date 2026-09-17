@@ -86,7 +86,7 @@ export function AnchorLookup() {
           borderRadius: 'var(--radius-sm)',
           backgroundColor: 'rgba(244, 63, 94, 0.08)',
           border: '1px solid rgba(244, 63, 94, 0.25)',
-          color: '#fb7185',
+          color: 'var(--rose-primary)',
           fontSize: '13.5px',
           display: 'flex',
           alignItems: 'center',
@@ -144,10 +144,10 @@ export function AnchorLookup() {
                 color: 'var(--cyan-primary)',
                 fontSize: '12px',
                 padding: '6px 10px',
-                backgroundColor: 'rgba(0, 0, 0, 0.35)',
+                backgroundColor: '#f1f5f9',
                 borderRadius: '4px',
                 marginTop: '3px',
-                border: '1px solid rgba(255, 255, 255, 0.05)',
+                border: '1px solid var(--border-subtle)',
                 userSelect: 'all',
               }}>
                 {anchorData.txHash || 'N/A'}
@@ -160,10 +160,10 @@ export function AnchorLookup() {
                 color: 'var(--text-secondary)',
                 fontSize: '12px',
                 padding: '6px 10px',
-                backgroundColor: 'rgba(0, 0, 0, 0.35)',
+                backgroundColor: '#f1f5f9',
                 borderRadius: '4px',
                 marginTop: '3px',
-                border: '1px solid rgba(255, 255, 255, 0.05)',
+                border: '1px solid var(--border-subtle)',
                 userSelect: 'all',
               }}>
                 {anchorData.contentHash || 'N/A'}

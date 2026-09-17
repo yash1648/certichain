@@ -46,8 +46,8 @@ export function Modal({
         style={{
           width: '100%',
           maxWidth,
-          backgroundColor: '#0c1222',
-          border: '1px solid rgba(255, 255, 255, 0.12)',
+          backgroundColor: '#ffffff',
+          border: '1px solid var(--border-subtle)',
           borderRadius: 'var(--radius-lg)',
           boxShadow: 'var(--shadow-modal)',
           maxHeight: '90vh',
@@ -120,7 +120,7 @@ export function Modal({
             gap: '12px',
             padding: '16px 24px',
             borderTop: '1px solid var(--border-subtle)',
-            backgroundColor: 'rgba(0, 0, 0, 0.25)',
+            backgroundColor: '#f8fafc',
           }}>
             {footer}
           </div>

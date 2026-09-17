@@ -79,9 +79,9 @@ export function StatusRow({
             color: 'var(--text-muted)',
             marginTop: '4px',
             padding: '4px 8px',
-            backgroundColor: 'rgba(0, 0, 0, 0.3)',
+            backgroundColor: '#f1f5f9',
             borderRadius: '4px',
-            border: '1px solid rgba(255, 255, 255, 0.05)',
+            border: '1px solid var(--border-subtle)',
             userSelect: 'all',
           }}>
             {monoDetail}

@@ -149,7 +149,7 @@ export function HolderWalletView() {
             borderRadius: 'var(--radius-sm)',
             backgroundColor: 'rgba(244, 63, 94, 0.1)',
             border: '1px solid rgba(244, 63, 94, 0.3)',
-            color: '#fb7185',
+            color: 'var(--rose-primary)',
             fontSize: '13px',
             marginBottom: '14px',
           }}>
@@ -163,7 +163,7 @@ export function HolderWalletView() {
             borderRadius: 'var(--radius-sm)',
             backgroundColor: 'rgba(16, 185, 129, 0.1)',
             border: '1px solid rgba(16, 185, 129, 0.3)',
-            color: '#34d399',
+            color: 'var(--emerald-primary)',
             fontSize: '13px',
             marginBottom: '14px',
           }}>
@@ -254,7 +254,7 @@ export function HolderWalletView() {
                 <div style={{
                   padding: '8px 14px',
                   borderRadius: 'var(--radius-md)',
-                  backgroundColor: 'rgba(255, 255, 255, 0.03)',
+                  backgroundColor: '#f8fafc',
                   border: '1px solid var(--border-subtle)',
                   textAlign: 'right',
                 }}>
@@ -306,7 +306,7 @@ export function HolderWalletView() {
                 flexWrap: 'wrap',
                 gap: '12px',
                 paddingTop: '8px',
-                borderTop: '1px solid rgba(255, 255, 255, 0.05)',
+                borderTop: '1px solid rgba(15, 23, 42, 0.06)',
               }}>
                 <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
                   Issued: {item.issuedAt ? new Date(item.issuedAt).toLocaleDateString() : 'N/A'}

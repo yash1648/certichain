@@ -69,7 +69,7 @@ export function DropZone({ onFileSelected, loading = false, disabled = false }) 
         style={{
           border: `2px dashed ${isDragOver ? 'var(--cyan-primary)' : 'var(--border-accent)'}`,
           borderRadius: 'var(--radius-lg)',
-          backgroundColor: isDragOver ? 'rgba(0, 229, 255, 0.08)' : 'rgba(10, 15, 28, 0.65)',
+          backgroundColor: isDragOver ? 'rgba(37, 99, 235, 0.06)' : '#f8fafc',
           padding: '40px 24px',
           textAlign: 'center',
           cursor: disabled || loading ? 'not-allowed' : 'pointer',
@@ -143,7 +143,7 @@ export function DropZone({ onFileSelected, loading = false, disabled = false }) 
           borderRadius: 'var(--radius-sm)',
           backgroundColor: 'rgba(244, 63, 94, 0.1)',
           border: '1px solid rgba(244, 63, 94, 0.3)',
-          color: '#fb7185',
+          color: 'var(--rose-primary)',
           fontSize: '13px',
           display: 'flex',
           alignItems: 'center',

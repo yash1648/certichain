@@ -93,7 +93,7 @@ export function ResultCard({ result, onReset }) {
 
             <p style={{
               fontSize: '13.5px',
-              color: isValid ? 'var(--text-secondary)' : '#fca5a5',
+              color: isValid ? 'var(--text-secondary)' : 'var(--rose-primary)',
               marginTop: '4px',
             }}>
               {reason || (isValid ? 'Credential verified successfully' : 'Cryptographic verification failed')}
@@ -212,7 +212,7 @@ export function ResultCard({ result, onReset }) {
               Certified Attributes (Claims)
             </h4>
 
-            <div className="table-container" style={{ backgroundColor: 'rgba(0, 0, 0, 0.2)' }}>
+            <div className="table-container" style={{ backgroundColor: '#ffffff' }}>
               <table className="table">
                 <thead>
                   <tr>

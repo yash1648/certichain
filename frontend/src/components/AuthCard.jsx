@@ -93,7 +93,7 @@ export function AuthCard() {
       <div style={{
         display: 'grid',
         gridTemplateColumns: '1fr 1fr',
-        background: 'rgba(0, 0, 0, 0.35)',
+        background: '#f1f5f9',
         padding: '4px',
         borderRadius: 'var(--radius-md)',
         marginBottom: '24px',
@@ -109,7 +109,7 @@ export function AuthCard() {
             cursor: 'pointer',
             fontWeight: 600,
             fontSize: '0.875rem',
-            background: mode === 'login' ? 'rgba(0, 229, 255, 0.15)' : 'transparent',
+            background: mode === 'login' ? 'rgba(37, 99, 235, 0.1)' : 'transparent',
             color: mode === 'login' ? 'var(--cyan-primary)' : 'var(--text-secondary)',
             borderBottom: mode === 'login' ? '2px solid var(--cyan-primary)' : '2px solid transparent',
             transition: 'all 0.2s ease'
@@ -127,7 +127,7 @@ export function AuthCard() {
             cursor: 'pointer',
             fontWeight: 600,
             fontSize: '0.875rem',
-            background: mode === 'register' ? 'rgba(16, 185, 129, 0.15)' : 'transparent',
+            background: mode === 'register' ? 'rgba(5, 150, 105, 0.1)' : 'transparent',
             color: mode === 'register' ? 'var(--emerald-primary)' : 'var(--text-secondary)',
             borderBottom: mode === 'register' ? '2px solid var(--emerald-primary)' : '2px solid transparent',
             transition: 'all 0.2s ease'
@@ -147,7 +147,7 @@ export function AuthCard() {
           display: 'flex',
           alignItems: 'center',
           gap: '10px',
-          color: '#fb7185',
+          color: 'var(--rose-primary)',
           fontSize: '0.85rem'
         }}>
           <AlertCircle size={16} style={{ flexShrink: 0 }} />
@@ -280,7 +280,7 @@ export function AuthCard() {
           backgroundColor: 'rgba(244, 63, 94, 0.08)',
           border: '1px solid rgba(244, 63, 94, 0.2)',
           fontSize: '0.75rem',
-          color: '#fb7185',
+          color: 'var(--rose-primary)',
           textAlign: 'center'
         }}>
           Backend on port 6969 is not reachable. Please ensure the Spring Boot server (`./mvnw spring-boot:run`) is started.

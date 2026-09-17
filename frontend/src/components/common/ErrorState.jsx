@@ -38,7 +38,7 @@ export function ErrorState({
         {title}
       </h4>
 
-      <p style={{ fontSize: '13px', color: '#fb7185', maxWidth: '460px', lineHeight: 1.5, marginBottom: onRetry ? '18px' : '0' }}>
+      <p style={{ fontSize: '13px', color: 'var(--rose-primary)', maxWidth: '460px', lineHeight: 1.5, marginBottom: onRetry ? '18px' : '0' }}>
         {message || 'An unexpected error occurred while communicating with the server.'}
       </p>
 
