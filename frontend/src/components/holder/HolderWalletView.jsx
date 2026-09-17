@@ -125,39 +125,38 @@ export function HolderWalletView() {
   });
 
   return (
-    <div className="animate-fade-in" style={{ maxWidth: '1040px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+    <div className="animate-fade-in" style={{ maxWidth: '1080px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '24px' }}>
       
       {/* Top Header & Welcome Banner */}
       <div className="glass-panel" style={{ padding: '28px', borderRadius: 'var(--radius-lg)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '20px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             <div style={{
-              width: '52px',
-              height: '52px',
-              borderRadius: '14px',
-              background: 'linear-gradient(135deg, rgba(37, 99, 235, 0.15) 0%, rgba(124, 58, 237, 0.15) 100%)',
-              border: '1px solid var(--border-accent)',
+              width: '48px',
+              height: '48px',
+              borderRadius: '10px',
+              background: '#eff6ff',
+              border: '1px solid #bfdbfe',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: 'var(--cyan-primary)',
-              boxShadow: '0 4px 15px rgba(37, 99, 235, 0.1)'
+              color: '#1d4ed8'
             }}>
-              <Award size={26} />
+              <Award size={24} />
             </div>
 
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                <h1 className="font-display" style={{ fontSize: '1.65rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-                  My Certificates & Credentials
+                <h1 className="font-display" style={{ fontSize: '1.6rem', fontWeight: 700, color: '#0f172a' }}>
+                  My Credential Wallet
                 </h1>
                 <span className="badge badge-emerald">
                   <ShieldCheck size={12} />
                   Verified Holder
                 </span>
               </div>
-              <p style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>
-                Welcome back, <strong>{user?.fullName || 'Student'}</strong>. Manage, present, and share your authentic degrees and certifications.
+              <p style={{ fontSize: '14px', color: '#475569' }}>
+                Welcome, <strong>{user?.fullName || 'Student'}</strong>. Manage, view, and share your authentic degrees and credentials.
               </p>
             </div>
           </div>
@@ -176,31 +175,31 @@ export function HolderWalletView() {
           gap: '16px',
           marginTop: '24px',
           paddingTop: '20px',
-          borderTop: '1px solid var(--border-subtle)'
+          borderTop: '1px solid #e2e8f0'
         }}>
-          <div style={{ padding: '12px 16px', backgroundColor: '#f8fafc', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-subtle)' }}>
-            <span style={{ fontSize: '12px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+          <div style={{ padding: '14px 18px', backgroundColor: '#f8fafc', borderRadius: 'var(--radius-sm)', border: '1px solid #e2e8f0' }}>
+            <span style={{ fontSize: '12px', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600 }}>
               Total Credentials
             </span>
-            <div className="font-display" style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--text-primary)', marginTop: '2px' }}>
+            <div className="font-display" style={{ fontSize: '1.5rem', fontWeight: 700, color: '#0f172a', marginTop: '2px' }}>
               {walletItems.length}
             </div>
           </div>
 
-          <div style={{ padding: '12px 16px', backgroundColor: '#f8fafc', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-subtle)' }}>
-            <span style={{ fontSize: '12px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+          <div style={{ padding: '14px 18px', backgroundColor: '#f8fafc', borderRadius: 'var(--radius-sm)', border: '1px solid #e2e8f0' }}>
+            <span style={{ fontSize: '12px', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600 }}>
               Ledger Anchored
             </span>
-            <div className="font-display" style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--emerald-primary)', marginTop: '2px' }}>
+            <div className="font-display" style={{ fontSize: '1.5rem', fontWeight: 700, color: '#15803d', marginTop: '2px' }}>
               {walletItems.filter(i => i.txHash).length}
             </div>
           </div>
 
-          <div style={{ padding: '12px 16px', backgroundColor: '#f8fafc', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-subtle)' }}>
-            <span style={{ fontSize: '12px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+          <div style={{ padding: '14px 18px', backgroundColor: '#f8fafc', borderRadius: 'var(--radius-sm)', border: '1px solid #e2e8f0' }}>
+            <span style={{ fontSize: '12px', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600 }}>
               Active & Valid
             </span>
-            <div className="font-display" style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--cyan-primary)', marginTop: '2px' }}>
+            <div className="font-display" style={{ fontSize: '1.5rem', fontWeight: 700, color: '#1d4ed8', marginTop: '2px' }}>
               {walletItems.filter(i => i.status === 'ACTIVE').length}
             </div>
           </div>
@@ -212,22 +211,22 @@ export function HolderWalletView() {
       {/* Add a Certificate by ID / Code Section */}
       <div className="glass-panel" style={{ padding: '24px', borderRadius: 'var(--radius-lg)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
-          <Sparkles size={18} color="var(--cyan-primary)" />
-          <h3 className="font-display" style={{ fontSize: '1.15rem', fontWeight: 600 }}>
-            Add a Certificate to Your Wallet
+          <Sparkles size={18} color="#1d4ed8" />
+          <h3 className="font-display" style={{ fontSize: '1.15rem', fontWeight: 600, color: '#0f172a' }}>
+            Claim a Certificate to Your Wallet
           </h3>
         </div>
-        <p style={{ fontSize: '13.5px', color: 'var(--text-secondary)', marginBottom: '16px' }}>
-          Received a degree or certification? Enter your Certificate UUID provided by your issuing university or training body to link it.
+        <p style={{ fontSize: '13.5px', color: '#475569', marginBottom: '16px' }}>
+          Received a degree or certificate? Enter the unique Certificate UUID provided by your issuing institution to claim and store it.
         </p>
 
         {addError && (
           <div style={{
             padding: '10px 14px',
             borderRadius: 'var(--radius-sm)',
-            backgroundColor: 'rgba(225, 29, 72, 0.08)',
-            border: '1px solid rgba(225, 29, 72, 0.25)',
-            color: 'var(--rose-primary)',
+            backgroundColor: '#fef2f2',
+            border: '1px solid #fecaca',
+            color: '#b91c1c',
             fontSize: '13px',
             marginBottom: '14px',
           }}>
@@ -239,9 +238,9 @@ export function HolderWalletView() {
           <div style={{
             padding: '10px 14px',
             borderRadius: 'var(--radius-sm)',
-            backgroundColor: 'rgba(5, 150, 105, 0.08)',
-            border: '1px solid rgba(5, 150, 105, 0.25)',
-            color: 'var(--emerald-primary)',
+            backgroundColor: '#f0fdf4',
+            border: '1px solid #bbf7d0',
+            color: '#15803d',
             fontSize: '13px',
             marginBottom: '14px',
           }}>
@@ -258,7 +257,7 @@ export function HolderWalletView() {
               value={newCredentialId}
               onChange={(e) => setNewCredentialId(e.target.value)}
               required
-              style={{ height: '44px' }}
+              style={{ height: '40px' }}
             />
           </div>
           <Button
@@ -267,9 +266,9 @@ export function HolderWalletView() {
             loading={adding}
             disabled={!newCredentialId.trim()}
             icon={Plus}
-            style={{ height: '44px', padding: '0 22px' }}
+            style={{ height: '40px', padding: '0 18px' }}
           >
-            Claim Certificate
+            Claim Credential
           </Button>
         </form>
       </div>
@@ -277,11 +276,11 @@ export function HolderWalletView() {
       {/* Certificates Directory Header & Search */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '14px' }}>
         <div>
-          <h2 className="font-display" style={{ fontSize: '1.3rem', fontWeight: 700 }}>
-            Your Official Credentials ({filteredItems.length})
+          <h2 className="font-display" style={{ fontSize: '1.25rem', fontWeight: 700, color: '#0f172a' }}>
+            Official Credentials ({filteredItems.length})
           </h2>
-          <p style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
-            Each certificate is cryptographically signed and permanently anchored.
+          <p style={{ fontSize: '13px', color: '#64748b' }}>
+            Each certificate is cryptographically signed with Ed25519 and permanently anchored.
           </p>
         </div>
 
@@ -290,12 +289,12 @@ export function HolderWalletView() {
             <input
               type="text"
               className="input-field"
-              placeholder="Search certificates or institutions..."
+              placeholder="Search certificates or universities..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               style={{ paddingLeft: '36px', height: '38px', fontSize: '13px' }}
             />
-            <Search size={15} color="var(--text-muted)" style={{ position: 'absolute', left: '12px', top: '12px' }} />
+            <Search size={15} color="#94a3b8" style={{ position: 'absolute', left: '12px', top: '11px' }} />
           </div>
         )}
       </div>
@@ -306,12 +305,12 @@ export function HolderWalletView() {
           <EmptyState
             icon={Award}
             title="Your certificate wallet is empty"
-            description="When your university, academy, or organization issues you a credential, enter the ID above to store and view your official certificate."
+            description="When your university or certification board issues you a credential, enter the ID above to store and view your official diploma."
           />
         </div>
       ) : filteredItems.length === 0 ? (
         <div className="glass-panel" style={{ padding: '32px', textAlign: 'center' }}>
-          <p style={{ color: 'var(--text-secondary)' }}>No certificates matched "{searchQuery}".</p>
+          <p style={{ color: '#64748b' }}>No certificates matched "{searchQuery}".</p>
         </div>
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(460px, 1fr))', gap: '20px' }}>
@@ -320,7 +319,6 @@ export function HolderWalletView() {
               key={item.credentialId}
               className="diploma-card"
               style={{
-                border: '1px solid var(--border-subtle)',
                 display: 'flex',
                 flexDirection: 'column',
                 justifyContent: 'space-between',
@@ -342,22 +340,22 @@ export function HolderWalletView() {
                     gap: '6px',
                     fontSize: '12.5px',
                     fontWeight: 600,
-                    color: 'var(--text-primary)',
+                    color: '#0f172a',
                     backgroundColor: '#f8fafc',
                     padding: '4px 10px',
                     borderRadius: 'var(--radius-pill)',
-                    border: '1px solid var(--border-subtle)'
+                    border: '1px solid #e2e8f0'
                   }}>
-                    <Building size={13} color="var(--purple-primary)" />
+                    <Building size={13} color="#6b21a8" />
                     <span>{item.issuerName || 'Authorized Issuer'}</span>
                   </div>
                 </div>
 
                 {/* Title */}
                 <h3 className="font-display" style={{
-                  fontSize: '1.35rem',
+                  fontSize: '1.25rem',
                   fontWeight: 700,
-                  color: 'var(--text-primary)',
+                  color: '#0f172a',
                   marginBottom: '8px',
                   lineHeight: 1.3
                 }}>
@@ -365,15 +363,15 @@ export function HolderWalletView() {
                 </h3>
 
                 {/* Certificate Number & Date */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap', fontSize: '12.5px', color: 'var(--text-secondary)', marginBottom: '16px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap', fontSize: '12.5px', color: '#475569', marginBottom: '16px' }}>
                   <div>
-                    <span style={{ color: 'var(--text-muted)' }}>Cert #: </span>
-                    <code className="font-mono" style={{ color: 'var(--cyan-primary)', fontWeight: 600 }}>
+                    <span style={{ color: '#64748b' }}>Cert #: </span>
+                    <code className="font-mono" style={{ color: '#1d4ed8', fontWeight: 600 }}>
                       {item.credentialNumber}
                     </code>
                   </div>
                   <div>
-                    <span style={{ color: 'var(--text-muted)' }}>Issued: </span>
+                    <span style={{ color: '#64748b' }}>Issued: </span>
                     <span>{item.issuedAt ? new Date(item.issuedAt).toLocaleDateString() : 'N/A'}</span>
                   </div>
                 </div>
@@ -382,19 +380,19 @@ export function HolderWalletView() {
                 <div style={{
                   padding: '10px 14px',
                   borderRadius: 'var(--radius-sm)',
-                  backgroundColor: 'rgba(37, 99, 235, 0.04)',
-                  border: '1px solid rgba(37, 99, 235, 0.15)',
+                  backgroundColor: '#eff6ff',
+                  border: '1px solid #bfdbfe',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
                   gap: '8px',
                   fontSize: '12px',
                 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--cyan-primary)', fontWeight: 500 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#1d4ed8', fontWeight: 600 }}>
                     <ShieldCheck size={15} />
                     <span>Anchored on Blockchain (Block #{item.blockNumber ?? '1'})</span>
                   </div>
-                  <span style={{ color: 'var(--emerald-primary)', fontWeight: 600 }}>
+                  <span style={{ color: '#15803d', fontWeight: 600 }}>
                     Tamper-Proof
                   </span>
                 </div>
@@ -404,7 +402,7 @@ export function HolderWalletView() {
               <div style={{
                 padding: '14px 24px',
                 backgroundColor: '#f8fafc',
-                borderTop: '1px solid var(--border-subtle)',
+                borderTop: '1px solid #e2e8f0',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
@@ -418,7 +416,7 @@ export function HolderWalletView() {
                     icon={Eye}
                     onClick={() => setViewingCredential(item)}
                   >
-                    View Certificate
+                    View Official Diploma
                   </Button>
 
                   <Button
@@ -441,13 +439,13 @@ export function HolderWalletView() {
                     loading={downloadingId === item.credentialId}
                     title="Download verifiable .json file for job applications"
                   >
-                    Download File
+                    Download JSON
                   </Button>
 
                   <button
                     onClick={() => setRemovingCredential(item)}
                     className="btn btn-ghost btn-sm"
-                    style={{ color: 'var(--text-muted)', padding: '6px' }}
+                    style={{ color: '#94a3b8', padding: '6px' }}
                     title="Remove from wallet"
                   >
                     <Trash2 size={15} />

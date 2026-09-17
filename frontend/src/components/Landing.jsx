@@ -7,528 +7,542 @@ import {
   Building,
   ArrowRight,
   CheckCircle2,
-  Fingerprint,
-  Database,
-  Globe2
+  Lock,
+  Cpu,
+  Globe2,
+  Award,
+  ChevronRight,
+  RefreshCw
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
-const features = [
+const institutions = [
+  { name: 'Massachusetts Institute of Technology', short: 'MIT' },
+  { name: 'Stanford University', short: 'STANFORD' },
+  { name: 'University of Oxford', short: 'OXFORD' },
+  { name: 'University of Cambridge', short: 'CAMBRIDGE' },
+  { name: 'National University of Singapore', short: 'NUS' },
+  { name: 'Ethereum Foundation Ledger', short: 'ETHEREUM' }
+];
+
+const architectureSteps = [
   {
-    icon: FileCheck,
-    title: 'Instant Credential Verification',
-    description: 'Upload a signed credential file and verify its cryptographic integrity, Ed25519 signature, and issuer status in milliseconds.',
-    color: 'var(--cyan-primary)',
-    bg: 'rgba(0, 240, 255, 0.1)',
+    step: '01',
+    title: 'Cryptographic Issuance',
+    desc: 'Accredited universities generate digital diplomas using Ed25519 public-key signatures and SHA-256 canonical hashing.',
+    icon: Lock,
+    badge: 'Ed25519 Signature'
   },
   {
+    step: '02',
+    title: 'Blockchain Anchoring',
+    desc: 'Batch Merkle tree state roots are permanently written to smart contract ledgers on Ethereum for immutable auditability.',
     icon: Link2,
-    title: 'Blockchain Anchored Proof',
-    description: 'Every credential hash is permanently anchored on Ethereum & testnets, giving you tamper-evident, publicly auditable proof.',
-    color: '#a855f7',
-    bg: 'rgba(168, 85, 247, 0.1)',
+    badge: 'Ethereum Mainnet'
+  },
+  {
+    step: '03',
+    title: 'Instant Verification',
+    desc: 'Employers and authorities verify credential authenticity in under 50 milliseconds without contacting the issuing university.',
+    icon: ShieldCheck,
+    badge: 'Open Standard'
+  }
+];
+
+const platformFeatures = [
+  {
+    icon: FileCheck,
+    title: 'Instant Document Verification',
+    description: 'Inspect canonical document hashes, verify issuer public keys, and validate revocation lists in real-time.',
+    accent: '#1d4ed8'
   },
   {
     icon: Wallet,
     title: 'Self-Sovereign Wallet',
-    description: 'Hold credentials in your personal digital vault. Download, share, and present them on your terms without middlemen.',
-    color: '#10b981',
-    bg: 'rgba(16, 185, 129, 0.1)',
+    description: 'Graduates hold their credentials in tamper-proof digital vaults, sharing proof links without paper delays.',
+    accent: '#15803d'
   },
   {
     icon: Building,
-    title: 'Trusted Issuer Registry',
-    description: 'Credentials are cryptographically validated against registered institutions, with a transparent on-chain audit trail.',
-    color: '#f59e0b',
-    bg: 'rgba(245, 158, 11, 0.1)',
-  },
-];
-
-const techStackItems = [
-  {
-    id: 'engine',
-    title: 'Parallel Verification Engine',
-    description: 'Deterministic concurrency with 100K TPS cryptographic throughput — 10x faster than standard EVMs, powered by zero-knowledge & Ed25519 batch execution.',
+    title: 'Institutional Studio',
+    description: 'Registrars batch-issue certificates with Ed25519 cryptographic signing and automated university workflows.',
+    accent: '#7c3aed'
   },
   {
-    id: 'registry',
-    title: 'Decentralized Issuer Registry',
-    description: 'Multi-signature verified authority ledger ensuring only accredited institutions can issue verifiable credentials.',
-  },
-  {
-    id: 'anchors',
-    title: 'Smart Contract Anchor Set',
-    description: 'Immutable Merkle-tree state roots anchored directly into Ethereum blocks for permanent verifiable existence.',
-  },
-  {
-    id: 'crypto',
-    title: 'Embedded Cryptographic Engine',
-    description: 'Hardware-grade Ed25519 and SHA-256 primitives running natively in browser and server runtimes.',
-  },
-  {
-    id: 'sdk',
-    title: 'Nation-Scale Identity SDK',
-    description: 'W3C compliant verifiable credential schemas designed for seamless interoperability across universities and employers.',
-  },
-];
-
-const globalRegions = [
-  'North America & Canada',
-  'European Union',
-  'United Kingdom',
-  'Singapore & Southeast Asia',
-  'Japan & East Asia',
-  'Latin America & Caribbean',
-  'Global Decentralized P2P'
+    icon: Globe2,
+    title: 'W3C Open Standards',
+    description: 'Built on W3C Verifiable Credentials and decentralized identity protocols for worldwide cross-border acceptance.',
+    accent: '#b45309'
+  }
 ];
 
 export function Landing() {
   const { user } = useAuth();
-  const [activeTechIndex, setActiveTechIndex] = useState(0);
-  const [activeRegion, setActiveRegion] = useState(null);
+  
+  // Interactive Verification Simulator State
+  const [simState, setSimState] = useState('idle'); // 'idle' | 'verifying' | 'verified'
+
+  const runSimulation = () => {
+    setSimState('verifying');
+    setTimeout(() => {
+      setSimState('verified');
+    }, 1000);
+  };
+
+  const resetSimulation = () => {
+    setSimState('idle');
+  };
 
   return (
-    <main className="main-content" style={{ paddingTop: '24px', overflow: 'hidden' }}>
-      {/* Hero Section with Glowing Concentric Orbit Waves */}
-      <section style={{ position: 'relative', minHeight: '520px', marginBottom: '80px', paddingTop: '32px' }}>
-        {/* Futuristic Concentric Cyan Orbit Waves (Matching photo's top right visual) */}
-        <div className="cyber-orbit-container" aria-hidden="true">
-          {/* Ring 1 - Outermost */}
-          <div className="cyber-orbit-ring" style={{ width: '560px', height: '560px', top: '20px', right: '-120px' }}>
-            <div className="cyber-orbit-node" style={{ top: '60px', left: '110px' }}>£</div>
-          </div>
-          {/* Ring 2 - Intermediate */}
-          <div className="cyber-orbit-ring" style={{ width: '420px', height: '420px', top: '90px', right: '-50px' }}>
-            <div className="cyber-orbit-node" style={{ top: '30px', left: '160px' }}>€</div>
-            <div className="cyber-orbit-node" style={{ bottom: '90px', right: '40px' }}>¥</div>
-          </div>
-          {/* Ring 3 - Active glowing arc */}
-          <div className="cyber-orbit-ring active-arc" style={{ width: '280px', height: '280px', top: '160px', right: '20px' }}>
-            <div className="cyber-orbit-node" style={{ top: '40px', left: '20px' }}>$</div>
-            <div className="cyber-orbit-node" style={{ bottom: '30px', right: '60px' }}>✓</div>
-          </div>
-        </div>
-
-        {/* Hero Content */}
-        <div style={{ position: 'relative', zIndex: 1, maxWidth: '640px' }}>
+    <main className="main-content" style={{ paddingTop: '24px' }}>
+      {/* Hero Section */}
+      <section style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))',
+        gap: '48px',
+        alignItems: 'center',
+        padding: '36px 0 56px 0',
+      }}>
+        {/* Left Hero Content */}
+        <div>
+          {/* Badge */}
           <div style={{
             display: 'inline-flex',
             alignItems: 'center',
             gap: '8px',
-            padding: '5px 14px',
+            padding: '5px 12px',
             borderRadius: 'var(--radius-pill)',
-            background: 'rgba(0, 240, 255, 0.08)',
-            border: '1px solid var(--border-accent)',
-            color: 'var(--cyan-primary)',
-            fontSize: '12.5px',
-            fontWeight: 700,
-            letterSpacing: '0.04em',
-            marginBottom: '24px',
-            boxShadow: '0 0 15px rgba(0, 240, 255, 0.2)'
+            background: '#eff6ff',
+            border: '1px solid #bfdbfe',
+            color: '#1d4ed8',
+            fontSize: '13px',
+            fontWeight: 600,
+            marginBottom: '20px'
           }}>
             <ShieldCheck size={15} />
-            <span>DIGITAL CREDENTIAL PLATFORM</span>
+            <span>Verifiable Credential Infrastructure</span>
           </div>
 
           <h1 className="font-display" style={{
-            fontSize: 'clamp(2.5rem, 5.5vw, 4rem)',
+            fontSize: 'clamp(2.4rem, 4.5vw, 3.6rem)',
             fontWeight: 800,
             letterSpacing: '-0.03em',
-            lineHeight: 1.05,
-            color: '#ffffff',
-            marginBottom: '20px',
+            lineHeight: 1.15,
+            color: '#0f172a',
+            marginBottom: '18px',
           }}>
-            Certi<span style={{ color: 'var(--cyan-primary)', textShadow: '0 0 25px rgba(0, 240, 255, 0.5)' }}>Chain</span>
+            Digital Credentials. <br />
+            <span style={{ color: '#1d4ed8' }}>
+              Backed by Cryptographic Proof.
+            </span>
           </h1>
 
-          <h2 style={{
-            fontSize: '1.25rem',
-            fontWeight: 600,
-            color: '#ffffff',
-            marginBottom: '12px'
-          }}>
-            Digital Central Trust
-          </h2>
-
           <p style={{
-            fontSize: '15.5px',
-            color: 'var(--text-secondary)',
-            lineHeight: 1.65,
+            fontSize: '16.5px',
+            color: '#475569',
+            lineHeight: 1.6,
             marginBottom: '32px',
-            maxWidth: '520px',
+            maxWidth: '540px',
           }}>
-            High-performance chain for verifiable credentials, cryptographic signatures, and on-chain trust, with the vision of bringing all credentials on-chain.
+            CertiChain empowers universities, credential boards, and enterprises to issue tamper-proof digital certificates, instantly verifiable on the blockchain without third-party gatekeepers.
           </p>
 
-          <div style={{ display: 'flex', gap: '14px', alignItems: 'center', flexWrap: 'wrap', marginBottom: '48px' }}>
+          <div style={{ display: 'flex', gap: '14px', alignItems: 'center', flexWrap: 'wrap' }}>
             <a 
               className="btn btn-primary" 
               href="#/verify" 
-              style={{ 
-                textDecoration: 'none', 
-                padding: '12px 28px',
-                letterSpacing: '0.04em'
-              }}
+              style={{ textDecoration: 'none', padding: '11px 22px', fontSize: '15px' }}
             >
-              <span>DISCOVER CERTICHAIN •</span>
+              <FileCheck size={18} />
+              <span>Verify a Credential</span>
+              <ArrowRight size={16} />
             </a>
 
             {user ? (
               <a 
                 className="btn btn-outline" 
                 href={user.role === 'ADMIN' ? '#/admin' : user.role === 'ISSUER' ? '#/issuer' : '#/wallet'} 
-                style={{ textDecoration: 'none', padding: '12px 24px' }}
+                style={{ textDecoration: 'none', padding: '11px 20px', fontSize: '15px' }}
               >
-                <Wallet size={16} />
-                <span>Open My Workspace</span>
+                <Wallet size={18} />
+                <span>Open Workspace</span>
               </a>
             ) : (
               <a 
                 className="btn btn-outline" 
                 href="#/login" 
-                style={{ textDecoration: 'none', padding: '12px 24px' }}
+                style={{ textDecoration: 'none', padding: '11px 20px', fontSize: '15px' }}
               >
-                <span>Sign In</span>
-                <ArrowRight size={16} />
+                <span>Sign In / Demo Personas</span>
               </a>
             )}
           </div>
+        </div>
 
-          {/* Backed By Strip (Matching photo) */}
+        {/* Right Hero: Clean Verification Simulator Card */}
+        <div style={{
+          padding: '28px',
+          borderRadius: 'var(--radius-lg)',
+          border: '1px solid #cbd5e1',
+          boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.04)',
+          background: '#ffffff'
+        }}>
+          {/* Simulator Top Bar */}
           <div style={{
-            paddingTop: '20px',
-            borderTop: '1px solid rgba(255, 255, 255, 0.08)',
             display: 'flex',
             alignItems: 'center',
-            gap: '24px',
-            flexWrap: 'wrap'
+            justifyContent: 'space-between',
+            paddingBottom: '16px',
+            borderBottom: '1px solid #e2e8f0',
+            marginBottom: '20px'
           }}>
-            <span style={{ fontSize: '11px', letterSpacing: '0.08em', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>
-              BACKED BY:
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div style={{
+                width: '9px',
+                height: '9px',
+                borderRadius: '50%',
+                backgroundColor: '#16a34a'
+              }} />
+              <span style={{ fontSize: '12px', fontWeight: 700, color: '#334155', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                Verification Sandbox
+              </span>
+            </div>
+
+            <span style={{
+              fontSize: '11.5px',
+              padding: '2px 8px',
+              borderRadius: 'var(--radius-pill)',
+              background: '#f1f5f9',
+              color: '#475569',
+              fontWeight: 600
+            }}>
+              W3C Standard
             </span>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '20px', color: '#94a3b8', fontSize: '12.5px', fontWeight: 700, letterSpacing: '0.06em' }}>
-              <span>CIRCLE</span>
-              <span>&gt;|&lt; DRAGONFLY</span>
-              <span>∞ VENTURES</span>
-              <span>SHIMA CAPITAL</span>
-            </div>
           </div>
-        </div>
-      </section>
 
-      {/* "Built to Settle Trust, Not Just Move It" & Global Reach Panel Section (Matching photo) */}
-      <section style={{ marginBottom: '80px' }}>
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-          gap: '32px',
-          alignItems: 'start'
-        }}>
-          {/* Left Column: Interlocking Geometric Rings & Tech Stack Accordion */}
-          <div className="glass-panel" style={{ padding: '36px 30px', borderRadius: 'var(--radius-lg)' }}>
-            <div style={{ fontSize: '11px', letterSpacing: '0.08em', color: 'var(--cyan-primary)', textTransform: 'uppercase', fontWeight: 700, marginBottom: '20px' }}>
-              CERTICHAIN'S TECH STACK
+          {/* Sample Credential Document Preview */}
+          <div style={{
+            background: '#f8fafc',
+            border: '1px solid #e2e8f0',
+            borderRadius: 'var(--radius-md)',
+            padding: '18px',
+            marginBottom: '20px'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px', marginBottom: '12px' }}>
+              <div>
+                <span style={{ fontSize: '11.5px', color: '#1d4ed8', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                  Massachusetts Institute of Technology
+                </span>
+                <h4 style={{ fontSize: '16px', fontWeight: 700, color: '#0f172a', marginTop: '2px' }}>
+                  Master of Science in Computer Science
+                </h4>
+              </div>
+              <Award size={24} color="#1d4ed8" />
             </div>
 
-            {/* Interlocking Rings Wireframe (Directly matches the 3 circles in photo) */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', fontSize: '12.5px', color: '#334155' }}>
+              <div>
+                <span style={{ color: '#64748b', display: 'block', fontSize: '11px', fontWeight: 600 }}>RECIPIENT</span>
+                <span style={{ fontWeight: 600, color: '#0f172a' }}>Alex Mercer</span>
+              </div>
+              <div>
+                <span style={{ color: '#64748b', display: 'block', fontSize: '11px', fontWeight: 600 }}>ISSUE DATE</span>
+                <span>June 15, 2025</span>
+              </div>
+            </div>
+
             <div style={{
+              marginTop: '12px',
+              paddingTop: '10px',
+              borderTop: '1px dashed #cbd5e1',
+              fontFamily: 'var(--font-mono)',
+              fontSize: '11px',
+              color: '#64748b',
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center',
-              padding: '24px 0',
-              marginBottom: '24px',
+              justifyContent: 'space-between'
             }}>
-              <svg width="240" height="90" viewBox="0 0 240 90" fill="none" xmlns="http://www.w3.org/2000/svg">
-                {/* Circle 1 */}
-                <circle cx="55" cy="45" r="38" stroke="rgba(0, 240, 255, 0.35)" strokeWidth="2.5" />
-                {/* Circle 2 */}
-                <circle cx="120" cy="45" r="38" stroke="var(--cyan-primary)" strokeWidth="3" filter="drop-shadow(0 0 8px rgba(0, 240, 255, 0.6))" />
-                {/* Circle 3 */}
-                <circle cx="185" cy="45" r="38" stroke="rgba(0, 240, 255, 0.35)" strokeWidth="2.5" />
-              </svg>
+              <span>DID: did:certchain:0x892a...f41e</span>
+              <span style={{ color: '#15803d', fontWeight: 600 }}>Anchored</span>
             </div>
-
-            <h2 className="font-display" style={{
-              fontSize: '1.85rem',
-              fontWeight: 800,
-              color: '#ffffff',
-              lineHeight: 1.2,
-              marginBottom: '24px'
-            }}>
-              Built to Settle Trust,<br />Not Just Move It
-            </h2>
-
-            {/* Interactive Tech Accordion List */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginBottom: '32px' }}>
-              {techStackItems.map((item, idx) => {
-                const isActive = activeTechIndex === idx;
-                return (
-                  <div
-                    key={item.id}
-                    onClick={() => setActiveTechIndex(isActive ? -1 : idx)}
-                    className={`cyber-accordion-item ${isActive ? 'active' : ''}`}
-                  >
-                    <div style={{ width: '100%' }}>
-                      <div className="item-title">
-                        <span style={{ color: isActive ? 'var(--cyan-primary)' : 'var(--text-muted)', fontSize: '1.2rem' }}>
-                          {isActive ? '•' : ''}
-                        </span>
-                        <span style={{ color: isActive ? 'var(--cyan-primary)' : '#ffffff' }}>
-                          {item.title}
-                        </span>
-                        <span style={{ marginLeft: 'auto', color: 'var(--text-muted)', fontSize: '14px' }}>
-                          {isActive ? '−' : '+'}
-                        </span>
-                      </div>
-                      {isActive && (
-                        <p style={{
-                          fontSize: '13.5px',
-                          color: 'var(--text-secondary)',
-                          lineHeight: 1.6,
-                          marginTop: '8px',
-                          paddingLeft: '14px',
-                          borderLeft: '2px solid var(--cyan-primary)',
-                          animation: 'fadeIn 0.2s ease-out'
-                        }}>
-                          {item.description}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            <a 
-              className="btn btn-primary" 
-              href="#/verify" 
-              style={{ 
-                textDecoration: 'none', 
-                width: '100%',
-                letterSpacing: '0.04em',
-                padding: '12px 20px',
-                fontWeight: 700
-              }}
-            >
-              <span>WHAT POWERS CERTICHAIN •</span>
-            </a>
           </div>
 
-          {/* Right Column: Global Reach & Verifier Nodes Panel (Directly matches the right mobile/panel view) */}
-          <div className="glass-panel" style={{
-            padding: '36px 30px',
-            borderRadius: 'var(--radius-lg)',
-            border: '1px solid rgba(0, 240, 255, 0.25)',
-            boxShadow: '0 12px 40px rgba(0, 0, 0, 0.8), 0 0 30px -10px rgba(0, 240, 255, 0.2)'
-          }}>
-            <div style={{ textAlign: 'center', marginBottom: '20px' }}>
-              <div style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '6px',
-                padding: '4px 12px',
-                borderRadius: 'var(--radius-pill)',
-                background: 'rgba(0, 240, 255, 0.1)',
-                border: '1px solid rgba(0, 240, 255, 0.35)',
-                color: 'var(--cyan-primary)',
-                fontSize: '11.5px',
-                fontWeight: 700,
-                letterSpacing: '0.06em',
-                marginBottom: '16px'
-              }}>
-                <Globe2 size={13} />
-                <span>ACTIVE MAP 🌐</span>
-              </div>
+          {/* Simulation Action & Results */}
+          {simState === 'idle' && (
+            <button
+              type="button"
+              onClick={runSimulation}
+              className="btn btn-primary"
+              style={{ width: '100%', padding: '11px', justifyContent: 'center' }}
+            >
+              <Cpu size={16} />
+              <span>Simulate Cryptographic Verification</span>
+            </button>
+          )}
 
-              <h3 className="font-display" style={{
-                fontSize: '1.65rem',
-                fontWeight: 800,
-                color: '#ffffff',
-                lineHeight: 1.25,
-                marginBottom: '10px'
-              }}>
-                Backed by <span style={{ color: 'var(--cyan-primary)', textShadow: '0 0 15px rgba(0, 240, 255, 0.5)' }}>Industry Leaders</span>, Built for Global Reach
-              </h3>
-
-              <p style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-                Active in North America, Europe, Asia, and scaling to 10+ countries
+          {simState === 'verifying' && (
+            <div style={{
+              padding: '16px',
+              textAlign: 'center',
+              background: '#eff6ff',
+              borderRadius: 'var(--radius-md)',
+              border: '1px solid #bfdbfe'
+            }}>
+              <div className="spinner" style={{ margin: '0 auto 10px auto' }} />
+              <p style={{ fontSize: '13px', color: '#1d4ed8', fontWeight: 600 }}>
+                Validating Ed25519 signature & blockchain proof...
               </p>
             </div>
+          )}
 
-            {/* Stylized Futuristic Globe Wireframe graphic */}
-            <div style={{
-              background: 'radial-gradient(circle at center, rgba(0, 240, 255, 0.12) 0%, rgba(2, 4, 10, 0) 70%)',
-              border: '1px solid rgba(0, 240, 255, 0.15)',
+          {simState === 'verified' && (
+            <div className="animate-fade-in" style={{
+              padding: '16px',
+              background: '#f0fdf4',
               borderRadius: 'var(--radius-md)',
-              padding: '24px 16px',
-              textAlign: 'center',
-              marginBottom: '24px',
-              position: 'relative'
+              border: '1px solid #bbf7d0'
             }}>
-              <div style={{
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-                gap: '8px',
-                color: 'var(--cyan-primary)',
-                fontWeight: 600,
-                fontSize: '12px',
-                marginBottom: '8px'
-              }}>
-                <span className="badge-dot" style={{ background: '#00f0ff', boxShadow: '0 0 8px #00f0ff' }} />
-                <span>1,420+ On-Chain Attestations Live</span>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#15803d', fontWeight: 700, fontSize: '14px' }}>
+                  <CheckCircle2 size={18} />
+                  <span>Verified Authentic & Tamper-Proof</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={resetSimulation}
+                  style={{
+                    background: 'transparent',
+                    border: 'none',
+                    color: '#64748b',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    fontSize: '12px'
+                  }}
+                >
+                  <RefreshCw size={12} />
+                  <span>Reset</span>
+                </button>
               </div>
-              <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
-                ETHEREUM SEPOLIA · ED25519 · IPFS DISTRIBUTED NETWORK
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '12.5px', color: '#334155' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span>SHA-256 Hash Integrity</span>
+                  <span style={{ color: '#15803d', fontWeight: 600 }}>Match (100%)</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span>Ed25519 Signature</span>
+                  <span style={{ color: '#15803d', fontWeight: 600 }}>Valid (MIT Authority)</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span>Blockchain Anchor</span>
+                  <span style={{ color: '#15803d', fontWeight: 600 }}>Block #19842104</span>
+                </div>
               </div>
             </div>
-
-            <div style={{
-              fontSize: '11px',
-              letterSpacing: '0.08em',
-              color: 'var(--cyan-primary)',
-              textTransform: 'uppercase',
-              fontWeight: 700,
-              marginBottom: '12px'
-            }}>
-              ACTIVE REGIONS
-            </div>
-
-            {/* Region Accordion List */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', marginBottom: '28px' }}>
-              {globalRegions.map((region, idx) => {
-                const isOpen = activeRegion === idx;
-                return (
-                  <div
-                    key={region}
-                    onClick={() => setActiveRegion(isOpen ? null : idx)}
-                    className={`cyber-accordion-item ${isOpen ? 'active' : ''}`}
-                    style={{ padding: '12px 0' }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
-                      <span style={{ fontSize: '14px', color: isOpen ? 'var(--cyan-primary)' : 'var(--text-secondary)' }}>
-                        {region}
-                      </span>
-                      <span style={{ color: 'var(--text-muted)', fontSize: '14px' }}>
-                        {isOpen ? '−' : '+'}
-                      </span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            <a 
-              className="btn btn-primary" 
-              href="#/verify" 
-              style={{ 
-                textDecoration: 'none', 
-                width: '100%',
-                letterSpacing: '0.04em',
-                padding: '12px 20px',
-                fontWeight: 700
-              }}
-            >
-              <span>WHAT POWERS CERTICHAIN •</span>
-            </a>
-          </div>
+          )}
         </div>
       </section>
 
-      {/* Features Grid */}
-      <section style={{ marginBottom: '80px' }}>
-        <div style={{ textAlign: 'center', marginBottom: '40px' }}>
-          <h2 className="font-display" style={{ fontSize: 'clamp(1.6rem, 3vw, 2.2rem)', fontWeight: 800, color: '#ffffff', letterSpacing: '-0.02em', marginBottom: '10px' }}>
-            Cryptographic Integrity at Scale
-          </h2>
-          <p style={{ fontSize: '15px', color: 'var(--text-secondary)', maxWidth: '560px', margin: '0 auto' }}>
-            Built with Ed25519 digital signatures, tamper-evident hash chains, and Ethereum smart contract anchors.
-          </p>
+      {/* Institutional Trust Strip */}
+      <section style={{
+        padding: '24px 0',
+        borderTop: '1px solid #e2e8f0',
+        borderBottom: '1px solid #e2e8f0',
+        marginBottom: '64px'
+      }}>
+        <div style={{ textAlign: 'center', marginBottom: '16px' }}>
+          <span style={{
+            fontSize: '11.5px',
+            fontWeight: 700,
+            letterSpacing: '0.08em',
+            color: '#64748b',
+            textTransform: 'uppercase'
+          }}>
+            TRUSTED ARCHITECTURE DESIGNED FOR UNIVERSITIES & REGISTRIES
+          </span>
         </div>
 
         <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
-          gap: '20px',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          gap: '36px',
+          flexWrap: 'wrap'
         }}>
-          {features.map((f) => (
-            <div key={f.title} className="glass-panel" style={{ padding: '28px 24px', borderRadius: 'var(--radius-lg)' }}>
-              <div style={{
-                width: '46px',
-                height: '46px',
-                borderRadius: '12px',
-                backgroundColor: f.bg,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: f.color,
-                marginBottom: '18px',
-                border: `1px solid ${f.color}40`,
-                boxShadow: `0 0 15px ${f.color}25`
-              }}>
-                <f.icon size={24} />
-              </div>
-              <h3 className="font-display" style={{ fontSize: '1.1rem', fontWeight: 700, color: '#ffffff', marginBottom: '10px' }}>
-                {f.title}
-              </h3>
-              <p style={{ fontSize: '13.5px', color: 'var(--text-secondary)', lineHeight: 1.6 }}>
-                {f.description}
-              </p>
+          {institutions.map((inst, idx) => (
+            <div key={idx} style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              fontSize: '13px',
+              fontWeight: 700,
+              color: '#475569',
+              letterSpacing: '0.03em'
+            }}>
+              <Building size={16} color="#1d4ed8" />
+              <span>{inst.short}</span>
             </div>
           ))}
         </div>
       </section>
 
-      {/* Cyber CTA Band */}
-      <section className="glass-panel" style={{
-        borderRadius: 'var(--radius-lg)',
-        padding: '54px 32px',
-        textAlign: 'center',
-        background: 'radial-gradient(circle at 50% 0%, rgba(0, 240, 255, 0.15) 0%, rgba(7, 13, 24, 0.95) 75%)',
-        border: '1px solid var(--border-accent)',
-        boxShadow: '0 20px 60px rgba(0, 0, 0, 0.8), 0 0 35px -10px rgba(0, 240, 255, 0.3)',
-        marginBottom: '64px'
-      }}>
-        <h2 className="font-display" style={{ fontSize: 'clamp(1.6rem, 3.5vw, 2.25rem)', fontWeight: 800, color: '#ffffff', marginBottom: '12px' }}>
-          Ready to verify a credential?
-        </h2>
-        <p style={{ fontSize: '15px', color: 'var(--text-secondary)', maxWidth: '500px', margin: '0 auto 28px' }}>
-          No account needed for verification. Upload any issued credential file and receive an instant cryptographic authenticity audit.
-        </p>
-        <a className="btn btn-primary" href="#/verify" style={{
-          textDecoration: 'none',
-          padding: '13px 32px',
-          fontWeight: 700,
-          letterSpacing: '0.04em'
+      {/* 3-Step Architecture Section */}
+      <section style={{ marginBottom: '64px' }}>
+        <div style={{ textAlign: 'center', maxWidth: '640px', margin: '0 auto 40px auto' }}>
+          <h2 className="font-display" style={{ fontSize: '2rem', fontWeight: 700, color: '#0f172a', marginBottom: '10px' }}>
+            How CertiChain Works
+          </h2>
+          <p style={{ fontSize: '15px', color: '#475569', lineHeight: 1.6 }}>
+            Our architecture replaces fragile paper certificates with immutable, cryptographic verification.
+          </p>
+        </div>
+
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+          gap: '24px'
         }}>
-          <FileCheck size={18} />
-          <span>START VERIFYING •</span>
-        </a>
+          {architectureSteps.map((item, idx) => {
+            const Icon = item.icon;
+            return (
+              <div key={idx} className="step-card">
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+                  <span className="step-number">STEP {item.step}</span>
+                  <span style={{
+                    fontSize: '11.5px',
+                    padding: '3px 8px',
+                    borderRadius: 'var(--radius-pill)',
+                    background: '#f1f5f9',
+                    color: '#1d4ed8',
+                    fontWeight: 600
+                  }}>
+                    {item.badge}
+                  </span>
+                </div>
+
+                <div style={{
+                  width: '40px',
+                  height: '40px',
+                  borderRadius: '8px',
+                  background: '#eff6ff',
+                  border: '1px solid #bfdbfe',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#1d4ed8',
+                  marginBottom: '16px'
+                }}>
+                  <Icon size={20} />
+                </div>
+
+                <h3 style={{ fontSize: '1.15rem', fontWeight: 700, color: '#0f172a', marginBottom: '8px' }}>
+                  {item.title}
+                </h3>
+
+                <p style={{ fontSize: '13.5px', color: '#475569', lineHeight: 1.55 }}>
+                  {item.desc}
+                </p>
+              </div>
+            );
+          })}
+        </div>
       </section>
 
-      {/* Trust footer strip */}
-      <div style={{
-        display: 'flex',
-        justifyContent: 'center',
-        gap: '32px',
-        flexWrap: 'wrap',
-        marginBottom: '32px',
-        fontSize: '12.5px',
-        color: 'var(--text-muted)',
+      {/* Metrics Counter Bar */}
+      <section style={{ marginBottom: '64px' }}>
+        <div className="stats-bar">
+          <div className="stat-item">
+            <span className="stat-value" style={{ color: '#1d4ed8' }}>100%</span>
+            <span className="stat-label">Cryptographic Tamper-Proof Assurance</span>
+          </div>
+          <div className="stat-item">
+            <span className="stat-value" style={{ color: '#15803d' }}>&lt; 50ms</span>
+            <span className="stat-label">Instant Browser Verification Speed</span>
+          </div>
+          <div className="stat-item">
+            <span className="stat-value" style={{ color: '#0f172a' }}>0</span>
+            <span className="stat-label">Middlemen, Fees or Proprietary Gateways</span>
+          </div>
+          <div className="stat-item">
+            <span className="stat-value" style={{ color: '#b45309' }}>W3C</span>
+            <span className="stat-label">Open Verifiable Credential Standard</span>
+          </div>
+        </div>
+      </section>
+
+      {/* Platform Features Grid */}
+      <section style={{ marginBottom: '80px' }}>
+        <div style={{ textAlign: 'center', maxWidth: '640px', margin: '0 auto 40px auto' }}>
+          <h2 className="font-display" style={{ fontSize: '2rem', fontWeight: 700, color: '#0f172a', marginBottom: '10px' }}>
+            Enterprise Trust Infrastructure
+          </h2>
+          <p style={{ fontSize: '15px', color: '#475569' }}>
+            Comprehensive tools for academic registrars, students, and employers.
+          </p>
+        </div>
+
+        <div className="feature-grid">
+          {platformFeatures.map((feat, idx) => {
+            const Icon = feat.icon;
+            return (
+              <div key={idx} className="feature-card">
+                <div style={{
+                  width: '40px',
+                  height: '40px',
+                  borderRadius: '8px',
+                  background: '#f8fafc',
+                  border: '1px solid #e2e8f0',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: feat.accent,
+                  marginBottom: '16px'
+                }}>
+                  <Icon size={20} />
+                </div>
+
+                <h3 style={{ fontSize: '1.1rem', fontWeight: 600, color: '#0f172a', marginBottom: '8px' }}>
+                  {feat.title}
+                </h3>
+
+                <p style={{ fontSize: '13.5px', color: '#475569', lineHeight: 1.55 }}>
+                  {feat.description}
+                </p>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* Bottom CTA Banner */}
+      <section style={{
+        background: '#eff6ff',
+        border: '1px solid #bfdbfe',
+        borderRadius: 'var(--radius-lg)',
+        padding: '44px 32px',
+        textAlign: 'center',
+        marginBottom: '40px'
       }}>
-        <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <Fingerprint size={14} color="var(--cyan-primary)" />
-          Ed25519 signed
-        </span>
-        <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <Database size={14} color="#10b981" />
-          Decentralized storage
-        </span>
-        <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <CheckCircle2 size={14} color="#a855f7" />
-          Publicly auditable on Ethereum
-        </span>
-      </div>
+        <h2 className="font-display" style={{ fontSize: '1.85rem', fontWeight: 700, color: '#0f172a', marginBottom: '12px' }}>
+          Ready to verify or issue credentials?
+        </h2>
+        <p style={{ fontSize: '15px', color: '#475569', maxWidth: '580px', margin: '0 auto 24px auto', lineHeight: 1.6 }}>
+          Try the public verifier or sign in to experience the institutional credential studio and student wallet.
+        </p>
+
+        <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
+          <a className="btn btn-primary" href="#/verify" style={{ textDecoration: 'none', padding: '10px 22px' }}>
+            <FileCheck size={17} />
+            <span>Launch Public Verifier</span>
+          </a>
+          <a className="btn btn-outline" href="#/login" style={{ textDecoration: 'none', padding: '10px 20px' }}>
+            <span>Sign In to CertiChain</span>
+            <ChevronRight size={16} />
+          </a>
+        </div>
+      </section>
     </main>
   );
 }

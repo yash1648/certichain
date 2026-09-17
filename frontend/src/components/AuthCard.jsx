@@ -17,10 +17,12 @@ import { useAuth } from '../context/AuthContext';
 const DEMO_PROFILES = [
   {
     role: 'ADMIN',
-    label: 'Admin',
-    badge: 'Network Administrator',
+    label: 'Network Admin',
+    badge: 'System Administrator',
     icon: ShieldAlert,
-    color: 'var(--amber-primary)',
+    color: '#b45309',
+    bg: '#fffbeb',
+    border: '#fde68a',
     fullName: 'System Administrator',
     email: 'admin@certichain.org',
     password: 'AdminPassword123!',
@@ -28,10 +30,12 @@ const DEMO_PROFILES = [
   },
   {
     role: 'ISSUER',
-    label: 'Institution',
+    label: 'University Registrar',
     badge: 'Issuing Authority',
     icon: Building2,
-    color: '#a855f7',
+    color: '#6b21a8',
+    bg: '#faf5ff',
+    border: '#e9d5ff',
     fullName: 'Massachusetts Institute of Technology',
     email: 'registrar@mit.edu',
     password: 'IssuerPassword123!',
@@ -39,10 +43,12 @@ const DEMO_PROFILES = [
   },
   {
     role: 'HOLDER',
-    label: 'Holder',
-    badge: 'Student / Graduate',
+    label: 'Student / Graduate',
+    badge: 'Credential Holder',
     icon: Award,
-    color: 'var(--cyan-primary)',
+    color: '#1d4ed8',
+    bg: '#eff6ff',
+    border: '#bfdbfe',
     fullName: 'Alex Mercer',
     email: 'alex.mercer@alumni.org',
     password: 'HolderPassword123!',
@@ -59,7 +65,7 @@ export function AuthCard() {
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState('');
 
-  const { login, register, loginDemoUser, backendOnline } = useAuth();
+  const { login, register, loginDemoUser } = useAuth();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -113,14 +119,16 @@ export function AuthCard() {
   };
 
   return (
-    <div className="glass-panel glass-panel-glow animate-fade-in" style={{
-      maxWidth: '540px',
+    <div className="glass-panel animate-fade-in" style={{
+      maxWidth: '500px',
       margin: '0 auto',
       padding: '36px 32px',
-      position: 'relative',
-      borderRadius: 'var(--radius-lg)'
+      borderRadius: 'var(--radius-lg)',
+      backgroundColor: '#ffffff',
+      border: '1px solid #cbd5e1',
+      boxShadow: '0 4px 20px -2px rgba(0, 0, 0, 0.08)'
     }}>
-      {/* Decorative top accent badge - NO raw endpoints */}
+      {/* Top Header */}
       <div style={{
         display: 'flex',
         alignItems: 'center',
@@ -128,50 +136,62 @@ export function AuthCard() {
         marginBottom: '20px'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <Key size={16} color="var(--cyan-primary)" />
-          <span style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--cyan-primary)', fontWeight: 700 }}>
+          <div style={{
+            width: '28px',
+            height: '28px',
+            borderRadius: '6px',
+            backgroundColor: '#eff6ff',
+            border: '1px solid #bfdbfe',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: '#1d4ed8'
+          }}>
+            <Key size={15} />
+          </div>
+          <span style={{ fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.06em', color: '#1d4ed8', fontWeight: 700 }}>
             Identity & Key Vault
           </span>
         </div>
-        <span className="badge badge-cyan" style={{ fontSize: '0.72rem' }}>
-          {mode === 'login' ? 'Decentralized Auth' : 'Self-Sovereign Identity'}
+        <span className="badge badge-cyan" style={{ fontSize: '11.5px' }}>
+          {mode === 'login' ? 'Secure Sign In' : 'New Account'}
         </span>
       </div>
 
-      <h2 className="font-display" style={{ fontSize: '1.65rem', fontWeight: 800, color: '#ffffff', marginBottom: '6px' }}>
-        {mode === 'login' ? 'Sign In to CertiChain' : 'Register Identity'}
+      <h2 className="font-display" style={{ fontSize: '1.5rem', fontWeight: 800, color: '#0f172a', marginBottom: '6px' }}>
+        {mode === 'login' ? 'Sign In to CertiChain' : 'Create Identity'}
       </h2>
-      <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginBottom: '24px' }}>
+      <p style={{ fontSize: '14px', color: '#475569', marginBottom: '24px', lineHeight: 1.5 }}>
         {mode === 'login'
-          ? 'Authenticate to access your role-specific credential workspace.'
-          : 'Create a new decentralized identity on the CertiChain network.'}
+          ? 'Authenticate to access your credential workspace.'
+          : 'Create a new verifiable identity on the CertiChain network.'}
       </p>
 
       {/* Mode Switcher Tabs */}
       <div style={{
         display: 'grid',
         gridTemplateColumns: '1fr 1fr',
-        background: 'rgba(4, 8, 18, 0.85)',
-        padding: '5px',
-        borderRadius: 'var(--radius-md)',
+        background: '#f1f5f9',
+        padding: '4px',
+        borderRadius: 'var(--radius-sm)',
         marginBottom: '24px',
-        border: '1px solid var(--border-subtle)',
+        border: '1px solid #e2e8f0',
         gap: '4px'
       }}>
         <button
           type="button"
           onClick={() => { setMode('login'); setFormError(''); }}
           style={{
-            padding: '9px 12px',
+            padding: '8px 12px',
             borderRadius: 'var(--radius-sm)',
-            border: mode === 'login' ? '1px solid rgba(0, 240, 255, 0.4)' : '1px solid transparent',
+            border: mode === 'login' ? '1px solid #cbd5e1' : '1px solid transparent',
             cursor: 'pointer',
-            fontWeight: 700,
-            fontSize: '0.875rem',
-            background: mode === 'login' ? 'rgba(0, 240, 255, 0.12)' : 'transparent',
-            color: mode === 'login' ? 'var(--cyan-primary)' : 'var(--text-secondary)',
-            boxShadow: mode === 'login' ? '0 0 15px rgba(0, 240, 255, 0.2)' : 'none',
-            transition: 'all 0.2s ease'
+            fontWeight: 600,
+            fontSize: '13.5px',
+            background: mode === 'login' ? '#ffffff' : 'transparent',
+            color: mode === 'login' ? '#0f172a' : '#64748b',
+            boxShadow: mode === 'login' ? '0 1px 2px rgba(0,0,0,0.05)' : 'none',
+            transition: 'all 0.15s ease'
           }}
         >
           Sign In
@@ -180,16 +200,16 @@ export function AuthCard() {
           type="button"
           onClick={() => { setMode('register'); setFormError(''); }}
           style={{
-            padding: '9px 12px',
+            padding: '8px 12px',
             borderRadius: 'var(--radius-sm)',
-            border: mode === 'register' ? '1px solid rgba(16, 185, 129, 0.4)' : '1px solid transparent',
+            border: mode === 'register' ? '1px solid #cbd5e1' : '1px solid transparent',
             cursor: 'pointer',
-            fontWeight: 700,
-            fontSize: '0.875rem',
-            background: mode === 'register' ? 'rgba(16, 185, 129, 0.12)' : 'transparent',
-            color: mode === 'register' ? 'var(--emerald-primary)' : 'var(--text-secondary)',
-            boxShadow: mode === 'register' ? '0 0 15px rgba(16, 185, 129, 0.2)' : 'none',
-            transition: 'all 0.2s ease'
+            fontWeight: 600,
+            fontSize: '13.5px',
+            background: mode === 'register' ? '#ffffff' : 'transparent',
+            color: mode === 'register' ? '#0f172a' : '#64748b',
+            boxShadow: mode === 'register' ? '0 1px 2px rgba(0,0,0,0.05)' : 'none',
+            transition: 'all 0.15s ease'
           }}
         >
           Register
@@ -198,16 +218,16 @@ export function AuthCard() {
 
       {formError && (
         <div style={{
-          backgroundColor: 'rgba(244, 63, 94, 0.12)',
-          border: '1px solid rgba(244, 63, 94, 0.35)',
-          borderRadius: 'var(--radius-md)',
+          backgroundColor: '#fef2f2',
+          border: '1px solid #fecaca',
+          borderRadius: 'var(--radius-sm)',
           padding: '12px 14px',
           marginBottom: '20px',
           display: 'flex',
           alignItems: 'center',
           gap: '10px',
-          color: 'var(--rose-primary)',
-          fontSize: '0.85rem'
+          color: '#b91c1c',
+          fontSize: '13px'
         }}>
           <AlertCircle size={16} style={{ flexShrink: 0 }} />
           <span>{formError}</span>
@@ -226,9 +246,9 @@ export function AuthCard() {
             gap: '8px'
           }}>
             {[
-              { id: 'HOLDER', label: 'Holder', icon: Award, desc: 'Student / Recipient' },
-              { id: 'ISSUER', label: 'Institution', icon: Building2, desc: 'University / Issuer' },
-              { id: 'ADMIN', label: 'Admin', icon: ShieldAlert, desc: 'System Admin' }
+              { id: 'HOLDER', label: 'Holder', icon: Award, desc: 'Student' },
+              { id: 'ISSUER', label: 'University', icon: Building2, desc: 'Issuer' },
+              { id: 'ADMIN', label: 'Admin', icon: ShieldAlert, desc: 'Network' }
             ].map((r) => {
               const selected = role === r.id;
               const Icon = r.icon;
@@ -240,24 +260,23 @@ export function AuthCard() {
                   style={{
                     padding: '10px 8px',
                     borderRadius: 'var(--radius-sm)',
-                    border: selected ? '1px solid var(--cyan-primary)' : '1px solid var(--border-subtle)',
-                    background: selected ? 'rgba(0, 240, 255, 0.12)' : 'rgba(4, 8, 18, 0.6)',
-                    color: selected ? 'var(--cyan-primary)' : 'var(--text-secondary)',
+                    border: selected ? '1px solid #1d4ed8' : '1px solid #cbd5e1',
+                    background: selected ? '#eff6ff' : '#ffffff',
+                    color: selected ? '#1d4ed8' : '#475569',
                     cursor: 'pointer',
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center',
                     gap: '4px',
                     textAlign: 'center',
-                    boxShadow: selected ? '0 0 12px rgba(0, 240, 255, 0.2)' : 'none',
-                    transition: 'all 0.2s ease'
+                    transition: 'all 0.15s ease'
                   }}
                 >
                   <Icon size={18} />
-                  <span style={{ fontSize: '12px', fontWeight: 700, color: selected ? '#ffffff' : 'inherit' }}>
+                  <span style={{ fontSize: '12.5px', fontWeight: 600, color: selected ? '#1d4ed8' : '#0f172a' }}>
                     {r.label}
                   </span>
-                  <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>
+                  <span style={{ fontSize: '10.5px', color: '#64748b' }}>
                     {r.desc}
                   </span>
                 </button>
@@ -285,9 +304,9 @@ export function AuthCard() {
                 style={{ paddingLeft: '38px' }}
               />
               {role === 'ISSUER' ? (
-                <Building2 size={16} color="var(--text-muted)" style={{ position: 'absolute', left: '12px', top: '14px' }} />
+                <Building2 size={16} color="#94a3b8" style={{ position: 'absolute', left: '12px', top: '12px' }} />
               ) : (
-                <User size={16} color="var(--text-muted)" style={{ position: 'absolute', left: '12px', top: '14px' }} />
+                <User size={16} color="#94a3b8" style={{ position: 'absolute', left: '12px', top: '12px' }} />
               )}
             </div>
           </div>
@@ -306,7 +325,7 @@ export function AuthCard() {
               required
               style={{ paddingLeft: '38px' }}
             />
-            <Mail size={16} color="var(--text-muted)" style={{ position: 'absolute', left: '12px', top: '14px' }} />
+            <Mail size={16} color="#94a3b8" style={{ position: 'absolute', left: '12px', top: '12px' }} />
           </div>
         </div>
 
@@ -314,7 +333,7 @@ export function AuthCard() {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <label className="form-label" htmlFor="password">Password</label>
             {mode === 'register' && (
-              <span style={{ fontSize: '11px', color: password.length >= 8 ? 'var(--emerald-primary)' : 'var(--text-muted)' }}>
+              <span style={{ fontSize: '11px', color: password.length >= 8 ? '#15803d' : '#64748b' }}>
                 {password.length >= 8 ? '✓ Length OK' : 'Min 8 characters'}
               </span>
             )}
@@ -332,46 +351,46 @@ export function AuthCard() {
               maxLength={72}
               style={{ paddingLeft: '38px' }}
             />
-            <Lock size={16} color="var(--text-muted)" style={{ position: 'absolute', left: '12px', top: '14px' }} />
+            <Lock size={16} color="#94a3b8" style={{ position: 'absolute', left: '12px', top: '12px' }} />
           </div>
         </div>
 
         <button
           type="submit"
-          className={`btn ${mode === 'login' ? 'btn-primary' : 'btn-emerald'}`}
+          className="btn btn-primary"
           disabled={submitting}
-          style={{ width: '100%', marginTop: '12px', height: '46px', letterSpacing: '0.04em' }}
+          style={{ width: '100%', marginTop: '12px', height: '42px', fontSize: '14.5px' }}
         >
           {submitting ? (
-            <span>Connecting to Secure Vault...</span>
+            <span>Connecting...</span>
           ) : mode === 'login' ? (
             <>
-              <span>Sign In with Credentials</span>
+              <span>Sign In</span>
               <ArrowRight size={16} />
             </>
           ) : (
             <>
-              <span>Register as {role === 'ADMIN' ? 'Admin' : role === 'ISSUER' ? 'Institution' : 'Holder'}</span>
+              <span>Register Account</span>
               <ShieldCheck size={16} />
             </>
           )}
         </button>
       </form>
 
-      {/* 1-Click Demo Registration & Sign In Profiles (Admin, Institution, Holder) */}
+      {/* 1-Click Demo Profiles */}
       <div style={{
         marginTop: '28px',
         paddingTop: '20px',
-        borderTop: '1px solid var(--border-subtle)'
+        borderTop: '1px solid #e2e8f0'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <Sparkles size={14} color="var(--cyan-primary)" />
-            <span style={{ fontSize: '0.825rem', fontWeight: 700, color: '#ffffff', letterSpacing: '0.02em' }}>
-              Quick Demo Profiles
+            <Sparkles size={14} color="#1d4ed8" />
+            <span style={{ fontSize: '13px', fontWeight: 700, color: '#0f172a' }}>
+              Quick Demo Personas
             </span>
           </div>
-          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+          <span style={{ fontSize: '11.5px', color: '#64748b' }}>
             1-Click Fill & Instant Access
           </span>
         </div>
@@ -385,39 +404,37 @@ export function AuthCard() {
                 style={{
                   padding: '12px 14px',
                   borderRadius: 'var(--radius-sm)',
-                  background: 'rgba(4, 8, 18, 0.75)',
-                  border: '1px solid var(--border-subtle)',
+                  background: '#f8fafc',
+                  border: '1px solid #e2e8f0',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
                   gap: '12px',
-                  transition: 'all 0.2s ease'
+                  transition: 'all 0.15s ease'
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
                   <div style={{
-                    width: '34px',
-                    height: '34px',
-                    borderRadius: '8px',
-                    background: `${profile.color}20`,
+                    width: '32px',
+                    height: '32px',
+                    borderRadius: '6px',
+                    background: profile.bg,
+                    border: `1px solid ${profile.border}`,
                     color: profile.color,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     flexShrink: 0
                   }}>
-                    <Icon size={18} />
+                    <Icon size={16} />
                   </div>
                   <div style={{ minWidth: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#ffffff' }}>
+                      <span style={{ fontSize: '13px', fontWeight: 600, color: '#0f172a' }}>
                         {profile.label}
                       </span>
-                      <span className="badge" style={{ fontSize: '0.65rem', padding: '1px 6px', background: `${profile.color}20`, color: profile.color, border: `1px solid ${profile.color}40` }}>
-                        {profile.badge}
-                      </span>
                     </div>
-                    <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <p style={{ fontSize: '11.5px', color: '#64748b', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {profile.email}
                     </p>
                   </div>
@@ -428,8 +445,8 @@ export function AuthCard() {
                     type="button"
                     onClick={() => selectDemoProfile(profile, false)}
                     className="btn btn-sm btn-outline"
-                    style={{ fontSize: '0.75rem', padding: '5px 9px' }}
-                    title="Fill the form with these demo credentials"
+                    style={{ fontSize: '12px', padding: '4px 10px' }}
+                    title="Fill form"
                   >
                     Fill
                   </button>
@@ -437,10 +454,10 @@ export function AuthCard() {
                     type="button"
                     onClick={() => selectDemoProfile(profile, true)}
                     className="btn btn-sm btn-primary"
-                    style={{ fontSize: '0.75rem', padding: '5px 10px' }}
-                    title="Instant sign in with demo credentials"
+                    style={{ fontSize: '12px', padding: '4px 12px' }}
+                    title="Instant sign in"
                   >
-                    Instant Access
+                    Enter
                   </button>
                 </div>
               </div>
@@ -448,22 +465,6 @@ export function AuthCard() {
           })}
         </div>
       </div>
-
-      {backendOnline === false && (
-        <div style={{
-          marginTop: '20px',
-          padding: '12px 14px',
-          borderRadius: 'var(--radius-sm)',
-          backgroundColor: 'rgba(0, 240, 255, 0.08)',
-          border: '1px solid var(--border-accent)',
-          fontSize: '0.78rem',
-          color: 'var(--cyan-primary)',
-          textAlign: 'center',
-          lineHeight: 1.5
-        }}>
-          💡 <strong>Sandbox Ready:</strong> Click <strong>Instant Access</strong> on any Demo Profile above to explore the Admin Center, Credential Studio, or Student Wallet immediately.
-        </div>
-      )}
     </div>
   );
 }

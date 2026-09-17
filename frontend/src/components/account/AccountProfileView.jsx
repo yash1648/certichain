@@ -180,8 +180,8 @@ export function AccountProfileView() {
         </h3>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px' }}>
-          <div style={{ padding: '16px', borderRadius: 'var(--radius-sm)', backgroundColor: '#f8fafc', border: '1px solid var(--border-subtle)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--emerald-primary)', fontWeight: 600, fontSize: '13.5px', marginBottom: '4px' }}>
+          <div style={{ padding: '16px', borderRadius: 'var(--radius-sm)', backgroundColor: 'rgba(255, 255, 255, 0.03)', border: '1px solid var(--border-subtle)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#34d399', fontWeight: 600, fontSize: '13.5px', marginBottom: '4px' }}>
               <ShieldCheck size={16} />
               <span>Session Secure</span>
             </div>
@@ -190,8 +190,8 @@ export function AccountProfileView() {
             </p>
           </div>
 
-          <div style={{ padding: '16px', borderRadius: 'var(--radius-sm)', backgroundColor: '#f8fafc', border: '1px solid var(--border-subtle)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--cyan-primary)', fontWeight: 600, fontSize: '13.5px', marginBottom: '4px' }}>
+          <div style={{ padding: '16px', borderRadius: 'var(--radius-sm)', backgroundColor: 'rgba(255, 255, 255, 0.03)', border: '1px solid var(--border-subtle)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#60a5fa', fontWeight: 600, fontSize: '13.5px', marginBottom: '4px' }}>
               <Lock size={16} />
               <span>Self-Sovereign Identity</span>
             </div>
@@ -207,7 +207,7 @@ export function AccountProfileView() {
         border: '1px solid var(--border-subtle)',
         borderRadius: 'var(--radius-lg)',
         overflow: 'hidden',
-        backgroundColor: '#ffffff'
+        backgroundColor: 'var(--bg-card)'
       }}>
         <button
           type="button"
@@ -227,7 +227,7 @@ export function AccountProfileView() {
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Code2 size={16} color="var(--cyan-primary)" />
+            <Code2 size={16} color="#60a5fa" />
             <span>Developer & Diagnostics Tools</span>
           </div>
           {showDeveloperTools ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
@@ -237,7 +237,7 @@ export function AccountProfileView() {
           <div className="animate-fade-in" style={{
             padding: '20px 24px 24px',
             borderTop: '1px solid var(--border-subtle)',
-            backgroundColor: '#f8fafc',
+            backgroundColor: 'rgba(10, 15, 26, 0.6)',
             display: 'flex',
             flexDirection: 'column',
             gap: '16px'
