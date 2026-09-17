@@ -1,0 +1,33 @@
+services:
+  ipfs:
+    image: ipfs/kubo:v0.36.0
+    container_name: certichain-ipfs
+    restart: unless-stopped
+    volumes:
+      - certichain_ipfs_data:/data/ipfs
+
+  anvil:
+    image: ghcr.io/foundry-rs/foundry:stable
+    container_name: certichain-anvil
+    restart: unless-stopped
+    command: anvil --host 0.0.0.0 --port 8545 --state /data/anvil-state
+    volumes:
+      - certichain_anvil_data:/data
+
+  backend:
+    build: ../certchain
+    container_name: certichain-backend
+    restart: unless-stopped
+    depends_on:
+      - ipfs
+      - anvil
+    env_file: .env
+    ports:
+      - "6969:6969"
+    volumes:
+      - certichain_keystore:/app/keystore
+
+volumes:
+  certichain_ipfs_data:
+  certichain_anvil_data:
+  certichain_keystore:
