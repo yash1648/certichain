@@ -11,15 +11,12 @@ Three pieces, three providers:
 ## 1. Neon (Postgres)
 
 1. Create a project at [neon.tech](https://neon.tech) (region: closest to your EC2, e.g. `us-east-1`).
-2. In the SQL editor, create the database:
-   ```sql
-   CREATE DATABASE certichain;
-   ```
-3. Copy the **JDBC** connection string (Settings > Connection Details, "Direct" connection):
+2. Create the database (`certichain`) in the SQL editor if it doesn't exist.
+3. Copy the **JDBC** connection string from Settings > Connection Details, using the **Direct** connection — **not** the `-pooler` host. PgBouncer's transaction mode breaks Flyway's session-level advisory locks.
    ```
    jdbc:postgresql://ep-XXXX.region.aws.neon.tech/certichain?sslmode=require
    ```
-   Save the username/password too — you'll need them in step 2.
+   Drop the `channel_binding` param — that's libpq-only, `sslmode=require` already gives TLS.
 
 ## 2. AWS EC2 (backend + IPFS + Anvil)
 
@@ -28,19 +25,28 @@ Three pieces, three providers:
    - `22` (SSH) — your IP only
    - `6969` (backend API) — `0.0.0.0/0` (Vercel's rewrites need to reach it)
 3. Allocate an **Elastic IP** and attach it — the URL must never change or Vercel rewrites break.
-4. Copy the deploy folder and configure:
+4. Copy **both** `deploy/` and `certchain/` (the compose build context is `../certchain`), then configure:
    ```bash
-   scp -r deploy ubuntu@<EC2_IP>:~
-   ssh ubuntu@<EC2_IP>
+   # from the repo root on your laptop
+   rsync -av --exclude target --exclude .idea -e "ssh -i KEY.pem" \
+     deploy/ ubuntu@<EC2_IP>:~/deploy/
+   rsync -av --exclude target --exclude .idea -e "ssh -i KEY.pem" \
+     certchain/ ubuntu@<EC2_IP>:~/certchain/
+
+   ssh -i KEY.pem ubuntu@<EC2_IP>
    cd deploy
-   cp .env.production.example .env
+   cp env.production.example .env
    nano .env   # fill in Neon URL/creds + secrets
    ./ec2-setup.sh
    ```
 5. Verify:
    ```bash
+   sudo docker compose -f docker-compose.prod.yml ps
+   sudo docker compose -f docker-compose.prod.yml logs -f backend   # watch Flyway apply migrations
    curl http://localhost:6969/v3/api-docs | head
    ```
+
+> The compose file is named `docker-compose.prod.yml`, which Compose does **not** auto-discover — always pass `-f docker-compose.prod.yml`.
 
 ### `.env` template
 
@@ -71,8 +77,8 @@ Notes:
 
 ## 3. Vercel (frontend)
 
-1. Import the repo in Vercel. It auto-detects Vite: build `npm run build`, output `dist`.
-2. Edit `vercel.json` at the repo root — replace `YOUR_EC2_IP` with the Elastic IP:
+1. Import the repo in Vercel and set **Root Directory** to `frontend` — the Vite app lives there; the repo root has no `package.json`. Vercel reads `vercel.json` from the Root Directory, so it is `frontend/vercel.json`.
+2. Edit `frontend/vercel.json` — replace `YOUR_EC2_IP` with the Elastic IP:
    ```json
    {
      "rewrites": [
@@ -82,11 +88,12 @@ Notes:
      ]
    }
    ```
-3. Deploy. The rewrites are server-side, so the browser only talks to Vercel — cookies and auth work with no CORS setup.
+3. Framework preset auto-detects **Vite** (build `npm run build`, output `dist`). Deploy.
+4. The rewrites are server-side, so the browser only talks to Vercel — cookies and auth work with no CORS setup.
 
 ## Rollback
 
-- **Backend**: `git checkout <prev-commit>` on the instance, `sudo docker compose up -d --build` (image is built from local source).
+- **Backend**: `git checkout <prev-commit>` on the instance, `sudo docker compose -f docker-compose.prod.yml up -d --build` (image is built from local source).
 - **Frontend**: Vercel → Deployments → previous deployment → Promote.
 - **DB**: Flyway migrations are forward-only; restore from a Neon branch/backup if needed.
 

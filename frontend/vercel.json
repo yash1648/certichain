@@ -1,0 +1,7 @@
+{
+  "rewrites": [
+    { "source": "/api/:path*", "destination": "http://100.56.56.198:6969/api/:path*" },
+    { "source": "/swagger-ui/:path*", "destination": "http://100.56.56.198:6969/swagger-ui/:path*" },
+    { "source": "/v3/api-docs/:path*", "destination": "http://100.56.56.198:6969/v3/api-docs/:path*" }
+  ]
+}
