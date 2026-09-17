@@ -31,7 +31,9 @@ export function Header() {
         padding: '6px 12px',
         borderRadius: 'var(--radius-sm)',
         textDecoration: 'none',
-        background: active ? 'rgba(37, 99, 235, 0.08)' : 'transparent',
+        background: active ? 'rgba(0, 240, 255, 0.1)' : 'transparent',
+        border: active ? '1px solid rgba(0, 240, 255, 0.3)' : '1px solid transparent',
+        boxShadow: active ? '0 0 12px rgba(0, 240, 255, 0.18)' : 'none',
         transition: 'all 0.2s ease',
       }}
     >
@@ -47,9 +49,9 @@ export function Header() {
   return (
     <header style={{
       borderBottom: '1px solid var(--border-subtle)',
-      backgroundColor: 'rgba(255, 255, 255, 0.92)',
-      backdropFilter: 'blur(16px)',
-      WebkitBackdropFilter: 'blur(16px)',
+      backgroundColor: 'rgba(2, 4, 10, 0.88)',
+      backdropFilter: 'blur(20px)',
+      WebkitBackdropFilter: 'blur(20px)',
       position: 'sticky',
       top: 0,
       zIndex: 50,
@@ -70,22 +72,22 @@ export function Header() {
             width: '38px',
             height: '38px',
             borderRadius: '10px',
-            background: 'linear-gradient(135deg, #2563eb 0%, #7c3aed 100%)',
+            background: 'radial-gradient(circle, #00f0ff 0%, #0369a1 100%)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            color: '#ffffff',
-            boxShadow: '0 4px 12px rgba(37, 99, 235, 0.3)',
+            color: '#02040a',
+            boxShadow: '0 0 16px rgba(0, 240, 255, 0.45)',
           }}>
-            <ShieldCheck size={22} />
+            <ShieldCheck size={22} strokeWidth={2.5} />
           </div>
 
           <div>
-            <div className="font-display" style={{ fontSize: '1.25rem', fontWeight: 800, letterSpacing: '-0.02em', color: 'var(--text-primary)' }}>
-              Certi<span style={{ color: 'var(--cyan-primary)' }}>Chain</span>
+            <div className="font-display" style={{ fontSize: '1.25rem', fontWeight: 800, letterSpacing: '-0.02em', color: '#ffffff' }}>
+              Certi<span style={{ color: 'var(--cyan-primary)', textShadow: '0 0 12px rgba(0, 240, 255, 0.4)' }}>Chain</span>
             </div>
-            <p style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
-              Verifiable Digital Credentials
+            <p style={{ fontSize: '10.5px', color: 'var(--text-muted)', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+              Verifiable Credentials
             </p>
           </div>
         </a>
@@ -128,13 +130,14 @@ export function Header() {
                   display: 'flex',
                   alignItems: 'center',
                   gap: '8px',
-                  padding: '5px 12px',
+                  padding: '6px 14px',
                   borderRadius: 'var(--radius-pill)',
-                  backgroundColor: 'rgba(37, 99, 235, 0.06)',
+                  backgroundColor: 'rgba(0, 240, 255, 0.08)',
                   border: '1px solid var(--border-accent)',
                   textDecoration: 'none',
                   color: 'inherit',
-                  transition: 'background 0.2s ease'
+                  transition: 'background 0.2s ease',
+                  boxShadow: '0 0 12px rgba(0, 240, 255, 0.15)'
                 }}
               >
                 <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>
@@ -154,9 +157,18 @@ export function Header() {
               </button>
             </>
           ) : (
-            <a className="btn btn-sm btn-primary" href="#/login" style={{ textDecoration: 'none' }}>
+            <a 
+              className="btn btn-sm btn-primary" 
+              href="#/login" 
+              style={{ 
+                textDecoration: 'none',
+                letterSpacing: '0.04em',
+                fontWeight: 700,
+                padding: '7px 16px'
+              }}
+            >
               <LogIn size={14} />
-              <span>Sign In / Register</span>
+              <span>SIGN IN •</span>
             </a>
           )}
         </div>

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { HardDrive, Key, FileText, Link2, Copy, Check, AlertTriangle, ShieldCheck } from 'lucide-react';
+import { HardDrive, Key, FileText, Link2, Copy, Check, AlertTriangle } from 'lucide-react';
 import { Modal } from '../common/Modal';
 import { Button } from '../common/Button';
 import { Badge } from '../common/Badge';

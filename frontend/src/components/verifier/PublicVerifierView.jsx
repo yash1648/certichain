@@ -86,11 +86,12 @@ export function PublicVerifierView() {
           {/* Dual Mode Switcher */}
           <div style={{
             display: 'flex',
-            backgroundColor: '#f1f5f9',
-            padding: '4px',
+            backgroundColor: 'rgba(4, 8, 18, 0.85)',
+            border: '1px solid var(--border-subtle)',
+            padding: '5px',
             borderRadius: 'var(--radius-md)',
             marginBottom: '24px',
-            gap: '4px'
+            gap: '6px'
           }}>
             <button
               type="button"
@@ -99,8 +100,8 @@ export function PublicVerifierView() {
                 flex: 1,
                 padding: '10px 16px',
                 borderRadius: 'var(--radius-sm)',
-                border: 'none',
-                background: activeVerifyMode === 'file' ? '#ffffff' : 'transparent',
+                border: activeVerifyMode === 'file' ? '1px solid rgba(0, 240, 255, 0.4)' : '1px solid transparent',
+                background: activeVerifyMode === 'file' ? 'rgba(0, 240, 255, 0.12)' : 'transparent',
                 color: activeVerifyMode === 'file' ? 'var(--cyan-primary)' : 'var(--text-secondary)',
                 fontWeight: activeVerifyMode === 'file' ? 700 : 500,
                 fontSize: '13.5px',
@@ -109,7 +110,7 @@ export function PublicVerifierView() {
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: '8px',
-                boxShadow: activeVerifyMode === 'file' ? '0 2px 8px rgba(0,0,0,0.06)' : 'none',
+                boxShadow: activeVerifyMode === 'file' ? '0 0 15px rgba(0, 240, 255, 0.2)' : 'none',
                 transition: 'all 0.2s ease'
               }}
             >
@@ -124,8 +125,8 @@ export function PublicVerifierView() {
                 flex: 1,
                 padding: '10px 16px',
                 borderRadius: 'var(--radius-sm)',
-                border: 'none',
-                background: activeVerifyMode === 'number' ? '#ffffff' : 'transparent',
+                border: activeVerifyMode === 'number' ? '1px solid rgba(0, 240, 255, 0.4)' : '1px solid transparent',
+                background: activeVerifyMode === 'number' ? 'rgba(0, 240, 255, 0.12)' : 'transparent',
                 color: activeVerifyMode === 'number' ? 'var(--cyan-primary)' : 'var(--text-secondary)',
                 fontWeight: activeVerifyMode === 'number' ? 700 : 500,
                 fontSize: '13.5px',
@@ -134,7 +135,7 @@ export function PublicVerifierView() {
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: '8px',
-                boxShadow: activeVerifyMode === 'number' ? '0 2px 8px rgba(0,0,0,0.06)' : 'none',
+                boxShadow: activeVerifyMode === 'number' ? '0 0 15px rgba(0, 240, 255, 0.2)' : 'none',
                 transition: 'all 0.2s ease'
               }}
             >

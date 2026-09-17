@@ -3,9 +3,11 @@ package com.certchain.certchain.service;
 import com.certchain.certchain.dto.request.LoginRequest;
 import com.certchain.certchain.dto.request.RegisterRequest;
 import com.certchain.certchain.dto.response.UserResponse;
+import com.certchain.certchain.model.Issuer;
 import com.certchain.certchain.model.RefreshToken;
 import com.certchain.certchain.model.Role;
 import com.certchain.certchain.model.User;
+import com.certchain.certchain.repository.IssuerRepository;
 import com.certchain.certchain.repository.RefreshTokenRepository;
 import com.certchain.certchain.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Value;
@@ -28,6 +30,7 @@ public class AuthService {
 
     private final UserRepository userRepository;
     private final RefreshTokenRepository refreshTokenRepository;
+    private final IssuerRepository issuerRepository;
     private final BCryptPasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
     private final SecureRandom secureRandom;
@@ -36,12 +39,14 @@ public class AuthService {
     public AuthService(
             UserRepository userRepository,
             RefreshTokenRepository refreshTokenRepository,
+            IssuerRepository issuerRepository,
             JwtUtil jwtUtil,
             @Value("${certichain.auth.refresh-token-ttl-days}")
             long refreshTokenTtlDays) {
 
         this.userRepository = userRepository;
         this.refreshTokenRepository = refreshTokenRepository;
+        this.issuerRepository = issuerRepository;
         this.passwordEncoder = new BCryptPasswordEncoder();
         this.jwtUtil = jwtUtil;
         this.secureRandom = new SecureRandom();
@@ -66,15 +71,37 @@ public class AuthService {
             );
         }
 
+        Role assignedRole = Role.HOLDER;
+        if (request.role() != null && !request.role().isBlank()) {
+            try {
+                assignedRole = Role.valueOf(request.role().trim().toUpperCase());
+            } catch (IllegalArgumentException ignored) {
+            }
+        }
+
         User user = new User();
         user.setEmail(email);
         user.setPasswordHash(
                 passwordEncoder.encode(request.password())
         );
         user.setFullName(request.fullName());
-        user.setRole(Role.HOLDER);
+        user.setRole(assignedRole);
 
         User saved = userRepository.save(user);
+
+        // If registered as an institution / issuer, automatically set up their verified issuer record
+        if (assignedRole == Role.ISSUER && !issuerRepository.existsByUserId(saved.getId())) {
+            Issuer issuer = new Issuer();
+            issuer.setUser(saved);
+            issuer.setName(saved.getFullName());
+            String domain = "certichain.org";
+            if (saved.getEmail().contains("@")) {
+                domain = saved.getEmail().substring(saved.getEmail().indexOf("@") + 1);
+            }
+            issuer.setDomain(domain);
+            issuer.setVerified(true);
+            issuerRepository.save(issuer);
+        }
 
         return new UserResponse(
                 saved.getId(),

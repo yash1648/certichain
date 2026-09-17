@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, Link2, AlertTriangle, ShieldCheck } from 'lucide-react';
+import { Search, AlertTriangle, ShieldCheck } from 'lucide-react';
 import { verifierService } from '../../services/verifierService';
 import { Button } from '../common/Button';
 import { Badge } from '../common/Badge';

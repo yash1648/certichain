@@ -46,7 +46,7 @@ export function Modal({
         style={{
           width: '100%',
           maxWidth,
-          backgroundColor: '#ffffff',
+          backgroundColor: 'var(--bg-card-elevated)',
           border: '1px solid var(--border-subtle)',
           borderRadius: 'var(--radius-lg)',
           boxShadow: 'var(--shadow-modal)',
