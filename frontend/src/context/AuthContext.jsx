@@ -30,18 +30,10 @@ export function AuthProvider({ children }) {
   const [accessToken, setAccessToken] = useState(null);
   const [expiresAt, setExpiresAt] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [backendOnline, setBackendOnline] = useState(null);
   const [lastActionStatus, setLastActionStatus] = useState(null);
 
   const refreshTimeoutRef = useRef(null);
   const refreshSessionRef = useRef(null);
-
-  // Ping backend status
-  const checkBackendStatus = useCallback(async () => {
-    const isOnline = await authService.checkBackendHealth();
-    setBackendOnline(isOnline);
-    return isOnline;
-  }, []);
 
   // Save auth state helper
   const handleAuthSuccess = useCallback((authData) => {
@@ -226,8 +218,6 @@ export function AuthProvider({ children }) {
     let mounted = true;
 
     async function init() {
-      await checkBackendStatus();
-
       // Check if we have cached session
       try {
         const cached = localStorage.getItem(STORAGE_KEY);
@@ -264,13 +254,11 @@ export function AuthProvider({ children }) {
 
     init();
 
-    const interval = setInterval(checkBackendStatus, 10000); // Check backend every 10s
     return () => {
       mounted = false;
-      clearInterval(interval);
       if (refreshTimeoutRef.current) clearTimeout(refreshTimeoutRef.current);
     };
-  }, [checkBackendStatus, refreshSession, clearAuthState]);
+  }, [refreshSession, clearAuthState]);
 
   const decodedToken = accessToken ? parseJwt(accessToken) : null;
 
@@ -282,14 +270,12 @@ export function AuthProvider({ children }) {
         decodedToken,
         expiresAt,
         loading,
-        backendOnline,
         lastActionStatus,
         login,
         register,
         loginDemoUser,
         refreshSession,
         logout,
-        checkBackendStatus,
         clearStatus,
       }}
     >

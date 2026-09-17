@@ -15,21 +15,6 @@
   min-height: calc(100vh - 150px);
 }
 
-.offline-banner {
-  background: #fef2f2;
-  border-bottom: 1px solid #fecaca;
-  color: #991b1b;
-  padding: 10px 20px;
-  font-size: 13px;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  text-align: center;
-  animation: fadeIn 0.2s ease-out;
-}
-
 /* Professional Enterprise Navigation Tabs */
 .workspace-nav-bar {
   display: flex;

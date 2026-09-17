@@ -10,7 +10,6 @@ import { PublicVerifierView } from './components/verifier/PublicVerifierView';
 import { AdminConsoleView } from './components/admin/AdminConsoleView';
 import { Landing } from './components/Landing';
 import {
-  WifiOff,
   Lock,
   ShieldCheck,
   LogIn,
@@ -187,7 +186,7 @@ export default function App() {
 }
 
 function AppShell({ route, navigate }) {
-  const { backendOnline, user } = useAuth();
+  const { user } = useAuth();
 
   // Legacy route redirect for #/console
   useEffect(() => {
@@ -199,14 +198,6 @@ function AppShell({ route, navigate }) {
 
   return (
     <div className="app-container">
-      {/* Offline banner when health poll detects backend unreachable */}
-      {backendOnline === false && (
-        <div className="offline-banner" role="alert">
-          <WifiOff size={15} />
-          <span>Backend service unreachable — checking connection...</span>
-        </div>
-      )}
-
       <Header />
 
       {/* Public Home Landing */}
