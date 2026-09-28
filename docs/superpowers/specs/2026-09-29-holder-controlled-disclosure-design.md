@@ -116,16 +116,25 @@ scheme, and the blockchain anchoring path are all untouched.
 
 ```
 GET /api/holder/credentials/{id}/disclosure
-  -> 200 { availableClaims: [String], hiddenClaims: [String] }
+  -> 200 { claims: { <key>: <value> }, hiddenClaims: [String] }
 ```
 
-`availableClaims` is the set of claim keys the issuer actually used, so the UI
-can render a real toggle list without the client guessing what exists.
+Returns the credential's **full** claim map, not merely the keys. This is
+required, not incidental: the holder cannot make an informed decision about
+what to withhold without seeing what is actually there, and
+`WalletCredentialResponse` carries no claims at all, so this endpoint is the
+only way the holder can read them. It is also what the "what verifiers see"
+preview renders from, so no second round trip is needed.
+
+The claim map is not stored in the database. The `credentials` table has no
+claims column — claims exist only inside the signed envelope on IPFS,
+addressed by `credentials.ipfs_cid`. Reading them means retrieving the CID,
+parsing `SignedCredentialEnvelope`, and reading `credential().claims()`.
 
 ```
 PUT /api/holder/credentials/{id}/disclosure
    body: { "hiddenClaims": ["gpa"] }
-   -> 200 { availableClaims: [...], hiddenClaims: [...] }
+   -> 200 { claims: { <key>: <value> }, hiddenClaims: [String] }
 ```
 
 An empty array resets to show-everything. No separate `DELETE` is provided —
