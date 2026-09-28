@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { 
   Building2, 
   Award, 
@@ -62,11 +62,39 @@ export function IssuerStudio() {
   const [credType, setCredType] = useState('Degree');
   const [credTitle, setCredTitle] = useState('');
   
-  // Step 3: Academic Attributes
-  const [programMajor, setProgramMajor] = useState('');
-  const [gpa, setGpa] = useState('');
-  const [honors, setHonors] = useState('');
-  const [department, setDepartment] = useState('');
+  // Step 3: Claims
+  //
+  // A ref, not state: the id is read and written synchronously inside
+  // the click handler, so a render-snapshot would hand out the same
+  // value twice under rapid clicking and React's key would collapse
+  // the two rows into one. A ref is not snapshotted, and never moves
+  // backwards when a row is removed.
+  const nextRowId = useRef(2);
+  const [claimRows, setClaimRows] = useState([
+    { id: 1, key: '', value: '' },
+  ]);
+
+  const CLAIM_CAP = 50;
+
+  const PRESETS = [
+    { key: 'major', value: '' },
+    { key: 'gpa', value: '' },
+    { key: 'honors', value: '' },
+    { key: 'department', value: '' },
+  ];
+
+  // Derived on every render, so a duplicate surfaces as it is typed.
+  // Set.add() returns the Set, so !seen.add(k) is a falsy side effect
+  // that only records the first sighting; the has() is the real test.
+  // recipientName is seeded by assembleClaims, so a row claiming that
+  // key would be overwritten silently - the same data loss the alert
+  // exists to prevent. Seeding the Set makes it report as a duplicate.
+  const trimmedRows = claimRows.filter((r) => r.key.trim());
+  const seenKeys = new Set();
+  if (recipientName.trim()) seenKeys.add('recipientName');
+  const duplicateKey = trimmedRows.find(
+    (r) => seenKeys.has(r.key.trim()) || !seenKeys.add(r.key.trim())
+  )?.key.trim();
 
   // Issuance Execution State
   const [issuing, setIssuing] = useState(false);
@@ -182,20 +210,42 @@ export function IssuerStudio() {
   };
 
   // Build Payload Claims Object
+  //
+  // Blank keys are dropped by trimmedRows, so a half-filled row never
+  // reaches the payload as { "": "..." }. recipientName stays a
+  // reserved seed: the verifier reads claims.recipientName for the
+  // name on the certificate, and it is the one entry the issuer does
+  // not type into a row.
   const assembleClaims = () => {
-    const obj = {
-      recipientName: recipientName.trim(),
-    };
-    if (programMajor.trim()) obj.major = programMajor.trim();
-    if (gpa.trim()) obj.gpa = gpa.trim();
-    if (honors.trim()) obj.honors = honors.trim();
-    if (department.trim()) obj.department = department.trim();
+    const obj = {};
+    for (const row of trimmedRows) {
+      obj[row.key.trim()] = row.value.trim();
+    }
+    if (recipientName.trim()) obj.recipientName = recipientName.trim();
     return obj;
+  };
+
+  const addRow = (preset) => {
+    const id = nextRowId.current++;
+    setClaimRows((prev) => [
+      ...prev,
+      { id, key: preset ? preset.key : '', value: '' },
+    ]);
+  };
+
+  const updateRow = (id, field, value) => {
+    setClaimRows((prev) =>
+      prev.map((r) => (r.id === id ? { ...r, [field]: value } : r))
+    );
+  };
+
+  const removeRow = (id) => {
+    setClaimRows((prev) => prev.filter((r) => r.id !== id));
   };
 
   // Issue Credential Submission
   const handleIssueCredential = async () => {
-    if (!resolvedHolder?.id || !credTitle.trim()) return;
+    if (!resolvedHolder?.id || !credTitle.trim() || duplicateKey) return;
 
     setIssuing(true);
     setIssueError(null);
@@ -674,61 +724,84 @@ export function IssuerStudio() {
                 <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                   <div>
                     <h2 className="font-display" style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--ink)', marginBottom: '4px' }}>
-                      Step 3: Academic Highlights & Honors
+                      Step 3: Certificate Claims
                     </h2>
                     <p style={{ fontSize: '13.5px', color: 'var(--ink-secondary)' }}>
-                      Enter graduation honors, GPA, specialization, and department information.
+                      Add any attributes the certificate should carry. Each claim needs its own name.
                     </p>
                   </div>
 
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px' }}>
-                    <div className="form-group" style={{ marginBottom: 0 }}>
-                      <label className="form-label" htmlFor="wMajor">Major / Program</label>
-                      <input
-                        id="wMajor"
-                        type="text"
-                        className="input-field"
-                        placeholder="e.g. Computer Science"
-                        value={programMajor}
-                        onChange={(e) => setProgramMajor(e.target.value)}
-                      />
+                  <div className="form-group" style={{ marginBottom: 0 }}>
+                    <p className="form-helper">
+                      Anything you add here is signed into the certificate and cannot be
+                      changed afterwards. The holder decides which of it a verifier sees.
+                    </p>
+
+                    {claimRows.map((row) => (
+                      <div
+                        key={row.id}
+                        style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}
+                      >
+                        <input
+                          aria-label={`Claim key ${row.id}`}
+                          className="input-field"
+                          placeholder="e.g. gpa"
+                          value={row.key}
+                          onChange={(e) => updateRow(row.id, 'key', e.target.value)}
+                        />
+                        <input
+                          aria-label={`Claim value ${row.id}`}
+                          className="input-field"
+                          placeholder="e.g. 3.9"
+                          value={row.value}
+                          onChange={(e) => updateRow(row.id, 'value', e.target.value)}
+                        />
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          aria-label={`Remove claim ${row.id}`}
+                          onClick={() => removeRow(row.id)}
+                        >
+                          Remove
+                        </Button>
+                      </div>
+                    ))}
+
+                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center', marginTop: '12px' }}>
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        icon={Plus}
+                        onClick={() => addRow(null)}
+                        disabled={trimmedRows.length >= CLAIM_CAP}
+                      >
+                        Add claim
+                      </Button>
+                      {PRESETS.map((p) => (
+                        <Button
+                          key={p.key}
+                          variant="outline"
+                          size="sm"
+                          onClick={() => addRow(p)}
+                          disabled={trimmedRows.length >= CLAIM_CAP}
+                        >
+                          + {p.key}
+                        </Button>
+                      ))}
+                      <span className="form-helper">
+                        {trimmedRows.length} / {CLAIM_CAP}
+                      </span>
                     </div>
 
-                    <div className="form-group" style={{ marginBottom: 0 }}>
-                      <label className="form-label" htmlFor="wGpa">Grade / GPA</label>
-                      <input
-                        id="wGpa"
-                        type="text"
-                        className="input-field"
-                        placeholder="e.g. 3.92 or First Class"
-                        value={gpa}
-                        onChange={(e) => setGpa(e.target.value)}
-                      />
-                    </div>
-
-                    <div className="form-group" style={{ marginBottom: 0 }}>
-                      <label className="form-label" htmlFor="wHonors">Honors / Distinction</label>
-                      <input
-                        id="wHonors"
-                        type="text"
-                        className="input-field"
-                        placeholder="e.g. Summa Cum Laude"
-                        value={honors}
-                        onChange={(e) => setHonors(e.target.value)}
-                      />
-                    </div>
-
-                    <div className="form-group" style={{ marginBottom: 0 }}>
-                      <label className="form-label" htmlFor="wDept">Issuing Department</label>
-                      <input
-                        id="wDept"
-                        type="text"
-                        className="input-field"
-                        placeholder="e.g. School of Engineering"
-                        value={department}
-                        onChange={(e) => setDepartment(e.target.value)}
-                      />
-                    </div>
+                    {duplicateKey && (
+                      <p className="form-error" role="alert" style={{ marginTop: '10px' }}>
+                        <AlertTriangle size={14} aria-hidden="true" />
+                        <span>
+                          &ldquo;{duplicateKey}&rdquo; is used more than once. Each claim needs
+                          its own name, or only the last one is kept.
+                        </span>
+                      </p>
+                    )}
                   </div>
 
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '12px' }}>
@@ -799,9 +872,17 @@ export function IssuerStudio() {
                     </h4>
 
                     <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', flexWrap: 'wrap', marginBottom: '20px' }}>
-                      {programMajor && <span style={{ backgroundColor: '#ffffff', padding: '4px 12px', borderRadius: '4px', fontSize: '12px', border: '1px solid #e2e8f0' }}>Major: <strong>{programMajor}</strong></span>}
-                      {gpa && <span style={{ backgroundColor: '#ffffff', padding: '4px 12px', borderRadius: '4px', fontSize: '12px', border: '1px solid #e2e8f0' }}>GPA: <strong>{gpa}</strong></span>}
-                      {honors && <span style={{ backgroundColor: '#ffffff', padding: '4px 12px', borderRadius: '4px', fontSize: '12px', border: '1px solid #e2e8f0' }}>Honors: <strong>{honors}</strong></span>}
+                      {/* Keyed on r.id: two rows can transiently share a key, and
+                          that is exactly the state the duplicate warning reports.
+                          Keying on r.key would collide while the issuer is mid-edit. */}
+                      {trimmedRows.map((r) => (
+                        <span
+                          key={r.id}
+                          style={{ backgroundColor: '#ffffff', padding: '4px 12px', borderRadius: '4px', fontSize: '12px', border: '1px solid #e2e8f0' }}
+                        >
+                          {r.key}: <strong>{r.value}</strong>
+                        </span>
+                      ))}
                     </div>
 
                     <div style={{ fontSize: '11px', color: '#64748b' }}>
