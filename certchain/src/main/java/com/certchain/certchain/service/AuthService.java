@@ -119,20 +119,8 @@ public class AuthService {
 
         User saved = userRepository.save(user);
 
-        if (role == Role.ISSUER
-                && provisionVerifiedIssuer
-                && !issuerRepository.existsByUserId(saved.getId())) {
-            Issuer issuer = new Issuer();
-            issuer.setUser(saved);
-            issuer.setName(saved.getFullName());
-            String domain = "certichain.org";
-            if (saved.getEmail().contains("@")) {
-                domain = saved.getEmail()
-                        .substring(saved.getEmail().indexOf("@") + 1);
-            }
-            issuer.setDomain(domain);
-            issuer.setVerified(true);
-            issuerRepository.save(issuer);
+        if (role == Role.ISSUER && provisionVerifiedIssuer) {
+            ensureVerifiedIssuer(saved);
         }
 
         return new UserResponse(
@@ -141,6 +129,75 @@ public class AuthService {
                 saved.getFullName(),
                 saved.getRole()
         );
+    }
+
+    /**
+     * Grants ISSUER to an existing account and gives it a verified
+     * issuer record, so the promoted user can issue immediately.
+     *
+     * <p>Reached only from the admin API. Holders cannot self-promote:
+     * the public registration path pins every new account to HOLDER.
+     *
+     * <p>The role also lives in the access token, so the promoted user
+     * keeps their old claim until that token expires; they must sign in
+     * again to pick up the new one.
+     */
+    @Transactional
+    public UserResponse promoteToIssuer(UUID userId) {
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() ->
+                        new IllegalArgumentException(
+                                "User not found: " + userId
+                        ));
+
+        if (user.getRole() == Role.ADMIN) {
+            throw new IllegalArgumentException(
+                    "An administrator cannot be promoted to issuer"
+            );
+        }
+
+        if (user.getRole() == Role.ISSUER) {
+            throw new IllegalArgumentException(
+                    "User is already an issuer"
+            );
+        }
+
+        user.setRole(Role.ISSUER);
+        User saved = userRepository.save(user);
+
+        ensureVerifiedIssuer(saved);
+
+        return new UserResponse(
+                saved.getId(),
+                saved.getEmail(),
+                saved.getFullName(),
+                saved.getRole()
+        );
+    }
+
+    /**
+     * Creates the issuer record a privileged grant needs, deriving the
+     * domain from the account's email. No-op when one already exists, so
+     * re-promoting an issuer is harmless.
+     */
+    private void ensureVerifiedIssuer(User user) {
+
+        if (issuerRepository.existsByUserId(user.getId())) {
+            return;
+        }
+
+        Issuer issuer = new Issuer();
+        issuer.setUser(user);
+        issuer.setName(user.getFullName());
+
+        String domain = "certichain.org";
+        if (user.getEmail() != null && user.getEmail().contains("@")) {
+            domain = user.getEmail().substring(user.getEmail().indexOf("@") + 1);
+        }
+        issuer.setDomain(domain);
+        issuer.setVerified(true);
+        issuerRepository.save(issuer);
     }
 
     @Transactional

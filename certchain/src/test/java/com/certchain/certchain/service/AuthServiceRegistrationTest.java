@@ -146,6 +146,107 @@ class AuthServiceRegistrationTest {
         verify(userRepository, never()).save(any(User.class));
     }
 
+    // -- Admin-driven issuer promotion -------------------------------
+    //
+    // The admin is the only party allowed to decide who issues. These
+    // guard that decision and its blast radius: promotion must grant a
+    // working issuer, and must not be usable to reach ADMIN or to
+    // double-grant.
+
+    private User existingUser(Role role) {
+        User user = new User();
+        // The id is @GeneratedValue, so there is no setter. Reach it the
+        // way JPA does after a persist, since the service reads it back
+        // to key the issuer lookup.
+        try {
+            java.lang.reflect.Field id = User.class.getDeclaredField("id");
+            id.setAccessible(true);
+            id.set(user, UUID.randomUUID());
+        } catch (ReflectiveOperationException e) {
+            throw new IllegalStateException(e);
+        }
+        user.setEmail("someone@example.com");
+        user.setFullName("Some One");
+        user.setPasswordHash("hash");
+        user.setRole(role);
+        return user;
+    }
+
+    @Test
+    @DisplayName("promoting a holder grants ISSUER and a verified issuer record")
+    void promotingHolderGrantsWorkingIssuer() {
+        User holder = existingUser(Role.HOLDER);
+        when(userRepository.findById(holder.getId()))
+                .thenReturn(java.util.Optional.of(holder));
+
+        UserResponse response = authService.promoteToIssuer(holder.getId());
+
+        assertThat(response.role()).isEqualTo(Role.ISSUER);
+        assertThat(holder.getRole()).isEqualTo(Role.ISSUER);
+
+        ArgumentCaptor<Issuer> saved = ArgumentCaptor.forClass(Issuer.class);
+        verify(issuerRepository).save(saved.capture());
+        assertThat(saved.getValue().isVerified()).isTrue();
+        assertThat(saved.getValue().getDomain())
+                .isEqualTo("example.com");
+    }
+
+    @Test
+    @DisplayName("an already-verified issuer is not granted a second record")
+    void promotionDoesNotDuplicateIssuerRecord() {
+        User issuer = existingUser(Role.HOLDER);
+        when(userRepository.findById(issuer.getId()))
+                .thenReturn(java.util.Optional.of(issuer));
+        when(issuerRepository.existsByUserId(issuer.getId()))
+                .thenReturn(true);
+
+        authService.promoteToIssuer(issuer.getId());
+
+        verify(issuerRepository, never()).save(any(Issuer.class));
+    }
+
+    @Test
+    @DisplayName("promotion cannot be aimed at an account that is already an issuer")
+    void promotingExistingIssuerIsRejected() {
+        User already = existingUser(Role.ISSUER);
+        when(userRepository.findById(already.getId()))
+                .thenReturn(java.util.Optional.of(already));
+
+        org.assertj.core.api.Assertions.assertThatThrownBy(() ->
+                authService.promoteToIssuer(already.getId()))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("already an issuer");
+
+        verify(userRepository, never()).save(any(User.class));
+    }
+
+    @Test
+    @DisplayName("promotion cannot reach an admin, so roles cannot be escalated")
+    void promotingAdminIsRejected() {
+        User admin = existingUser(Role.ADMIN);
+        when(userRepository.findById(admin.getId()))
+                .thenReturn(java.util.Optional.of(admin));
+
+        org.assertj.core.api.Assertions.assertThatThrownBy(() ->
+                authService.promoteToIssuer(admin.getId()))
+                .isInstanceOf(IllegalArgumentException.class);
+
+        verify(issuerRepository, never()).save(any(Issuer.class));
+    }
+
+    @Test
+    @DisplayName("promoting an unknown user is a not-found, not a silent no-op")
+    void promotingUnknownUserIsRejected() {
+        UUID ghost = UUID.randomUUID();
+        when(userRepository.findById(ghost))
+                .thenReturn(java.util.Optional.empty());
+
+        org.assertj.core.api.Assertions.assertThatThrownBy(() ->
+                authService.promoteToIssuer(ghost))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("not found");
+    }
+
     @Test
     @DisplayName("email is normalised before the duplicate check and insert")
     void emailIsNormalised() {

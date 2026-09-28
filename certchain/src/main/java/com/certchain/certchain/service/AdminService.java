@@ -3,6 +3,7 @@ package com.certchain.certchain.service;
 import com.certchain.certchain.dto.response.AdminIssuerResponse;
 import com.certchain.certchain.dto.response.AdminUserResponse;
 import com.certchain.certchain.dto.response.AdminVerificationResponse;
+import com.certchain.certchain.dto.response.UserResponse;
 import com.certchain.certchain.model.Credential;
 import com.certchain.certchain.model.Issuer;
 import com.certchain.certchain.model.User;
@@ -28,13 +29,27 @@ public class AdminService {
 
     private final VerificationRecordRepository recordRepository;
 
+    private final AuthService authService;
+
     public AdminService(
             IssuerRepository issuerRepository,
             UserRepository userRepository,
-            VerificationRecordRepository recordRepository) {
+            VerificationRecordRepository recordRepository,
+            AuthService authService) {
         this.issuerRepository = issuerRepository;
         this.userRepository = userRepository;
         this.recordRepository = recordRepository;
+        this.authService = authService;
+    }
+
+    /**
+     * Grants issuer authority to an existing account. Delegated to
+     * AuthService, which owns the role and issuer-record rules, so the
+     * seeder and this endpoint cannot drift apart.
+     */
+    @Transactional
+    public UserResponse promoteToIssuer(UUID userId) {
+        return authService.promoteToIssuer(userId);
     }
 
     @Transactional(readOnly = true)

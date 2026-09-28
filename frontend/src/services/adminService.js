@@ -82,6 +82,24 @@ export const adminService = {
   },
 
   /**
+   * Grant issuer authority to an existing account.
+   * POST /api/admin/users/{id}/promote-issuer
+   * The role is also an access-token claim, so the promoted user must
+   * sign in again before the new role takes effect.
+   * @param {string} userId UUID
+   * @param {string} token Bearer JWT
+   */
+  async promoteIssuer(userId, token) {
+    const response = await fetchWithTimeout(`${API_BASE}/users/${userId}/promote-issuer`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+    return handleResponse(response);
+  },
+
+  /**
    * List platform-wide global verification audits
    * GET /api/admin/verifications
    * @param {string} token Bearer JWT

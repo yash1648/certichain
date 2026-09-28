@@ -32,6 +32,7 @@ export function AdminConsoleView() {
 
   const [search, setSearch] = useState('');
   const [approvingId, setApprovingId] = useState(null);
+  const [promotingId, setPromotingId] = useState(null);
   const [notice, setNotice] = useState('');
   const [error, setError] = useState('');
 
@@ -71,6 +72,25 @@ export function AdminConsoleView() {
       setError(err.message || 'Could not approve that issuer.');
     } finally {
       setApprovingId(null);
+    }
+  };
+
+  const handlePromoteIssuer = async (target) => {
+    setPromotingId(target.id);
+    setNotice('');
+    setError('');
+    try {
+      await adminService.promoteIssuer(target.id, accessToken);
+      setUsers((list) =>
+        list.map((u) => (u.id === target.id ? { ...u, role: 'ISSUER' } : u))
+      );
+      setNotice(
+        `${target.fullName || target.email} can now issue credentials. They need to sign in again for the new role to take effect.`
+      );
+    } catch (err) {
+      setError(err.message || 'Could not promote that account.');
+    } finally {
+      setPromotingId(null);
     }
   };
 
@@ -119,6 +139,25 @@ export function AdminConsoleView() {
       { label: 'Email', render: (u) => <span className="font-mono">{u.email}</span> },
       { label: 'Role', render: (u) => <Badge status={u.role} text={u.role} /> },
       { label: 'Registered', render: (u) => formatDate(u.createdAt) },
+      {
+        label: 'Actions',
+        // Only holders are offered the grant. Issuers and admins already
+        // hold it, and an admin must not be reachable from here at all.
+        render: (u) =>
+          u.role === 'HOLDER' ? (
+            <Button
+              variant="primary"
+              size="sm"
+              icon={Building2}
+              loading={promotingId === u.id}
+              onClick={() => handlePromoteIssuer(u)}
+            >
+              Make issuer
+            </Button>
+          ) : (
+            <span className="table__sub">—</span>
+          ),
+      },
     ],
     verifications: [
       { label: 'Credential', render: (v) => <span className="font-mono">{v.credentialNumber || 'Unknown'}</span> },

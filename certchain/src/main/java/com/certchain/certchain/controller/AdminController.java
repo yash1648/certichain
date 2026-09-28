@@ -3,6 +3,7 @@ package com.certchain.certchain.controller;
 import com.certchain.certchain.dto.response.AdminIssuerResponse;
 import com.certchain.certchain.dto.response.AdminUserResponse;
 import com.certchain.certchain.dto.response.AdminVerificationResponse;
+import com.certchain.certchain.dto.response.UserResponse;
 import com.certchain.certchain.service.AdminService;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -41,6 +42,18 @@ public class AdminController {
 
         return ResponseEntity.ok(
                 adminService.verifyIssuer(id)
+        );
+    }
+
+    @PostMapping(
+            value = "/users/{id}/promote-issuer",
+            produces = MediaType.APPLICATION_JSON_VALUE
+    )
+    public ResponseEntity<UserResponse> promoteIssuer(
+            @PathVariable UUID id) {
+
+        return ResponseEntity.ok(
+                adminService.promoteToIssuer(id)
         );
     }
 
