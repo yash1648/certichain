@@ -4,7 +4,6 @@ import com.certchain.certchain.dto.response.DisclosureResponse;
 import com.certchain.certchain.model.Credential;
 import com.certchain.certchain.model.CredentialDisclosure;
 import com.certchain.certchain.model.HolderWallet;
-import com.certchain.certchain.model.Issuer;
 import com.certchain.certchain.model.Role;
 import com.certchain.certchain.model.User;
 import com.certchain.certchain.repository.CredentialAnchorRepository;
@@ -18,6 +17,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -144,8 +144,62 @@ class HolderDisclosureServiceTest {
         when(disclosureRepository.findByCredentialId(credentialId))
                 .thenReturn(Optional.of(disclosure));
 
-        assertThat(holderService.getDisclosure(userId, credentialId).hiddenClaims())
+        DisclosureResponse response =
+                holderService.getDisclosure(userId, credentialId);
+
+        assertThat(response.hiddenClaims())
                 .containsExactly("gpa");
+
+        /*
+         * Global Constraint 6. The holder is the one deciding what to
+         * hide, so hiding must never take a claim away from them. This
+         * is the guard against a future edit filtering hidden keys out
+         * of the returned map - the very thing the verifier's view does
+         * in Task 4, added to this same service.
+         */
+        assertThat(response.claims())
+                .as("the holder still sees a claim they chose to hide")
+                .containsEntry("gpa", "3.9");
+    }
+
+    @Test
+    @DisplayName("an unreachable envelope is a 503 that names its cause")
+    void unreachableEnvelopeIsServiceUnavailable() throws Exception {
+        when(ipfsService.retrieve(anyString()))
+                .thenThrow(new IOException("IPFS retrieval failed"));
+
+        assertThatThrownBy(() ->
+                holderService.getDisclosure(userId, credentialId))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("503")
+                .hasCauseInstanceOf(IOException.class);
+    }
+
+    @Test
+    @DisplayName("an interrupted fetch still leaves the thread interrupted")
+    void interruptedFetchRestoresInterruptFlag() throws Exception {
+        when(ipfsService.retrieve(anyString()))
+                .thenThrow(new InterruptedException("fetch aborted"));
+
+        try {
+            assertThatThrownBy(() ->
+                    holderService.getDisclosure(userId, credentialId))
+                    .isInstanceOf(ResponseStatusException.class)
+                    .hasMessageContaining("503");
+
+            /*
+             * Without restoring the flag, a shutdown or a request
+             * timeout during an IPFS fetch is silently dropped and the
+             * thread keeps running as if nothing happened.
+             */
+            assertThat(Thread.currentThread().isInterrupted())
+                    .as("the interrupt signal must survive the 503")
+                    .isTrue();
+        } finally {
+            // JUnit runs the next test on this same thread; a leaked
+            // flag would break anything it blocks on.
+            Thread.interrupted();
+        }
     }
 
     @Test

@@ -228,11 +228,28 @@ public class HolderService {
 
             return envelope.credential().claims();
 
+        } catch (InterruptedException ex) {
+
+            /*
+             * The blocking IPFS call is the thing that gets
+             * interrupted. Dropping the signal here would let a
+             * shutdown, a request timeout or a container stop
+             * disappear and leave the thread running on.
+             */
+            Thread.currentThread().interrupt();
+
+            throw new ResponseStatusException(
+                    HttpStatus.SERVICE_UNAVAILABLE,
+                    "Credential content is unavailable",
+                    ex
+            );
+
         } catch (Exception ex) {
 
             throw new ResponseStatusException(
                     HttpStatus.SERVICE_UNAVAILABLE,
-                    "Credential content is unavailable"
+                    "Credential content is unavailable",
+                    ex
             );
         }
     }
