@@ -595,7 +595,10 @@ Add the `CredentialDisclosureRepository` and `ObjectMapper` imports to that file
 
 - [ ] **Step 9: Run the tests to verify they pass**
 
-Run: `cd certchain && ./mvnw -B test -Dtest='HolderDisclosureServiceTest+HolderServiceClaimTest'`
+Run: `cd certchain && ./mvnw -B test -Dtest='HolderDisclosureServiceTest,HolderServiceClaimTest'`
+
+(Surefire's `-Dtest` takes comma-separated patterns, not `+`. The `+` form in
+the original draft fails with "No tests matching pattern".)
 
 Expected: PASS — 4 + 3 tests.
 
