@@ -218,10 +218,7 @@ public class HolderService {
 
         /*
          * An empty request still writes a row, so "hide nothing" is
-         * a stored decision rather than the absence of one. The
-         * request set is a fresh copy, never the entity's own live
-         * collection: passing that in would make the setter's clear()
-         * wipe it before addAll could read it.
+         * a stored decision rather than the absence of one.
          */
         CredentialDisclosure disclosure =
                 disclosureRepository

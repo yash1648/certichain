@@ -15,6 +15,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
@@ -231,7 +232,48 @@ class HolderDisclosureServiceTest {
 
         assertThat(response.hiddenClaims()).containsExactly("gpa");
         assertThat(response.claims()).hasSize(2);
-        verify(disclosureRepository).save(any(CredentialDisclosure.class));
+
+        ArgumentCaptor<CredentialDisclosure> saved =
+                ArgumentCaptor.forClass(CredentialDisclosure.class);
+
+        verify(disclosureRepository).save(saved.capture());
+
+        /*
+         * The response is built from a local variable, so echoing
+         * it back says nothing about what reached the database. Only
+         * the entity handed to save() is the stored policy, and this
+         * is the assertion that makes the feature falsifiable.
+         */
+        assertThat(saved.getValue().getHiddenClaims())
+                .as("the holder's choice is what gets stored")
+                .containsExactly("gpa");
+    }
+
+    @Test
+    @DisplayName("an existing hidden set is replaced, not appended to")
+    void replacesAnExistingHiddenSet() {
+        /*
+         * The production path for a holder changing their mind: the
+         * row is loaded inside the same transaction, so this is the
+         * branch that hands the setter a managed entity.
+         */
+        when(disclosureRepository.findByCredentialId(credentialId))
+                .thenReturn(Optional.of(
+                        new CredentialDisclosure(credential, Set.of("major"))));
+        when(disclosureRepository.save(any(CredentialDisclosure.class)))
+                .thenAnswer(i -> i.getArgument(0));
+
+        holderService.setDisclosure(userId, credentialId, List.of("gpa"));
+
+        ArgumentCaptor<CredentialDisclosure> saved =
+                ArgumentCaptor.forClass(CredentialDisclosure.class);
+
+        verify(disclosureRepository).save(saved.capture());
+
+        assertThat(saved.getValue().getHiddenClaims())
+                .as("the old choice must be gone, not merged with "
+                        + "the new one")
+                .containsExactly("gpa");
     }
 
     @Test
@@ -247,8 +289,8 @@ class HolderDisclosureServiceTest {
     }
 
     @Test
-    @DisplayName("an empty set resets the credential to showing everything")
-    void emptySetResetsToVisible() {
+    @DisplayName("an empty set stores a row that hides nothing")
+    void emptySetStoresNothingHidden() {
         when(disclosureRepository.findByCredentialId(credentialId))
                 .thenReturn(Optional.empty());
         when(disclosureRepository.save(any(CredentialDisclosure.class)))
@@ -256,6 +298,21 @@ class HolderDisclosureServiceTest {
 
         assertThat(holderService.setDisclosure(
                 userId, credentialId, List.of()).hiddenClaims())
+                .isEmpty();
+
+        ArgumentCaptor<CredentialDisclosure> saved =
+                ArgumentCaptor.forClass(CredentialDisclosure.class);
+
+        verify(disclosureRepository).save(saved.capture());
+
+        /*
+         * Global Constraint 2. A row that hides nothing must be
+         * written, not skipped: "no row" and "nothing hidden" mean
+         * the same thing to a verifier, and only a stored empty set
+         * makes them agree.
+         */
+        assertThat(saved.getValue().getHiddenClaims())
+                .as("hide nothing is a stored decision, not no decision")
                 .isEmpty();
     }
 
