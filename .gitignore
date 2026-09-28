@@ -36,5 +36,12 @@ build/
 *.p12
 *.jks
 *.pfx
+# Backups and partials of the above are still key material.
+*.p12.*
+*.jks.*
+*.pfx.*
 .env
 .env.*
+
+### UAT scratch (test artifacts, not shipped) ###
+.uat/

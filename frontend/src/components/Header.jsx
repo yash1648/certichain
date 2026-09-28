@@ -1,184 +1,182 @@
-import React from 'react';
-import { 
-  ShieldCheck, 
-  LogOut, 
-  FileCheck, 
-  Award, 
-  Building2, 
-  ShieldAlert, 
-  User, 
-  LogIn
+import React, { useState, useEffect } from 'react';
+import {
+  ShieldCheck,
+  LogOut,
+  FileCheck,
+  History,
+  Award,
+  Building2,
+  ShieldAlert,
+  User,
+  LogIn,
+  Menu,
+  X,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { Badge } from './common/Badge';
 
-export function Header() {
+/**
+ * Primary navigation.
+ *
+ * The workspace link is the one the signed-in user actually needs, so
+ * only their own workspace appears. History and settings sit in the
+ * account cluster rather than the top bar, which takes the bar from
+ * seven items to three and is what makes the mobile layout viable.
+ */
+function useNavItems(user) {
+  const role = user?.role;
+
+  return [
+    { href: '#/', label: 'Overview', Icon: ShieldCheck, route: '/' },
+    { href: '#/verify', label: 'Verify', Icon: FileCheck, route: '/verify' },
+    role === 'HOLDER' || role === 'ADMIN'
+      ? { href: '#/wallet', label: 'Wallet', Icon: Award, route: '/wallet' }
+      : null,
+    role === 'ISSUER' || role === 'ADMIN'
+      ? { href: '#/issuer', label: 'Issuer Studio', Icon: Building2, route: '/issuer' }
+      : null,
+    role === 'ADMIN'
+      ? { href: '#/admin', label: 'Admin', Icon: ShieldAlert, route: '/admin' }
+      : null,
+  ].filter(Boolean);
+}
+
+export function Header({ route }) {
   const { user, logout } = useAuth();
-  const route = window.location.hash.replace(/^#/, '') || '/';
+  const [navOpen, setNavOpen] = useState(false);
 
-  const navLink = (href, label, Icon, active) => (
-    <a
-      key={href}
-      href={href}
-      className="site-nav-link"
-      style={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: '7px',
-        fontSize: '13.5px',
-        fontWeight: active ? 600 : 500,
-        color: active ? '#1d4ed8' : '#475569',
-        padding: '7px 13px',
-        borderRadius: 'var(--radius-sm)',
-        textDecoration: 'none',
-        background: active ? '#eff6ff' : 'transparent',
-        border: active ? '1px solid #bfdbfe' : '1px solid transparent',
-        transition: 'all 0.15s ease',
-      }}
-    >
-      <Icon size={16} />
-      <span>{label}</span>
-    </a>
-  );
+  const navItems = useNavItems(user);
 
-  const isHolder = user?.role === 'HOLDER';
-  const isIssuer = user?.role === 'ISSUER';
-  const isAdmin = user?.role === 'ADMIN';
+  // Escape closes the mobile panel and returns focus to the toggle.
+  useEffect(() => {
+    if (!navOpen) return undefined;
+
+    const onKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        setNavOpen(false);
+        document.querySelector('.nav-toggle')?.focus();
+      }
+    };
+
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [navOpen]);
+
+  const isActive = (item) => route === item.route;
+
+  // Navigating from the mobile panel closes it. Done in the handler
+  // rather than an effect on `route`, which would also fire for
+  // navigations that did not come from the panel.
+  const closeNav = () => {
+    if (navOpen) setNavOpen(false);
+  };
 
   return (
-    <header style={{
-      borderBottom: '1px solid #e2e8f0',
-      backgroundColor: '#ffffff',
-      position: 'sticky',
-      top: 0,
-      zIndex: 50,
-      padding: '12px 24px',
-      boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)'
-    }}>
-      <div style={{
-        maxWidth: '1240px',
-        margin: '0 auto',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        flexWrap: 'wrap',
-        gap: '16px',
-      }}>
-        {/* Brand */}
-        <a href="#/" style={{ display: 'flex', alignItems: 'center', gap: '12px', textDecoration: 'none' }}>
-          <div style={{
-            width: '36px',
-            height: '36px',
-            borderRadius: '8px',
-            background: '#1d4ed8',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: '#ffffff',
-            boxShadow: '0 1px 3px rgba(29, 78, 216, 0.3)',
-          }}>
-            <ShieldCheck size={22} strokeWidth={2.4} />
-          </div>
+    <>
+      <a className="skip-link" href="#main-content">
+        Skip to content
+      </a>
 
-          <div>
-            <div className="font-display" style={{ fontSize: '1.25rem', fontWeight: 800, letterSpacing: '-0.02em', color: '#0f172a' }}>
-              Certi<span style={{ color: '#1d4ed8' }}>Chain</span>
-            </div>
-            <p style={{ fontSize: '10.5px', color: '#64748b', letterSpacing: '0.04em', textTransform: 'uppercase', fontWeight: 600 }}>
-              Verifiable Credential Registry
-            </p>
-          </div>
-        </a>
+      <header className="site-header">
+        <div className="site-header__bar">
+          <a href="#/" className="brand" aria-label="CertiChain home">
+            <span className="brand__mark">
+              <ShieldCheck size={17} strokeWidth={2.2} aria-hidden="true" />
+            </span>
+            <span>
+              <span className="brand__name">CertiChain</span>
+              <br />
+              <span className="brand__tag">Credential Registry</span>
+            </span>
+          </a>
 
-        {/* Center Navigation */}
-        <nav style={{ display: 'flex', alignItems: 'center', gap: '4px', flexWrap: 'wrap' }}>
-          {navLink('#/', 'Overview', ShieldCheck, route === '/')}
-          
-          {/* Holder / Student Navigation */}
-          {user && (isHolder || isAdmin) && (
-            navLink('#/wallet', 'Credential Wallet', Award, route === '/wallet')
-          )}
-
-          {/* Issuer Navigation */}
-          {user && (isIssuer || isAdmin) && (
-            navLink('#/issuer', 'Issuer Studio', Building2, route === '/issuer')
-          )}
-
-          {/* Admin Navigation */}
-          {user && isAdmin && (
-            navLink('#/admin', 'Admin Center', ShieldAlert, route === '/admin')
-          )}
-
-          {/* Public Verification */}
-          {navLink('#/verify', 'Verify Credential', FileCheck, route === '/verify')}
-
-          {/* Account Profile */}
-          {user && (
-            navLink('#/account', 'Settings', User, route === '/account')
-          )}
-        </nav>
-
-        {/* Right Side: Status & Account or Sign In */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-          {user ? (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <nav
+            id="site-nav"
+            className={`site-nav${navOpen ? ' is-open' : ''}`}
+            aria-label="Primary"
+          >
+            {navItems.map(({ href, label, Icon, route: itemRoute }) => (
               <a
-                href="#/account"
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  padding: '5px 12px',
-                  borderRadius: 'var(--radius-pill)',
-                  backgroundColor: '#f8fafc',
-                  border: '1px solid #e2e8f0',
-                  textDecoration: 'none',
-                  color: 'inherit',
-                  transition: 'background 0.15s ease',
-                }}
+                key={href}
+                href={href}
+                className="site-nav-link"
+                onClick={closeNav}
+                aria-current={isActive({ route: itemRoute }) ? 'page' : undefined}
               >
-                <div style={{
-                  width: '24px',
-                  height: '24px',
-                  borderRadius: '50%',
-                  backgroundColor: '#1d4ed8',
-                  color: '#ffffff',
-                  fontSize: '12px',
-                  fontWeight: 700,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}>
-                  {user.fullName ? user.fullName[0].toUpperCase() : 'U'}
-                </div>
-                <span style={{ fontSize: '13px', fontWeight: 600, color: '#0f172a' }}>
-                  {user.fullName}
-                </span>
-                <Badge status={user.role} />
+                <Icon size={15} aria-hidden="true" />
+                <span>{label}</span>
               </a>
+            ))}
 
-              <button
-                type="button"
-                onClick={logout}
-                className="btn btn-sm btn-outline"
-                title="Sign out of CertiChain"
-                style={{ padding: '6px 10px' }}
-              >
-                <LogOut size={14} />
-              </button>
-            </div>
-          ) : (
-            <a 
-              className="btn btn-sm btn-primary" 
-              href="#/login" 
-              style={{ textDecoration: 'none', padding: '7px 16px' }}
+            {user && (
+              <>
+                <a
+                  href="#/history"
+                  className="site-nav-link site-nav-link--secondary"
+                  onClick={closeNav}
+                  aria-current={route === '/history' ? 'page' : undefined}
+                >
+                  <History size={15} aria-hidden="true" />
+                  <span>History</span>
+                </a>
+                <a
+                  href="#/account"
+                  className="site-nav-link site-nav-link--secondary"
+                  onClick={closeNav}
+                  aria-current={route === '/account' ? 'page' : undefined}
+                >
+                  <User size={15} aria-hidden="true" />
+                  <span>Settings</span>
+                </a>
+              </>
+            )}
+          </nav>
+
+          <div className="header-account">
+            {user ? (
+              <>
+                <a href="#/account" className="account-chip">
+                  <span className="account-chip__avatar" aria-hidden="true">
+                    {(user.fullName || '?').charAt(0).toUpperCase()}
+                  </span>
+                  <span className="account-chip__name">{user.fullName}</span>
+                  <Badge status={user.role} />
+                </a>
+
+                <button
+                  type="button"
+                  onClick={logout}
+                  className="btn btn-ghost btn-sm"
+                  aria-label="Sign out"
+                  title="Sign out"
+                >
+                  <LogOut size={15} aria-hidden="true" />
+                </button>
+              </>
+            ) : (
+              <a className="btn btn-primary btn-sm" href="#/login">
+                <LogIn size={15} aria-hidden="true" />
+                <span>Sign in</span>
+              </a>
+            )}
+
+            <button
+              type="button"
+              className="nav-toggle"
+              aria-expanded={navOpen}
+              aria-controls="site-nav"
+              aria-label={navOpen ? 'Close menu' : 'Open menu'}
+              onClick={() => setNavOpen((open) => !open)}
             >
-              <LogIn size={15} />
-              <span>Sign In</span>
-            </a>
-          )}
+              {navOpen ? (
+                <X size={18} aria-hidden="true" />
+              ) : (
+                <Menu size={18} aria-hidden="true" />
+              )}
+            </button>
+          </div>
         </div>
-      </div>
-    </header>
+      </header>
+    </>
   );
 }

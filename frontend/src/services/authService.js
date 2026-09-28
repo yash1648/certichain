@@ -8,19 +8,10 @@
  * - GET /v3/api-docs (health check)
  */
 
-const API_BASE = '/api/auth';
+import { fetchWithTimeout } from './fetchUtils.js';
+import { AuthApiError } from './errors.js';
 
-/**
- * Custom error class capturing backend HTTP status and error messages
- */
-export class AuthApiError extends Error {
-  constructor(message, status, details = null) {
-    super(message);
-    this.name = 'AuthApiError';
-    this.status = status;
-    this.details = details;
-  }
-}
+const API_BASE = '/api/auth';
 
 /**
  * Helper to process JSON response or throw structured AuthApiError
@@ -59,7 +50,7 @@ export const authService = {
    * @param {Object} payload { email, password, fullName, role }
    */
   async register({ email, password, fullName, role = 'HOLDER' }) {
-    const response = await fetch(`${API_BASE}/register`, {
+    const response = await fetchWithTimeout(`${API_BASE}/register`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -79,7 +70,7 @@ export const authService = {
    * @param {Object} payload { email, password }
    */
   async login({ email, password }) {
-    const response = await fetch(`${API_BASE}/login`, {
+    const response = await fetchWithTimeout(`${API_BASE}/login`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -97,7 +88,7 @@ export const authService = {
    * Rotate refresh token and obtain a fresh access token
    */
   async refresh() {
-    const response = await fetch(`${API_BASE}/refresh`, {
+    const response = await fetchWithTimeout(`${API_BASE}/refresh`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -112,7 +103,7 @@ export const authService = {
    */
   async logout() {
     try {
-      const response = await fetch(`${API_BASE}/logout`, {
+      const response = await fetchWithTimeout(`${API_BASE}/logout`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -5,7 +5,9 @@ const AuthContext = createContext(null);
 
 const STORAGE_KEY = 'certichain_auth';
 
-function parseJwt(token) {
+function decodeJwtPayload(token) {
+  // Decodes JWT payload WITHOUT signature verification.
+  // Use only for UI display (role, exp, etc.). Never for auth decisions.
   if (!token) return null;
   try {
     const parts = token.split('.');
@@ -69,7 +71,6 @@ export function AuthProvider({ children }) {
     if (refreshTimeoutRef.current) clearTimeout(refreshTimeoutRef.current);
     const timeUntilRefresh = Math.max(10000, (expiresInSeconds - 60) * 1000);
     refreshTimeoutRef.current = setTimeout(() => {
-      console.log('CertiChain: Triggering automatic silent refresh rotation...');
       refreshSessionRef.current?.(true);
     }, timeUntilRefresh);
   }, []);
@@ -137,10 +138,11 @@ export function AuthProvider({ children }) {
     }
   };
 
-  // Register handler
-  const register = async ({ email, password, fullName, role = 'HOLDER' }) => {
+  // Register handler. Public registration is holder-only: the role is not
+  // selectable and is not sent. ISSUER accounts are approved by an admin.
+  const register = async ({ email, password, fullName }) => {
     try {
-      const user = await authService.register({ email, password, fullName, role });
+      const user = await authService.register({ email, password, fullName });
       setLastActionStatus({
         type: 'success',
         message: `Account created for ${user.fullName} (${user.role})! You can now sign in.`,
@@ -156,45 +158,42 @@ export function AuthProvider({ children }) {
   };
 
   // Instant Demo Authentication for Admin, Institution & Holder
-  const loginDemoUser = ({ role = 'HOLDER', email, fullName }) => {
+  // Real authentication with the seeded demo accounts.
+  const loginDemoUser = async ({ role = 'HOLDER', email, fullName }) => {
     const normalizedRole = String(role || 'HOLDER').toUpperCase();
     const defaultData = {
       ADMIN: {
-        userId: '00000000-0000-0000-0000-000000000001',
         email: email || 'admin@certichain.org',
+        password: 'DemoAdmin123!',
         fullName: fullName || 'System Administrator',
         role: 'ADMIN',
       },
       ISSUER: {
-        userId: '00000000-0000-0000-0000-000000000002',
         email: email || 'registrar@mit.edu',
+        password: 'DemoIssuer123!',
         fullName: fullName || 'Massachusetts Institute of Technology',
         role: 'ISSUER',
       },
       HOLDER: {
-        userId: '00000000-0000-0000-0000-000000000003',
         email: email || 'alex.mercer@alumni.org',
+        password: 'DemoHolder123!',
         fullName: fullName || 'Alex Mercer',
         role: 'HOLDER',
       }
     };
 
     const target = defaultData[normalizedRole] || defaultData.HOLDER;
-    const demoPayload = {
-      accessToken: `demo_jwt_${target.role.toLowerCase()}_${Date.now()}`,
-      expiresInSeconds: 86400,
-      userId: target.userId,
-      email: target.email,
-      fullName: target.fullName,
-      role: target.role
-    };
 
-    handleAuthSuccess(demoPayload);
+    const data = await authService.login({
+      email: target.email,
+      password: target.password,
+    });
+    handleAuthSuccess(data);
     setLastActionStatus({
       type: 'success',
       message: `Signed in as Demo ${target.role} (${target.fullName})!`,
     });
-    return demoPayload;
+    return data;
   };
 
   // Logout handler
@@ -213,37 +212,34 @@ export function AuthProvider({ children }) {
   // Clear toast alert
   const clearStatus = () => setLastActionStatus(null);
 
-  // Initialize on mount: check backend and try hydrating session or refreshing
+  // Initialize on mount: hydrate from cache, or rotate a session whose cached
+  // access token has expired. A visitor with no cache has no refresh cookie to
+  // rotate -- attempting it just adds a failed round trip, and a console error,
+  // to every anonymous first paint.
   useEffect(() => {
     let mounted = true;
 
     async function init() {
-      // Check if we have cached session
       try {
         const cached = localStorage.getItem(STORAGE_KEY);
-        if (cached) {
-          const parsed = JSON.parse(cached);
-          if (parsed.expiresAt && parsed.expiresAt > Date.now()) {
-            if (mounted) {
-              setUser(parsed.user);
-              setAccessToken(parsed.accessToken);
-              setExpiresAt(parsed.expiresAt);
-            }
-          } else {
-            // Attempt to restore session via refresh cookie
-            try {
-              await refreshSession(true);
-            } catch {
-              clearAuthState();
-            }
+        if (!cached) return;
+
+        const parsed = JSON.parse(cached);
+        if (parsed.expiresAt && parsed.expiresAt > Date.now()) {
+          if (mounted) {
+            setUser(parsed.user);
+            setAccessToken(parsed.accessToken);
+            setExpiresAt(parsed.expiresAt);
           }
-        } else {
-          // Attempt silent refresh in case httpOnly cookie is present
-          try {
-            await refreshSession(true);
-          } catch {
-            // No valid active cookie, perfectly normal for guest
-          }
+          return;
+        }
+
+        // Access token expired but a session may still be alive: rotate it.
+        try {
+          await refreshSession(true);
+        } catch (err) {
+          // Only drop local state on an auth failure, not a network blip.
+          if (err.status === 401 || err.status === 403) clearAuthState();
         }
       } catch (e) {
         console.warn('Session hydration error', e);
@@ -260,7 +256,7 @@ export function AuthProvider({ children }) {
     };
   }, [refreshSession, clearAuthState]);
 
-  const decodedToken = accessToken ? parseJwt(accessToken) : null;
+  const decodedToken = accessToken ? decodeJwtPayload(accessToken) : null;
 
   return (
     <AuthContext.Provider

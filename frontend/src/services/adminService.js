@@ -3,6 +3,8 @@
  * Interacts with Spring Boot AdminController (/api/admin/**)
  */
 
+import { fetchWithTimeout } from './fetchUtils.js';
+
 const API_BASE = '/api/admin';
 
 async function handleResponse(response) {
@@ -39,7 +41,7 @@ export const adminService = {
    * @param {string} token Bearer JWT
    */
   async listIssuers(token) {
-    const response = await fetch(`${API_BASE}/issuers`, {
+    const response = await fetchWithTimeout(`${API_BASE}/issuers`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -55,7 +57,7 @@ export const adminService = {
    * @param {string} token Bearer JWT
    */
   async verifyIssuer(issuerId, token) {
-    const response = await fetch(`${API_BASE}/issuers/${issuerId}/verify`, {
+    const response = await fetchWithTimeout(`${API_BASE}/issuers/${issuerId}/verify`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -70,7 +72,7 @@ export const adminService = {
    * @param {string} token Bearer JWT
    */
   async listUsers(token) {
-    const response = await fetch(`${API_BASE}/users`, {
+    const response = await fetchWithTimeout(`${API_BASE}/users`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -85,7 +87,7 @@ export const adminService = {
    * @param {string} token Bearer JWT
    */
   async listGlobalVerifications(token) {
-    const response = await fetch(`${API_BASE}/verifications`, {
+    const response = await fetchWithTimeout(`${API_BASE}/verifications`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,

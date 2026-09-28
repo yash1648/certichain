@@ -38,6 +38,17 @@ public class IssuerController {
                 ));
     }
 
+    @GetMapping("/me")
+    public ResponseEntity<IssuerResponse> me(
+            Authentication authentication) {
+
+        return ResponseEntity.ok(
+                issuerService.getIssuerProfile(
+                        currentUserId(authentication)
+                )
+        );
+    }
+
     @PostMapping("/keys")
     public ResponseEntity<IssuerKeyResponse> createKey(
             Authentication authentication)

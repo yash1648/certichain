@@ -92,6 +92,26 @@ public class IssuerService {
         );
     }
 
+    @Transactional(readOnly = true)
+    public IssuerResponse getIssuerProfile(UUID userId) {
+
+        Issuer issuer = issuerRepository.findByUserId(userId)
+                .orElseThrow(() ->
+                        new ResponseStatusException(
+                                HttpStatus.NOT_FOUND,
+                                "Issuer not registered for user: "
+                                        + userId
+                        ));
+
+        return new IssuerResponse(
+                issuer.getId(),
+                issuer.getName(),
+                issuer.getDomain(),
+                issuer.isVerified(),
+                issuer.getCreatedAt()
+        );
+    }
+
     @Transactional
     public IssuerKeyResponse createSigningKey(UUID userId)
             throws Exception {
@@ -375,6 +395,12 @@ public class IssuerService {
                 credential.getCredentialNumber(),
                 credential.getType(),
                 credential.getTitle(),
+                credential.getSubject() == null
+                        ? null
+                        : credential.getSubject().getId(),
+                credential.getSubject() == null
+                        ? null
+                        : credential.getSubject().getFullName(),
                 credential.getContentHash(),
                 credential.getIpfsCid(),
                 anchor == null

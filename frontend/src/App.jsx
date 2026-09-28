@@ -7,171 +7,254 @@ import { AccountProfileView } from './components/account/AccountProfileView';
 import { IssuerStudio } from './components/issuer/IssuerStudio';
 import { HolderWalletView } from './components/holder/HolderWalletView';
 import { PublicVerifierView } from './components/verifier/PublicVerifierView';
+import { VerificationHistoryView } from './components/verifier/VerificationHistoryView';
 import { AdminConsoleView } from './components/admin/AdminConsoleView';
 import { Landing } from './components/Landing';
-import {
-  Lock,
-  ShieldCheck,
-  LogIn,
-  ArrowRight
-} from 'lucide-react';
+import { NotFound } from './components/NotFound';
+import { LogIn, ShieldAlert, ShieldCheck, ArrowRight } from 'lucide-react';
 import './App.css';
 
+/* Hash routing. Normalised so a trailing slash or a stray query does not
+   silently fall through to the not-found view. */
 function useHashRoute() {
-  const [route, setRoute] = useState(() => window.location.hash.replace(/^#/, '') || '/');
+  const read = () => {
+    const raw = window.location.hash.replace(/^#/, '');
+    const [path] = raw.split('?');
+    return path.replace(/\/+$/, '') || '/';
+  };
+
+  const [route, setRoute] = useState(read);
+
   useEffect(() => {
-    const onHashChange = () => setRoute(window.location.hash.replace(/^#/, '') || '/');
+    const onHashChange = () => setRoute(read());
     window.addEventListener('hashchange', onHashChange);
     return () => window.removeEventListener('hashchange', onHashChange);
   }, []);
-  const navigate = (path) => { window.location.hash = path; };
+
+  const navigate = (path) => {
+    window.location.hash = path;
+  };
+
   return [route, navigate];
 }
 
+function workspaceFor(user) {
+  if (!user) return '#/login';
+  if (user.role === 'ADMIN') return '#/admin';
+  if (user.role === 'ISSUER') return '#/issuer';
+  return '#/wallet';
+}
+
+function LoadingScreen({ label = 'Loading' }) {
+  return (
+    <div className="loading-row" role="status" aria-live="polite">
+      <span className="spinner spinner--lg" aria-hidden="true" />
+      <span>{label}</span>
+    </div>
+  );
+}
+
+/**
+ * Gate for authenticated routes.
+ *
+ * The role check matches SecurityConfig: an ADMIN may open the holder or
+ * issuer workspace, everything else is restricted to its own role.
+ */
 function LoginGate({ children, requiredRole = null }) {
   const { user, loading } = useAuth();
-  if (loading) return <LoadingScreen />;
-  
+
+  if (loading) return <LoadingScreen label="Checking your session" />;
+
   if (!user) {
     return (
-      <main className="main-content">
-        <div className="glass-panel" style={{ maxWidth: '460px', margin: '48px auto', padding: '36px 32px', textAlign: 'center', borderRadius: 'var(--radius-lg)' }}>
-          <div style={{
-            width: '48px',
-            height: '48px',
-            borderRadius: '12px',
-            backgroundColor: '#eff6ff',
-            border: '1px solid #bfdbfe',
-            color: '#1d4ed8',
-            display: 'inline-flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            marginBottom: '16px',
-          }}>
-            <Lock size={24} />
+      <div className="card">
+        <div className="state">
+          <div className="state__icon">
+            <LogIn size={20} aria-hidden="true" />
           </div>
-          <h2 className="font-display" style={{ fontSize: '1.4rem', fontWeight: 700, color: '#0f172a', marginBottom: '8px' }}>
-            Authentication Required
-          </h2>
-          <p style={{ fontSize: '14px', color: '#475569', marginBottom: '24px', lineHeight: 1.5 }}>
-            Please sign in to access your secure credential workspace.
+          <h2 className="state__title">Sign in required</h2>
+          <p className="state__text">
+            This workspace is only available to signed-in accounts.
           </p>
-          <a className="btn btn-primary" href="#/login" style={{ textDecoration: 'none', padding: '10px 22px' }}>
-            <LogIn size={16} />
-            <span>Sign In to CertiChain</span>
+          <a className="btn btn-primary" href="#/login">
+            <LogIn size={16} aria-hidden="true" />
+            <span>Sign in</span>
           </a>
         </div>
-      </main>
+      </div>
     );
   }
 
-  if (requiredRole && user.role !== requiredRole && user.role !== 'ADMIN') {
+  if (requiredRole && user.role !== requiredRole) {
     return (
-      <main className="main-content">
-        <div className="glass-panel" style={{ maxWidth: '480px', margin: '48px auto', padding: '36px 32px', textAlign: 'center', borderRadius: 'var(--radius-lg)' }}>
-          <h2 className="font-display" style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--rose-primary)', marginBottom: '8px' }}>
-            Access Restricted
-          </h2>
-          <p style={{ fontSize: '14px', color: 'var(--text-secondary)', marginBottom: '20px' }}>
-            This portal is designated for {requiredRole} accounts only.
+      <div className="card">
+        <div className="state">
+          <div className="state__icon">
+            <ShieldAlert size={20} aria-hidden="true" />
+          </div>
+          <h2 className="state__title">Not available for your role</h2>
+          <p className="state__text">
+            This workspace is for {requiredRole.toLowerCase()} accounts. You
+            are signed in as {user.role.toLowerCase()}.
           </p>
-          <a className="btn btn-outline" href="#/" style={{ textDecoration: 'none' }}>
-            <span>Return to Home</span>
+          <a className="btn btn-secondary" href={workspaceFor(user)}>
+            <span>Back to my workspace</span>
           </a>
         </div>
-      </main>
+      </div>
     );
   }
 
   return children;
 }
 
-function LoadingScreen() {
-  return (
-    <div style={{
-      minHeight: '60vh',
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      gap: '16px',
-    }}>
-      <div className="spinner" style={{ width: '40px', height: '40px', borderWidth: '3px', borderTopColor: 'var(--cyan-primary)' }} />
-      <span style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>
-        Loading CertiChain...
-      </span>
-    </div>
-  );
-}
-
 function LoginPage() {
   const { user, loading } = useAuth();
-  if (loading) return <LoadingScreen />;
-  
+
+  if (loading) return <LoadingScreen label="Checking your session" />;
+
   if (user) {
-    const target = user.role === 'ADMIN' ? '#/admin' : user.role === 'ISSUER' ? '#/issuer' : '#/wallet';
     return (
-      <main className="main-content" style={{ textAlign: 'center', paddingTop: '64px' }}>
-        <p style={{ color: 'var(--text-secondary)', marginBottom: '16px', fontSize: '15px' }}>
-          You are signed in as <strong>{user.fullName}</strong> ({user.role}).
-        </p>
-        <a className="btn btn-primary" href={target} style={{ textDecoration: 'none', padding: '12px 24px' }}>
-          <ShieldCheck size={18} />
-          <span>Continue to Workspace</span>
-          <ArrowRight size={16} />
-        </a>
-      </main>
+      <div className="card">
+        <div className="state">
+          <div className="state__icon">
+            <ArrowRight size={20} aria-hidden="true" />
+          </div>
+          <h2 className="state__title">
+            Signed in as {user.fullName}
+          </h2>
+          <p className="state__text">
+            You have {user.role.toLowerCase()} access on this registry.
+          </p>
+          <a className="btn btn-primary" href={workspaceFor(user)}>
+            <span>Continue to workspace</span>
+            <ArrowRight size={16} aria-hidden="true" />
+          </a>
+        </div>
+      </div>
     );
   }
 
   return (
-    <main className="main-content">
+    <>
       <StatusAlert />
       <AuthCard />
-    </main>
+    </>
   );
 }
 
 function Footer() {
   return (
-    <footer style={{
-      borderTop: '1px solid #e2e8f0',
-      padding: '24px',
-      backgroundColor: '#ffffff',
-      fontSize: '13px',
-      color: '#64748b',
-      marginTop: 'auto'
-    }}>
-      <div style={{
-        maxWidth: '1240px',
-        margin: '0 auto',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        flexWrap: 'wrap',
-        gap: '16px',
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <ShieldCheck size={18} color="#1d4ed8" />
-          <span style={{ fontWeight: 600, color: '#0f172a' }}>CertiChain</span>
-          <span>&copy; 2026 · Verifiable Digital Credentials</span>
+    <footer className="site-footer">
+      <div className="site-footer__inner">
+        <div className="site-footer__group">
+          <ShieldCheck size={15} aria-hidden="true" />
+          <span>CertiChain</span>
+          <span>Verifiable digital credentials</span>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '20px', flexWrap: 'wrap' }}>
-          <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <Lock size={14} color="#1d4ed8" />
-            <span>Ed25519 Cryptography</span>
-          </span>
-          <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <ShieldCheck size={14} color="#15803d" />
-            <span>Ethereum Blockchain Ledger</span>
-          </span>
-          <a href="#/verify" style={{ color: '#1d4ed8', textDecoration: 'none', fontWeight: 500 }}>
-            Verify Document
-          </a>
+        <div className="site-footer__group">
+          <a href="#/verify">Verify a credential</a>
+          <a href="#/login">Sign in</a>
         </div>
       </div>
     </footer>
+  );
+}
+
+/* Route table. Adding a page means adding a row, not another branch in a
+   conditional ladder. */
+const ROUTES = {
+  '/': { render: () => <Landing />, bare: true },
+  '/verify': { render: () => <PublicVerifierView />, title: 'Verify a credential' },
+  '/login': { render: () => <LoginPage />, narrow: true, bare: true },
+  '/wallet': {
+    render: () => <HolderWalletView />,
+    title: 'Credential wallet',
+    subtitle:
+      'Credentials you have claimed. Download an official copy or check its current standing.',
+    gate: true,
+    role: 'HOLDER',
+  },
+  '/issuer': {
+    render: () => <IssuerStudio />,
+    title: 'Issuer studio',
+    subtitle: 'Issue, manage, and anchor verifiable credentials for your organization.',
+    gate: true,
+    role: 'ISSUER',
+  },
+  '/admin': {
+    render: () => <AdminConsoleView />,
+    title: 'Administration',
+    gate: true,
+    role: 'ADMIN',
+  },
+  '/account': {
+    render: () => <AccountProfileView />,
+    title: 'Account and security',
+    gate: true,
+  },
+  '/history': {
+    render: () => <VerificationHistoryView />,
+    title: 'Verification history',
+    subtitle: 'Credential checks you have run, newest first.',
+    gate: true,
+  },
+};
+
+function AppShell({ route, navigate }) {
+  const { user } = useAuth();
+  const config = ROUTES[route];
+
+  // Legacy deep link from the pre-rename console.
+  useEffect(() => {
+    if (route === '/console' && user) {
+      navigate(workspaceFor(user).replace('#', ''));
+    }
+  }, [route, user, navigate]);
+
+  return (
+    <div className="app-container">
+      <Header route={route} />
+
+      <main
+        id="main-content"
+        className={[
+          'main-content',
+          config?.narrow ? 'main-content--narrow' : '',
+        ]
+          .filter(Boolean)
+          .join(' ')}
+        tabIndex={-1}
+      >
+        {!config && <NotFound route={route} />}
+
+        {config && (
+          <>
+            {config.title && !config.fullBleed && (
+              <div className="page-header">
+                <h1 className="page-header__title">{config.title}</h1>
+                {config.subtitle && (
+                  <p className="page-header__sub">{config.subtitle}</p>
+                )}
+              </div>
+            )}
+
+            {!config.bare && <StatusAlert />}
+
+            {config.gate ? (
+              <LoginGate requiredRole={config.role ?? null}>
+                {config.render()}
+              </LoginGate>
+            ) : (
+              config.render()
+            )}
+          </>
+        )}
+      </main>
+
+      <Footer />
+    </div>
   );
 }
 
@@ -182,79 +265,5 @@ export default function App() {
     <AuthProvider>
       <AppShell route={route} navigate={navigate} />
     </AuthProvider>
-  );
-}
-
-function AppShell({ route, navigate }) {
-  const { user } = useAuth();
-
-  // Legacy route redirect for #/console
-  useEffect(() => {
-    if (route === '/console' && user) {
-      const dest = user.role === 'ADMIN' ? '#/admin' : user.role === 'ISSUER' ? '#/issuer' : '#/wallet';
-      navigate(dest.replace('#', ''));
-    }
-  }, [route, user, navigate]);
-
-  return (
-    <div className="app-container">
-      <Header />
-
-      {/* Public Home Landing */}
-      {route === '/' && <Landing />}
-
-      {/* Public Verification */}
-      {route === '/verify' && (
-        <main className="main-content">
-          <StatusAlert />
-          <PublicVerifierView />
-        </main>
-      )}
-
-      {/* Auth Login / Register */}
-      {route === '/login' && <LoginPage />}
-
-      {/* Student / Holder Certificates Wallet */}
-      {route === '/wallet' && (
-        <LoginGate>
-          <main className="main-content">
-            <StatusAlert />
-            <HolderWalletView />
-          </main>
-        </LoginGate>
-      )}
-
-      {/* Issuer Credential Studio */}
-      {route === '/issuer' && (
-        <LoginGate requiredRole="ISSUER">
-          <main className="main-content">
-            <StatusAlert />
-            <IssuerStudio />
-          </main>
-        </LoginGate>
-      )}
-
-      {/* Admin Center */}
-      {route === '/admin' && (
-        <LoginGate requiredRole="ADMIN">
-          <main className="main-content">
-            <StatusAlert />
-            <AdminConsoleView />
-          </main>
-        </LoginGate>
-      )}
-
-      {/* User Account Profile & Security */}
-      {route === '/account' && (
-        <LoginGate>
-          <main className="main-content">
-            <StatusAlert />
-            <AccountProfileView />
-          </main>
-        </LoginGate>
-      )}
-
-      <Footer />
-    </div>
   );
 }

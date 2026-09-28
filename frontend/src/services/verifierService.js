@@ -3,6 +3,8 @@
  * Public & authenticated endpoints for Spring Boot VerifierController (/api/verifier/**)
  */
 
+import { fetchWithTimeout } from './fetchUtils.js';
+
 const API_BASE = '/api/verifier';
 
 async function handleResponse(response) {
@@ -51,7 +53,7 @@ export const verifierService = {
       headers['Authorization'] = `Bearer ${token}`;
     }
 
-    const response = await fetch(`${API_BASE}/verify`, {
+    const response = await fetchWithTimeout(`${API_BASE}/verify`, {
       method: 'POST',
       headers,
       body: formData,
@@ -69,7 +71,7 @@ export const verifierService = {
    */
   async lookupAnchor(credentialNumber) {
     const cleanNumber = encodeURIComponent(credentialNumber.trim());
-    const response = await fetch(`${API_BASE}/anchor/${cleanNumber}`, {
+    const response = await fetchWithTimeout(`${API_BASE}/anchor/${cleanNumber}`, {
       method: 'GET',
       headers: {
         'Accept': 'application/json',
@@ -87,7 +89,7 @@ export const verifierService = {
    * @returns {Promise<Array>} Array of VerificationHistoryResponse
    */
   async listVerificationHistory(token) {
-    const response = await fetch(`${API_BASE}/history`, {
+    const response = await fetchWithTimeout(`${API_BASE}/history`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,

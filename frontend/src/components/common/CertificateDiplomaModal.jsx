@@ -1,10 +1,8 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { 
   X, 
   Printer, 
-  Share2, 
   Download, 
-  Check, 
   ShieldCheck, 
   Award, 
   Building2
@@ -12,16 +10,14 @@ import {
 import { Button } from './Button';
 import { Badge } from './Badge';
 
-export function CertificateDiplomaModal({ credential, onClose, onDownload }) {
-  const [copied, setCopied] = useState(false);
-
+export function CertificateDiplomaModal({ credential, issuerName: issuerNameProp, onClose, onDownload }) {
   if (!credential) return null;
 
   const {
     title,
     type = 'Certificate',
     credentialNumber,
-    issuerName = 'Authorized Issuing Institution',
+    issuerName = issuerNameProp || 'Issuing Institution',
     issuerDomain,
     recipientName,
     subjectId,
@@ -48,15 +44,6 @@ export function CertificateDiplomaModal({ credential, onClose, onDownload }) {
 
   const handlePrint = () => {
     window.print();
-  };
-
-  const handleShare = () => {
-    const shareUrl = `${window.location.origin}${window.location.pathname}#/verify`;
-    navigator.clipboard.writeText(
-      `Verify my official certificate "${title}" on CertiChain: ${shareUrl} (Certificate #: ${credentialNumber})`
-    );
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2500);
   };
 
   // Determine recipient display name
@@ -87,8 +74,8 @@ export function CertificateDiplomaModal({ credential, onClose, onDownload }) {
           maxWidth: '860px',
           maxHeight: '92vh',
           overflowY: 'auto',
-          backgroundColor: 'var(--bg-card-elevated)',
-          border: '1px solid var(--border-subtle)',
+          backgroundColor: 'var(--surface)',
+          border: '1px solid var(--line)',
           borderRadius: 'var(--radius-lg)',
           boxShadow: '0 25px 60px -15px rgba(0, 0, 0, 0.8), 0 0 30px rgba(0, 240, 255, 0.15)',
           display: 'flex',
@@ -98,19 +85,19 @@ export function CertificateDiplomaModal({ credential, onClose, onDownload }) {
         {/* Modal Top Bar (Action Header - Hidden in Print) */}
         <div className="no-print" style={{
           padding: '16px 24px',
-          borderBottom: '1px solid var(--border-subtle)',
+          borderBottom: '1px solid var(--line)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
           flexWrap: 'wrap',
           gap: '12px',
-          backgroundColor: 'var(--bg-card-hover)',
+          backgroundColor: 'var(--surface-sunken)',
           borderTopLeftRadius: 'var(--radius-lg)',
           borderTopRightRadius: 'var(--radius-lg)'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Award size={18} color="var(--amber-primary)" />
-            <span style={{ fontWeight: 600, fontSize: '14px', color: 'var(--text-primary)' }}>
+            <Award size={18} color="var(--warn)" />
+            <span style={{ fontWeight: 600, fontSize: '14px', color: 'var(--ink)' }}>
               Official Verifiable Certificate View
             </span>
             <Badge status={status} />
@@ -125,15 +112,6 @@ export function CertificateDiplomaModal({ credential, onClose, onDownload }) {
               title="Print or Save as PDF"
             >
               Print / Save PDF
-            </Button>
-
-            <Button
-              variant="outline"
-              size="sm"
-              icon={copied ? Check : Share2}
-              onClick={handleShare}
-            >
-              {copied ? 'Link Copied!' : 'Share Proof'}
             </Button>
 
             {onDownload && (
@@ -360,7 +338,7 @@ export function CertificateDiplomaModal({ credential, onClose, onDownload }) {
                 <div>
                   <span>Ledger Proof: </span>
                   <span className="font-mono" style={{ color: '#0369a1' }}>
-                    Block #{blockNumber || '1'} · {txHash.substring(0, 10)}...{txHash.substring(txHash.length - 6)}
+                    Block #{blockNumber || 'N/A'} · {txHash.substring(0, 10)}...{txHash.substring(txHash.length - 6)}
                   </span>
                 </div>
               )}

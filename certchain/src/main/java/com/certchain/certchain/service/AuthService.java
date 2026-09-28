@@ -65,38 +65,70 @@ public class AuthService {
         String email =
                 request.email().trim().toLowerCase();
 
-        if (userRepository.existsByEmail(email)) {
+        /*
+         * Self-registration is always HOLDER. The role on the request is
+         * advisory only: trusting it would let anyone mint themselves an
+         * ADMIN, and would let them skip the issuer approval flow in
+         * IssuerService.register by self-provisioning a verified issuer.
+         * Privileged accounts are provisioned out of band via
+         * provisionUser (see DemoDataSeeder) or promoted by an
+         * administrator.
+         */
+        return provisionUser(
+                email,
+                request.password(),
+                request.fullName(),
+                Role.HOLDER,
+                false
+        );
+    }
+
+    /**
+     * Creates a user with an explicitly assigned role, provisioning a
+     * pre-verified issuer record when requested. This is the only path
+     * that may grant a role other than HOLDER and it is not exposed over
+     * HTTP.
+     *
+     * <p>Idempotent by email: re-running against a database that already
+     * contains the account raises IllegalArgumentException rather than a
+     * constraint violation, which is what lets the seeder skip.
+     */
+    @Transactional
+    public UserResponse provisionUser(
+            String email,
+            String password,
+            String fullName,
+            Role role,
+            boolean provisionVerifiedIssuer) {
+
+        String normalizedEmail = email.trim().toLowerCase();
+
+        if (userRepository.existsByEmail(normalizedEmail)) {
             throw new IllegalArgumentException(
                     "Email already registered"
             );
         }
 
-        Role assignedRole = Role.HOLDER;
-        if (request.role() != null && !request.role().isBlank()) {
-            try {
-                assignedRole = Role.valueOf(request.role().trim().toUpperCase());
-            } catch (IllegalArgumentException ignored) {
-            }
-        }
-
         User user = new User();
-        user.setEmail(email);
+        user.setEmail(normalizedEmail);
         user.setPasswordHash(
-                passwordEncoder.encode(request.password())
+                passwordEncoder.encode(password)
         );
-        user.setFullName(request.fullName());
-        user.setRole(assignedRole);
+        user.setFullName(fullName);
+        user.setRole(role);
 
         User saved = userRepository.save(user);
 
-        // If registered as an institution / issuer, automatically set up their verified issuer record
-        if (assignedRole == Role.ISSUER && !issuerRepository.existsByUserId(saved.getId())) {
+        if (role == Role.ISSUER
+                && provisionVerifiedIssuer
+                && !issuerRepository.existsByUserId(saved.getId())) {
             Issuer issuer = new Issuer();
             issuer.setUser(saved);
             issuer.setName(saved.getFullName());
             String domain = "certichain.org";
             if (saved.getEmail().contains("@")) {
-                domain = saved.getEmail().substring(saved.getEmail().indexOf("@") + 1);
+                domain = saved.getEmail()
+                        .substring(saved.getEmail().indexOf("@") + 1);
             }
             issuer.setDomain(domain);
             issuer.setVerified(true);
@@ -199,7 +231,7 @@ public class AuthService {
                         stored.getUser().getRole()
                 ),
                 replacement.getRawToken(),
-                refreshTokenTtlDays * 24 * 60 * 60,
+                jwtUtil.accessTokenTtlSeconds(),
                 stored.getUser().getId(),
                 stored.getUser().getEmail(),
                 stored.getUser().getFullName(),
@@ -243,7 +275,7 @@ public class AuthService {
                         user.getRole()
                 ),
                 refreshToken.getRawToken(),
-                refreshTokenTtlDays * 24 * 60 * 60,
+                jwtUtil.accessTokenTtlSeconds(),
                 user.getId(),
                 user.getEmail(),
                 user.getFullName(),

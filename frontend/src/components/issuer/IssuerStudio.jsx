@@ -2,8 +2,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { 
   Building2, 
   Award, 
-  Plus, 
-  Trash2, 
   RefreshCw, 
   Eye, 
   Search, 
@@ -11,7 +9,8 @@ import {
   ShieldCheck, 
   AlertTriangle,
   ArrowRight,
-  ArrowLeft
+  ArrowLeft,
+  Plus
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { issuerService } from '../../services/issuerService';
@@ -53,19 +52,18 @@ export function IssuerStudio() {
   const [wizardStep, setWizardStep] = useState(1);
   
   // Step 1: Recipient
-  const [recipientName, setRecipientName] = useState('Jane Doe');
+  const [recipientName, setRecipientName] = useState('');
   const [subjectId, setSubjectId] = useState('');
   
   // Step 2: Credential Details
   const [credType, setCredType] = useState('Degree');
-  const [credTitle, setCredTitle] = useState('Bachelor of Science in Computer Science');
+  const [credTitle, setCredTitle] = useState('');
   
   // Step 3: Academic Attributes
-  const [programMajor, setProgramMajor] = useState('Computer Science');
-  const [gpa, setGpa] = useState('3.92');
-  const [honors, setHonors] = useState('Summa Cum Laude');
-  const [department, setDepartment] = useState('School of Engineering');
-  const [customClaims, setCustomClaims] = useState([]);
+  const [programMajor, setProgramMajor] = useState('');
+  const [gpa, setGpa] = useState('');
+  const [honors, setHonors] = useState('');
+  const [department, setDepartment] = useState('');
 
   // Issuance Execution State
   const [issuing, setIssuing] = useState(false);
@@ -83,7 +81,14 @@ export function IssuerStudio() {
     setError(null);
 
     try {
-      const creds = await issuerService.listCredentials(accessToken);
+      const [profile, creds] = await Promise.all([
+        issuerService.getIssuerProfile(accessToken).catch((err) => {
+          if (err.status === 404) return null; // not registered yet
+          throw err;
+        }),
+        issuerService.listCredentials(accessToken),
+      ]);
+      setIssuerInfo(profile);
       setCredentials(creds || []);
 
       if (creds && creds.length > 0) {
@@ -148,21 +153,6 @@ export function IssuerStudio() {
     }
   };
 
-  // Custom Claims Handlers
-  const handleAddCustomClaim = () => {
-    setCustomClaims([...customClaims, { key: '', value: '' }]);
-  };
-
-  const handleRemoveCustomClaim = (index) => {
-    setCustomClaims(customClaims.filter((_, i) => i !== index));
-  };
-
-  const handleCustomClaimChange = (index, field, val) => {
-    const copy = [...customClaims];
-    copy[index][field] = val;
-    setCustomClaims(copy);
-  };
-
   // Build Payload Claims Object
   const assembleClaims = () => {
     const obj = {
@@ -172,12 +162,6 @@ export function IssuerStudio() {
     if (gpa.trim()) obj.gpa = gpa.trim();
     if (honors.trim()) obj.honors = honors.trim();
     if (department.trim()) obj.department = department.trim();
-
-    customClaims.forEach(c => {
-      if (c.key.trim() && c.value.trim()) {
-        obj[c.key.trim()] = c.value.trim();
-      }
-    });
     return obj;
   };
 
@@ -229,40 +213,23 @@ export function IssuerStudio() {
     <div className="animate-fade-in" style={{ maxWidth: '1080px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '24px' }}>
       
       {/* Top Banner: Institution Header */}
-      <div className="glass-panel" style={{ padding: '26px 28px', borderRadius: 'var(--radius-lg)' }}>
+      <div className="card card--flush" style={{ padding: '26px 28px', borderRadius: 'var(--radius-lg)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-            <div style={{
-              width: '52px',
-              height: '52px',
-              borderRadius: '16px',
-              background: 'linear-gradient(135deg, rgba(124, 58, 237, 0.2) 0%, rgba(37, 99, 235, 0.2) 100%)',
-              border: '1px solid var(--border-purple)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'var(--purple-primary)',
-              boxShadow: '0 4px 15px rgba(124, 58, 237, 0.15)'
-            }}>
-              <Building2 size={26} />
-            </div>
+            <span className="icon-tile" aria-hidden="true">
+              <Building2 size={22} />
+            </span>
 
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap', marginBottom: '4px' }}>
-                <h1 className="font-display" style={{ fontSize: '1.65rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-                  {issuerInfo?.name || 'Credential Issuance Studio'}
-                </h1>
                 {issuerInfo?.domain && (
-                  <span style={{ fontSize: '13px', color: 'var(--text-secondary)', padding: '2px 8px', borderRadius: '4px', backgroundColor: '#f1f5f9' }}>
+                  <span style={{ fontSize: '13px', color: 'var(--ink-secondary)', padding: '2px 8px', borderRadius: '4px', backgroundColor: '#f1f5f9' }}>
                     {issuerInfo.domain}
                   </span>
                 )}
-                <span className="badge badge-purple">
-                  <ShieldCheck size={12} />
-                  Authorized Institution
-                </span>
+
               </div>
-              <p style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>
+              <p style={{ fontSize: '14px', color: 'var(--ink-secondary)' }}>
                 Issue, manage, and anchor verifiable academic degrees, badges, and certificates on the blockchain ledger.
               </p>
             </div>
@@ -270,21 +237,11 @@ export function IssuerStudio() {
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             {/* Digital Seal Status Indicator */}
-            <div style={{
-              padding: '6px 14px',
-              borderRadius: 'var(--radius-pill)',
-              backgroundColor: signingKey?.keyId ? 'rgba(5, 150, 105, 0.08)' : 'rgba(217, 119, 6, 0.08)',
-              border: `1px solid ${signingKey?.keyId ? 'rgba(5, 150, 105, 0.3)' : 'rgba(217, 119, 6, 0.3)'}`,
-              color: signingKey?.keyId ? 'var(--emerald-primary)' : 'var(--amber-primary)',
-              fontSize: '12.5px',
-              fontWeight: 600,
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px'
-            }}>
-              <ShieldCheck size={15} />
-              <span>{signingKey?.keyId ? 'Digital Signing Seal Ready' : 'Seal Inactive'}</span>
-            </div>
+            <Badge
+              status={signingKey?.keyId ? 'VERIFIED' : 'PENDING'}
+              text={signingKey?.keyId ? 'Seal active' : 'Seal inactive'}
+              icon={ShieldCheck}
+            />
 
             <Button variant="secondary" size="sm" onClick={loadIssuerData} loading={loading} icon={RefreshCw}>
               Refresh
@@ -297,7 +254,7 @@ export function IssuerStudio() {
           <div style={{
             marginTop: '20px',
             padding: '14px 18px',
-            borderRadius: 'var(--radius-md)',
+            borderRadius: 'var(--radius)',
             backgroundColor: 'rgba(217, 119, 6, 0.06)',
             border: '1px solid rgba(217, 119, 6, 0.25)',
             display: 'flex',
@@ -307,10 +264,13 @@ export function IssuerStudio() {
             gap: '12px'
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <AlertTriangle size={18} color="var(--amber-primary)" />
-              <span style={{ fontSize: '13.5px', color: 'var(--text-primary)' }}>
-                Your institution requires an active digital seal before certificates can be signed.
-              </span>
+              <AlertTriangle size={18} className="alert__icon" aria-hidden="true" />
+              <div className="alert__body">
+                <strong className="alert__title">Signing seal required</strong>
+                <p className="alert__message">
+                  Your institution needs an active digital seal before certificates can be signed.
+                </p>
+              </div>
             </div>
 
             <Button
@@ -323,22 +283,25 @@ export function IssuerStudio() {
             </Button>
           </div>
         )}
-        {sealError && <p style={{ color: 'var(--rose-primary)', fontSize: '12.5px', marginTop: '8px' }}>{sealError}</p>}
+        {sealError && <p style={{ color: 'var(--bad)', fontSize: '12.5px', marginTop: '8px' }}>{sealError}</p>}
       </div>
 
       {error && <ErrorState message={error} onRetry={loadIssuerData} />}
 
       {!issuerInfo && credentials.length === 0 && (
-        <div className="glass-panel" style={{ padding: '24px', borderRadius: 'var(--radius-lg)' }}>
-          <h3 className="font-display" style={{ fontSize: '1.2rem', fontWeight: 600, marginBottom: '6px' }}>
+        <div className="card card--flush" style={{ padding: '24px', borderRadius: 'var(--radius-lg)' }}>
+          <h2 className="font-display" style={{ fontSize: '1.2rem', fontWeight: 600, marginBottom: '6px' }}>
             Register Your Educational Institution
-          </h3>
-          <p style={{ fontSize: '13.5px', color: 'var(--text-secondary)', marginBottom: '16px' }}>
+          </h2>
+          <p style={{ fontSize: '13.5px', color: 'var(--ink-secondary)', marginBottom: '16px' }}>
             Register your institution's official name and verified domain to activate your credential issuing profile.
           </p>
           {registerError && (
-            <div style={{ padding: '10px 14px', borderRadius: 'var(--radius-sm)', backgroundColor: 'rgba(225, 29, 72, 0.08)', color: 'var(--rose-primary)', fontSize: '13px', marginBottom: '14px' }}>
-              {registerError}
+            <div className="alert alert--bad" role="alert" style={{ marginBottom: 'var(--space-4)' }}>
+              <AlertTriangle size={18} className="alert__icon" aria-hidden="true" />
+              <div className="alert__body">
+                <p className="alert__message">{registerError}</p>
+              </div>
             </div>
           )}
           <form onSubmit={handleRegisterIssuer} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '12px', alignItems: 'flex-end' }}>
@@ -380,73 +343,50 @@ export function IssuerStudio() {
       )}
 
       {/* Main Tab Navigation: Issue Wizard vs Issued Records */}
-      <div style={{
-        display: 'flex',
-        backgroundColor: '#ffffff',
-        border: '1px solid var(--border-subtle)',
-        borderRadius: 'var(--radius-md)',
-        padding: '6px',
-        gap: '8px'
-      }}>
+      <div className="segmented" role="tablist" aria-label="Issuer workspace">
         <button
           type="button"
+          role="tab"
+          id="studio-tab-wizard"
+          aria-selected={activeTab === 'wizard'}
+          aria-controls="studio-panel-wizard"
           onClick={() => setActiveTab('wizard')}
-          style={{
-            flex: 1,
-            padding: '10px 16px',
-            borderRadius: 'var(--radius-sm)',
-            border: 'none',
-            background: activeTab === 'wizard' ? 'rgba(124, 58, 237, 0.08)' : 'transparent',
-            color: activeTab === 'wizard' ? 'var(--purple-primary)' : 'var(--text-secondary)',
-            fontWeight: activeTab === 'wizard' ? 700 : 500,
-            fontSize: '14px',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '8px',
-            transition: 'all 0.2s ease'
-          }}
+          className={`segmented__item ${activeTab === 'wizard' ? 'is-active' : ''}`}
         >
-          <Award size={16} />
-          <span>Issue New Certificate (Guided Wizard)</span>
+          <Award size={15} aria-hidden="true" />
+          <span>Issue new credential</span>
         </button>
 
         <button
           type="button"
+          role="tab"
+          id="studio-tab-directory"
+          aria-selected={activeTab === 'directory'}
+          aria-controls="studio-panel-directory"
           onClick={() => setActiveTab('directory')}
-          style={{
-            flex: 1,
-            padding: '10px 16px',
-            borderRadius: 'var(--radius-sm)',
-            border: 'none',
-            background: activeTab === 'directory' ? 'rgba(124, 58, 237, 0.08)' : 'transparent',
-            color: activeTab === 'directory' ? 'var(--purple-primary)' : 'var(--text-secondary)',
-            fontWeight: activeTab === 'directory' ? 700 : 500,
-            fontSize: '14px',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '8px',
-            transition: 'all 0.2s ease'
-          }}
+          className={`segmented__item ${activeTab === 'directory' ? 'is-active' : ''}`}
         >
-          <Building2 size={16} />
-          <span>Issued Certificates Directory ({credentials.length})</span>
+          <Building2 size={15} aria-hidden="true" />
+          <span>Issued credentials ({credentials.length})</span>
         </button>
       </div>
 
       {/* TAB 1: GUIDED ISSUANCE WIZARD */}
       {activeTab === 'wizard' && (
-        <div className="glass-panel" style={{ padding: '32px', borderRadius: 'var(--radius-lg)' }}>
+        <div
+          id="studio-panel-wizard"
+          role="tabpanel"
+          aria-labelledby="studio-tab-wizard"
+          className="card card--flush"
+          style={{ padding: '32px', borderRadius: 'var(--radius-lg)' }}
+        >
           
           {/* Success Celebratory Banner if just issued */}
           {issuedResult ? (
             <div className="animate-fade-in" style={{
               textAlign: 'center',
               padding: '36px 20px',
-              borderRadius: 'var(--radius-md)',
+              borderRadius: 'var(--radius)',
               backgroundColor: 'rgba(5, 150, 105, 0.04)',
               border: '1px solid rgba(5, 150, 105, 0.25)'
             }}>
@@ -455,7 +395,7 @@ export function IssuerStudio() {
                 height: '64px',
                 borderRadius: '50%',
                 backgroundColor: 'rgba(5, 150, 105, 0.15)',
-                color: 'var(--emerald-primary)',
+                color: 'var(--ok)',
                 display: 'inline-flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -464,11 +404,11 @@ export function IssuerStudio() {
                 <ShieldCheck size={36} />
               </div>
 
-              <h2 className="font-display" style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '8px' }}>
+              <h2 className="font-display" style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--ink)', marginBottom: '8px' }}>
                 Certificate Successfully Issued & Sealed!
               </h2>
 
-              <p style={{ fontSize: '15px', color: 'var(--text-secondary)', maxWidth: '520px', margin: '0 auto 20px' }}>
+              <p style={{ fontSize: '15px', color: 'var(--ink-secondary)', maxWidth: '520px', margin: '0 auto 20px' }}>
                 <strong>"{issuedResult.title}"</strong> has been digitally signed and permanently anchored on the blockchain ledger.
               </p>
 
@@ -477,11 +417,11 @@ export function IssuerStudio() {
                 padding: '10px 18px',
                 backgroundColor: '#ffffff',
                 borderRadius: 'var(--radius-sm)',
-                border: '1px solid var(--border-subtle)',
+                border: '1px solid var(--line)',
                 marginBottom: '24px'
               }}>
-                <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Official Certificate #: </span>
-                <strong className="font-mono" style={{ fontSize: '14px', color: 'var(--cyan-primary)' }}>
+                <span style={{ fontSize: '12px', color: 'var(--ink-muted)' }}>Official Certificate #: </span>
+                <strong className="font-mono" style={{ fontSize: '14px', color: 'var(--accent)' }}>
                   {issuedResult.credentialNumber}
                 </strong>
               </div>
@@ -526,7 +466,7 @@ export function IssuerStudio() {
                     <div className="wizard-step-circle">
                       {wizardStep > item.step ? <Check size={16} /> : item.step}
                     </div>
-                    <span style={{ fontSize: '13.5px', fontWeight: wizardStep === item.step ? 700 : 500, color: wizardStep === item.step ? 'var(--text-primary)' : 'var(--text-secondary)' }}>
+                    <span style={{ fontSize: '13.5px', fontWeight: wizardStep === item.step ? 700 : 500, color: wizardStep === item.step ? 'var(--ink)' : 'var(--ink-secondary)' }}>
                       {item.label}
                     </span>
                   </button>
@@ -539,7 +479,7 @@ export function IssuerStudio() {
                   borderRadius: 'var(--radius-sm)',
                   backgroundColor: 'rgba(225, 29, 72, 0.08)',
                   border: '1px solid rgba(225, 29, 72, 0.25)',
-                  color: 'var(--rose-primary)',
+                  color: 'var(--bad)',
                   fontSize: '13.5px',
                   marginBottom: '20px'
                 }}>
@@ -551,10 +491,10 @@ export function IssuerStudio() {
               {wizardStep === 1 && (
                 <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                   <div>
-                    <h3 className="font-display" style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '4px' }}>
+                    <h2 className="font-display" style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--ink)', marginBottom: '4px' }}>
                       Step 1: Recipient Student / Candidate
-                    </h3>
-                    <p style={{ fontSize: '13.5px', color: 'var(--text-secondary)' }}>
+                    </h2>
+                    <p style={{ fontSize: '13.5px', color: 'var(--ink-secondary)' }}>
                       Specify who will receive this official certificate.
                     </p>
                   </div>
@@ -584,7 +524,7 @@ export function IssuerStudio() {
                           type="button"
                           onClick={() => setSubjectId(user.id)}
                           className="btn btn-ghost btn-sm"
-                          style={{ fontSize: '11.5px', color: 'var(--cyan-primary)', padding: '2px 6px' }}
+                          style={{ color: 'var(--accent)' }}
                         >
                           Use My Account ID (for testing)
                         </button>
@@ -622,10 +562,10 @@ export function IssuerStudio() {
               {wizardStep === 2 && (
                 <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                   <div>
-                    <h3 className="font-display" style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '4px' }}>
+                    <h2 className="font-display" style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--ink)', marginBottom: '4px' }}>
                       Step 2: Certificate Degree & Title
-                    </h3>
-                    <p style={{ fontSize: '13.5px', color: 'var(--text-secondary)' }}>
+                    </h2>
+                    <p style={{ fontSize: '13.5px', color: 'var(--ink-secondary)' }}>
                       Define the credential category and official award title.
                     </p>
                   </div>
@@ -686,10 +626,10 @@ export function IssuerStudio() {
               {wizardStep === 3 && (
                 <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                   <div>
-                    <h3 className="font-display" style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '4px' }}>
+                    <h2 className="font-display" style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--ink)', marginBottom: '4px' }}>
                       Step 3: Academic Highlights & Honors
-                    </h3>
-                    <p style={{ fontSize: '13.5px', color: 'var(--text-secondary)' }}>
+                    </h2>
+                    <p style={{ fontSize: '13.5px', color: 'var(--ink-secondary)' }}>
                       Enter graduation honors, GPA, specialization, and department information.
                     </p>
                   </div>
@@ -744,45 +684,6 @@ export function IssuerStudio() {
                     </div>
                   </div>
 
-                  {/* Custom Attributes */}
-                  <div style={{ marginTop: '10px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                      <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)' }}>
-                        Additional Custom Attributes (Optional)
-                      </span>
-                      <Button variant="ghost" size="sm" icon={Plus} onClick={handleAddCustomClaim}>
-                        Add Attribute
-                      </Button>
-                    </div>
-
-                    {customClaims.map((claim, idx) => (
-                      <div key={idx} style={{ display: 'flex', gap: '8px', marginBottom: '8px', alignItems: 'center' }}>
-                        <input
-                          type="text"
-                          className="input-field"
-                          placeholder="Attribute name (e.g. Dean's List)"
-                          value={claim.key}
-                          onChange={(e) => handleCustomClaimChange(idx, 'key', e.target.value)}
-                        />
-                        <input
-                          type="text"
-                          className="input-field"
-                          placeholder="Value (e.g. 2026)"
-                          value={claim.value}
-                          onChange={(e) => handleCustomClaimChange(idx, 'value', e.target.value)}
-                        />
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveCustomClaim(idx)}
-                          className="btn btn-ghost btn-sm"
-                          style={{ color: 'var(--rose-primary)' }}
-                        >
-                          <Trash2 size={15} />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '12px' }}>
                     <Button
                       variant="secondary"
@@ -807,10 +708,10 @@ export function IssuerStudio() {
               {wizardStep === 4 && (
                 <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
                   <div>
-                    <h3 className="font-display" style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '4px' }}>
+                    <h2 className="font-display" style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--ink)', marginBottom: '4px' }}>
                       Step 4: Live Certificate Preview
-                    </h3>
-                    <p style={{ fontSize: '13.5px', color: 'var(--text-secondary)' }}>
+                    </h2>
+                    <p style={{ fontSize: '13.5px', color: 'var(--ink-secondary)' }}>
                       Review how the certificate will appear to the student and verifiers before signing.
                     </p>
                   </div>
@@ -891,13 +792,19 @@ export function IssuerStudio() {
 
       {/* TAB 2: ISSUED CERTIFICATES DIRECTORY */}
       {activeTab === 'directory' && (
-        <div className="glass-panel" style={{ padding: '24px', borderRadius: 'var(--radius-lg)' }}>
+        <div
+          id="studio-panel-directory"
+          role="tabpanel"
+          aria-labelledby="studio-tab-directory"
+          className="card card--flush"
+          style={{ padding: '24px', borderRadius: 'var(--radius-lg)' }}
+        >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '14px', marginBottom: '20px' }}>
             <div>
-              <h3 className="font-display" style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+              <h2 className="font-display" style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--ink)' }}>
                 Issued Certificates Archive
-              </h3>
-              <p style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
+              </h2>
+              <p style={{ fontSize: '13px', color: 'var(--ink-secondary)' }}>
                 Audit all credentials conferred by your organization.
               </p>
             </div>
@@ -912,7 +819,7 @@ export function IssuerStudio() {
                   onChange={(e) => setSearchQuery(e.target.value)}
                   style={{ paddingLeft: '34px', height: '38px', fontSize: '13px' }}
                 />
-                <Search size={14} color="var(--text-muted)" style={{ position: 'absolute', left: '10px', top: '12px' }} />
+                <Search size={14} color="var(--ink-muted)" style={{ position: 'absolute', left: '10px', top: '12px' }} />
               </div>
 
               <select
@@ -935,7 +842,7 @@ export function IssuerStudio() {
               description="Use the guided wizard to mint your institution's first verifiable degree or certificate."
             />
           ) : filteredCredentials.length === 0 ? (
-            <div style={{ padding: '32px', textAlign: 'center', color: 'var(--text-secondary)' }}>
+            <div style={{ padding: '32px', textAlign: 'center', color: 'var(--ink-secondary)' }}>
               No certificates match your query "{searchQuery}".
             </div>
           ) : (
@@ -954,19 +861,19 @@ export function IssuerStudio() {
                   {filteredCredentials.map((cred) => (
                     <tr key={cred.id || cred.credentialId}>
                       <td>
-                        <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
+                        <div style={{ fontWeight: 600, color: 'var(--ink)' }}>
                           {cred.title}
                         </div>
-                        <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
-                          Recipient: {cred.claims?.recipientName || cred.claims?.studentName || cred.subjectId?.substring(0, 16) + '...'}
+                        <div style={{ fontSize: '12px', color: 'var(--ink-muted)' }}>
+                          Recipient: {cred.subjectName || cred.claims?.recipientName || `${cred.subjectId?.substring(0, 16) || 'unknown'}...`}
                         </div>
                       </td>
                       <td>
-                        <code className="font-mono" style={{ color: 'var(--cyan-primary)', fontSize: '12.5px' }}>
+                        <code className="font-mono" style={{ color: 'var(--accent)', fontSize: '12.5px' }}>
                           {cred.credentialNumber}
                         </code>
                       </td>
-                      <td style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
+                      <td style={{ fontSize: '13px', color: 'var(--ink-secondary)' }}>
                         {cred.issuedAt ? new Date(cred.issuedAt).toLocaleDateString() : 'N/A'}
                       </td>
                       <td>
@@ -1007,6 +914,7 @@ export function IssuerStudio() {
       {previewingCredential && (
         <CertificateDiplomaModal
           credential={previewingCredential}
+          issuerName={issuerInfo?.name}
           onClose={() => setPreviewingCredential(null)}
         />
       )}

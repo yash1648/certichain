@@ -75,8 +75,16 @@ public class JwtUtil {
                 .compact();
     }
 
-    public Claims parseAccessToken(String token) {
-        return Jwts.parser()
+    /**
+     * Lifetime of a freshly issued access token, in seconds.
+     * The client schedules its refresh from this, so it must be the
+     * access token's own TTL and not the refresh token's.
+     */
+    public long accessTokenTtlSeconds() {
+        return accessTokenTtlMinutes * 60;
+    }
+
+    public Claims parseAccessToken(String token) {        return Jwts.parser()
                 .verifyWith(key)
                 .build()
                 .parseSignedClaims(token)

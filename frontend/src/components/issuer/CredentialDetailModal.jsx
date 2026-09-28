@@ -55,36 +55,37 @@ export function CredentialDetailModal({ credential, onClose, onOpenRevoke }) {
           flexWrap: 'wrap',
           gap: '8px',
           padding: '12px 14px',
-          backgroundColor: 'rgba(255, 255, 255, 0.02)',
+          background: 'var(--surface-sunken)',
           borderRadius: 'var(--radius-sm)',
-          border: '1px solid var(--border-subtle)',
+          border: '1px solid var(--line)',
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Credential Type:</span>
-            <Badge text={credential.type} variant="cyan" />
+            <span style={{ fontSize: '13px', color: 'var(--ink-muted)' }}>Credential type:</span>
+            <span className="font-mono" style={{ fontSize: '13px', fontWeight: 500 }}>
+              {credential.type}
+            </span>
           </div>
           <Badge status={credential.status} />
         </div>
 
         {/* Blockchain Anchor Details */}
         <div style={{
-          background: 'rgba(0, 0, 0, 0.35)',
-          border: '1px solid var(--border-subtle)',
-          borderRadius: 'var(--radius-md)',
+          background: 'var(--surface-sunken)',
+          border: '1px solid var(--line)',
+          borderRadius: 'var(--radius)',
           padding: '14px',
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--cyan-primary)', fontWeight: 600, fontSize: '13px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--accent)', fontWeight: 600, fontSize: '13px' }}>
               <Link2 size={16} />
               <span>On-Chain Blockchain Anchor</span>
             </div>
             {credential.txHash && (
               <button
                 onClick={() => copyToClipboard(credential.txHash, 'txHash')}
-                className="btn btn-outline"
-                style={{ padding: '3px 8px', fontSize: '0.72rem' }}
+                className="btn btn-outline btn-sm"
               >
-                {copiedField === 'txHash' ? <Check size={12} color="var(--emerald-primary)" /> : <Copy size={12} />}
+                {copiedField === 'txHash' ? <Check size={13} color="var(--ok)" aria-hidden="true" /> : <Copy size={13} aria-hidden="true" />}
                 <span>{copiedField === 'txHash' ? 'Copied' : 'Copy Tx'}</span>
               </button>
             )}
@@ -92,16 +93,16 @@ export function CredentialDetailModal({ credential, onClose, onOpenRevoke }) {
 
           {credential.txHash ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <div style={{ display: 'flex', gap: '16px', fontSize: '12px', color: 'var(--text-secondary)' }}>
-                <span>Block Number: <strong style={{ color: 'var(--text-primary)' }}>{credential.blockNumber ?? '1'}</strong></span>
-                <span>Chain ID: <strong style={{ color: 'var(--text-primary)' }}>{credential.chainId ?? '31337'}</strong></span>
+              <div style={{ display: 'flex', gap: '16px', fontSize: '12px', color: 'var(--ink-secondary)' }}>
+                <span>Block Number: <strong style={{ color: 'var(--ink)' }}>{credential.blockNumber ?? 'N/A'}</strong></span>
+                <span>Chain ID: <strong style={{ color: 'var(--ink)' }}>{credential.chainId ?? 'N/A'}</strong></span>
               </div>
-              <code className="font-mono" style={{ color: 'var(--cyan-primary)', fontSize: '12px', wordBreak: 'break-all' }}>
+              <code className="font-mono" style={{ color: 'var(--accent)', fontSize: '12px', wordBreak: 'break-all' }}>
                 {credential.txHash}
               </code>
             </div>
           ) : (
-            <span style={{ fontSize: '12.5px', color: 'var(--text-muted)' }}>
+            <span style={{ fontSize: '12.5px', color: 'var(--ink-muted)' }}>
               No on-chain anchor recorded (legacy credential).
             </span>
           )}
@@ -109,13 +110,13 @@ export function CredentialDetailModal({ credential, onClose, onOpenRevoke }) {
 
         {/* IPFS CID */}
         <div style={{
-          background: 'rgba(0, 0, 0, 0.35)',
-          border: '1px solid var(--border-subtle)',
-          borderRadius: 'var(--radius-md)',
+          background: 'var(--surface-sunken)',
+          border: '1px solid var(--line)',
+          borderRadius: 'var(--radius)',
           padding: '14px',
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--emerald-primary)', fontWeight: 600, fontSize: '13px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--ok)', fontWeight: 600, fontSize: '13px' }}>
               <HardDrive size={16} />
               <span>IPFS Content Identifier (CID)</span>
             </div>
@@ -124,7 +125,7 @@ export function CredentialDetailModal({ credential, onClose, onOpenRevoke }) {
               className="btn btn-outline"
               style={{ padding: '3px 8px', fontSize: '0.72rem' }}
             >
-              {copiedField === 'ipfs' ? <Check size={12} color="var(--emerald-primary)" /> : <Copy size={12} />}
+              {copiedField === 'ipfs' ? <Check size={12} color="var(--ok)" /> : <Copy size={12} />}
               <span>{copiedField === 'ipfs' ? 'Copied' : 'Copy'}</span>
             </button>
           </div>
@@ -135,13 +136,13 @@ export function CredentialDetailModal({ credential, onClose, onOpenRevoke }) {
 
         {/* Content Hash */}
         <div style={{
-          background: 'rgba(0, 0, 0, 0.35)',
-          border: '1px solid var(--border-subtle)',
-          borderRadius: 'var(--radius-md)',
+          background: 'var(--surface-sunken)',
+          border: '1px solid var(--line)',
+          borderRadius: 'var(--radius)',
           padding: '14px',
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--cyan-primary)', fontWeight: 600, fontSize: '13px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--accent)', fontWeight: 600, fontSize: '13px' }}>
               <FileText size={16} />
               <span>Canonical Content Hash (SHA-256)</span>
             </div>
@@ -150,24 +151,24 @@ export function CredentialDetailModal({ credential, onClose, onOpenRevoke }) {
               className="btn btn-outline"
               style={{ padding: '3px 8px', fontSize: '0.72rem' }}
             >
-              {copiedField === 'hash' ? <Check size={12} color="var(--emerald-primary)" /> : <Copy size={12} />}
+              {copiedField === 'hash' ? <Check size={12} color="var(--ok)" /> : <Copy size={12} />}
               <span>{copiedField === 'hash' ? 'Copied' : 'Copy'}</span>
             </button>
           </div>
-          <code className="font-mono" style={{ color: 'var(--cyan-primary)', fontSize: '12px', wordBreak: 'break-all' }}>
+          <code className="font-mono" style={{ color: 'var(--accent)', fontSize: '12px', wordBreak: 'break-all' }}>
             {credential.contentHash || 'N/A'}
           </code>
         </div>
 
         {/* Signature & Key ID */}
         <div style={{
-          background: 'rgba(0, 0, 0, 0.35)',
-          border: '1px solid var(--border-subtle)',
-          borderRadius: 'var(--radius-md)',
+          background: 'var(--surface-sunken)',
+          border: '1px solid var(--line)',
+          borderRadius: 'var(--radius)',
           padding: '14px',
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--purple-primary)', fontWeight: 600, fontSize: '13px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--accent)', fontWeight: 600, fontSize: '13px' }}>
               <Key size={16} />
               <span>Digital Signature ({credential.signatureAlgorithm || 'Ed25519'})</span>
             </div>
@@ -176,7 +177,7 @@ export function CredentialDetailModal({ credential, onClose, onOpenRevoke }) {
               className="btn btn-outline"
               style={{ padding: '3px 8px', fontSize: '0.72rem' }}
             >
-              {copiedField === 'sig' ? <Check size={12} color="var(--emerald-primary)" /> : <Copy size={12} />}
+              {copiedField === 'sig' ? <Check size={12} color="var(--ok)" /> : <Copy size={12} />}
               <span>{copiedField === 'sig' ? 'Copied' : 'Copy'}</span>
             </button>
           </div>
@@ -190,22 +191,22 @@ export function CredentialDetailModal({ credential, onClose, onOpenRevoke }) {
           }}>
             {credential.signature || 'N/A'}
           </code>
-          <div style={{ marginTop: '8px', fontSize: '12px', color: 'var(--text-muted)' }}>
-            Key ID: <span className="font-mono" style={{ color: 'var(--text-secondary)' }}>{credential.keyId || 'N/A'}</span>
+          <div style={{ marginTop: '8px', fontSize: '12px', color: 'var(--ink-muted)' }}>
+            Key ID: <span className="font-mono" style={{ color: 'var(--ink-secondary)' }}>{credential.keyId || 'N/A'}</span>
           </div>
         </div>
 
         {/* Timestamps Grid */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '10px' }}>
-          <div style={{ background: 'rgba(0,0,0,0.25)', padding: '12px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-subtle)' }}>
-            <span style={{ color: 'var(--text-muted)', fontSize: '11px', textTransform: 'uppercase' }}>Issued At</span>
-            <div className="font-mono" style={{ color: 'var(--text-primary)', marginTop: '3px', fontSize: '13px' }}>
+          <div style={{ background: 'rgba(0,0,0,0.25)', padding: '12px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--line)' }}>
+            <span style={{ color: 'var(--ink-muted)', fontSize: '11px', textTransform: 'uppercase' }}>Issued At</span>
+            <div className="font-mono" style={{ color: 'var(--ink)', marginTop: '3px', fontSize: '13px' }}>
               {credential.issuedAt ? new Date(credential.issuedAt).toLocaleString() : 'N/A'}
             </div>
           </div>
-          <div style={{ background: 'rgba(0,0,0,0.25)', padding: '12px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-subtle)' }}>
-            <span style={{ color: 'var(--text-muted)', fontSize: '11px', textTransform: 'uppercase' }}>Expires At</span>
-            <div className="font-mono" style={{ color: 'var(--text-primary)', marginTop: '3px', fontSize: '13px' }}>
+          <div style={{ background: 'rgba(0,0,0,0.25)', padding: '12px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--line)' }}>
+            <span style={{ color: 'var(--ink-muted)', fontSize: '11px', textTransform: 'uppercase' }}>Expires At</span>
+            <div className="font-mono" style={{ color: 'var(--ink)', marginTop: '3px', fontSize: '13px' }}>
               {credential.expiresAt ? new Date(credential.expiresAt).toLocaleString() : 'Permanent (No Expiry)'}
             </div>
           </div>

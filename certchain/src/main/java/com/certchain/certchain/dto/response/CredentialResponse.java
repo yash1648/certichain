@@ -15,6 +15,10 @@ public record CredentialResponse(
 
         String title,
 
+        UUID subjectId,
+
+        String subjectName,
+
         String contentHash,
 
         String ipfsCid,

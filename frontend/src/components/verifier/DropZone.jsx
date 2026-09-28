@@ -1,26 +1,29 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useId } from 'react';
 import { UploadCloud, FileCheck2, AlertCircle } from 'lucide-react';
 import { Button } from '../common/Button';
+
+const MAX_FILE_SIZE = 2 * 1024 * 1024;
 
 export function DropZone({ onFileSelected, loading = false, disabled = false }) {
   const [isDragOver, setIsDragOver] = useState(false);
   const [selectedFileName, setSelectedFileName] = useState(null);
   const [fileError, setFileError] = useState(null);
   const fileInputRef = useRef(null);
+  const hintId = useId();
 
-  const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
+  const blocked = disabled || loading;
 
   const handleFile = (file) => {
     setFileError(null);
     if (!file) return;
 
     if (!file.name.toLowerCase().endsWith('.json')) {
-      setFileError('Please select a valid .json credential envelope file.');
+      setFileError('Select the .json credential file issued to you.');
       return;
     }
 
     if (file.size > MAX_FILE_SIZE) {
-      setFileError('Upload exceeds the 2MB limit.');
+      setFileError('That file is over the 2MB limit.');
       return;
     }
 
@@ -28,129 +31,93 @@ export function DropZone({ onFileSelected, loading = false, disabled = false }) 
     onFileSelected(file);
   };
 
-  const handleDragOver = (e) => {
+  // The visible <button> is the only way in. Making the whole box clickable too
+  // would add a second, mouse-only path and a nested-interactive control, so the
+  // container handles drag and drop only.
+  const onDragOver = (e) => {
     e.preventDefault();
-    e.stopPropagation();
-    if (!disabled && !loading) {
-      setIsDragOver(true);
-    }
+    if (!blocked) setIsDragOver(true);
   };
 
-  const handleDragLeave = (e) => {
+  const onDragLeave = (e) => {
     e.preventDefault();
-    e.stopPropagation();
+    if (e.currentTarget.contains(e.relatedTarget)) return;
     setIsDragOver(false);
   };
 
-  const handleDrop = (e) => {
+  const onDrop = (e) => {
     e.preventDefault();
-    e.stopPropagation();
     setIsDragOver(false);
-    if (disabled || loading) return;
-
-    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      handleFile(e.dataTransfer.files[0]);
-    }
-  };
-
-  const handleFileInputChange = (e) => {
-    if (e.target.files && e.target.files.length > 0) {
-      handleFile(e.target.files[0]);
-    }
+    if (blocked) return;
+    const file = e.dataTransfer.files?.[0];
+    if (file) handleFile(file);
   };
 
   return (
-    <div style={{ width: '100%' }}>
+    <div>
       <div
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
-        onDrop={handleDrop}
-        onClick={() => !loading && !disabled && fileInputRef.current?.click()}
-        style={{
-          border: `2px dashed ${isDragOver ? '#1d4ed8' : '#cbd5e1'}`,
-          borderRadius: 'var(--radius-lg)',
-          backgroundColor: isDragOver ? '#eff6ff' : '#f8fafc',
-          padding: '44px 24px',
-          textAlign: 'center',
-          cursor: disabled || loading ? 'not-allowed' : 'pointer',
-          transition: 'all 0.15s ease',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
+        onDragOver={onDragOver}
+        onDragLeave={onDragLeave}
+        onDrop={onDrop}
+        className="dropzone"
+        data-dragover={isDragOver || undefined}
+        data-busy={blocked || undefined}
       >
         <input
           ref={fileInputRef}
           type="file"
           accept=".json,application/json"
-          onChange={handleFileInputChange}
-          style={{ display: 'none' }}
-          disabled={disabled || loading}
+          data-testid="verify-file-input"
+          className="sr-only"
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (file) handleFile(file);
+            // Allow re-picking the same file after an error.
+            e.target.value = '';
+          }}
+          disabled={blocked}
+          tabIndex={-1}
+          aria-hidden="true"
         />
 
-        <div style={{
-          width: '56px',
-          height: '56px',
-          borderRadius: '12px',
-          backgroundColor: '#eff6ff',
-          border: '1px solid #bfdbfe',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          color: '#1d4ed8',
-          marginBottom: '16px',
-        }}>
+        <span className="dropzone__icon" aria-hidden="true">
           {loading ? (
-            <span className="spinner" style={{ width: '24px', height: '24px', borderWidth: '3px' }} />
+            <span className="spinner" />
           ) : selectedFileName ? (
-            <FileCheck2 size={28} />
+            <FileCheck2 size={22} />
           ) : (
-            <UploadCloud size={28} />
+            <UploadCloud size={22} />
           )}
-        </div>
+        </span>
 
-        <h3 className="font-display" style={{ fontSize: '1.15rem', fontWeight: 700, color: '#0f172a', marginBottom: '8px' }}>
+        <h2 className="dropzone__title">
           {loading
-            ? 'Verifying credential with cryptographic ledger...'
+            ? 'Checking signature and ledger anchor'
             : selectedFileName
-            ? `Ready to verify: ${selectedFileName}`
-            : 'Drop certificate file here, or browse files'}
-        </h3>
+              ? selectedFileName
+              : 'Drop the credential file here'}
+        </h2>
 
-        <p style={{ fontSize: '14px', color: '#475569', maxWidth: '440px', lineHeight: 1.5, marginBottom: '18px' }}>
-          Upload an official <code className="font-mono" style={{ color: '#1d4ed8', fontWeight: 600 }}>.json</code> credential envelope for instant verification.
+        <p className="dropzone__note" id={hintId}>
+          The .json envelope issued to you. Its Ed25519 signature and ledger anchor are
+          both checked.
         </p>
 
         <Button
           variant="secondary"
-          size="sm"
-          disabled={disabled || loading}
-          onClick={(e) => {
-            e.stopPropagation();
-            fileInputRef.current?.click();
-          }}
+          disabled={blocked}
+          aria-describedby={hintId}
+          onClick={() => fileInputRef.current?.click()}
         >
-          {selectedFileName ? 'Select Another File' : 'Browse Local Files'}
+          {selectedFileName ? 'Choose another file' : 'Browse files'}
         </Button>
       </div>
 
       {fileError && (
-        <div style={{
-          marginTop: '12px',
-          padding: '10px 14px',
-          borderRadius: 'var(--radius-sm)',
-          backgroundColor: '#fef2f2',
-          border: '1px solid #fecaca',
-          color: '#b91c1c',
-          fontSize: '13px',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '8px',
-        }}>
-          <AlertCircle size={16} style={{ flexShrink: 0 }} />
-          <span>{fileError}</span>
-        </div>
+        <p className="form-error" role="alert" style={{ marginTop: 'var(--space-3)' }}>
+          <AlertCircle size={14} aria-hidden="true" />
+          {fileError}
+        </p>
       )}
     </div>
   );

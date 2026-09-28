@@ -4,45 +4,20 @@ import { Button } from './Button';
 
 export function EmptyState({
   icon: Icon = FolderOpen,
-  title = 'No items found',
-  description = 'Get started by creating or adding a new record.',
+  title = 'Nothing here yet',
+  description,
   actionLabel,
   onAction,
   actionIcon,
-  actionVariant = 'primary',
+  actionVariant = 'secondary',
 }) {
   return (
-    <div style={{
-      textAlign: 'center',
-      padding: '48px 24px',
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-    }}>
-      <div style={{
-        width: '56px',
-        height: '56px',
-        borderRadius: '16px',
-        backgroundColor: 'rgba(37, 99, 235, 0.12)',
-        border: '1px solid rgba(59, 130, 246, 0.3)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        color: '#60a5fa',
-        marginBottom: '16px',
-      }}>
-        <Icon size={28} />
+    <div className="state">
+      <div className="state__icon">
+        <Icon size={20} aria-hidden="true" />
       </div>
-
-      <h4 className="font-display" style={{ fontSize: '1.1rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '8px' }}>
-        {title}
-      </h4>
-
-      <p style={{ fontSize: '14px', color: 'var(--text-secondary)', maxWidth: '420px', lineHeight: 1.5, marginBottom: actionLabel ? '20px' : '0' }}>
-        {description}
-      </p>
-
+      <h2 className="state__title">{title}</h2>
+      {description && <p className="state__text">{description}</p>}
       {actionLabel && onAction && (
         <Button variant={actionVariant} onClick={onAction} icon={actionIcon}>
           {actionLabel}

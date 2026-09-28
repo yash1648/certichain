@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useId } from 'react';
 import { History, RefreshCw, Search } from 'lucide-react';
 import { verifierService } from '../../services/verifierService';
 import { useAuth } from '../../context/AuthContext';
@@ -7,23 +7,32 @@ import { Badge } from '../common/Badge';
 import { EmptyState } from '../common/EmptyState';
 import { ErrorState } from '../common/ErrorState';
 
+const formatDateTime = (iso) => {
+  if (!iso) return 'Not recorded';
+  const d = new Date(iso);
+  return Number.isNaN(d.getTime()) ? iso : d.toLocaleString();
+};
+
 export function VerificationHistoryView() {
   const { accessToken } = useAuth();
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [query, setQuery] = useState('');
+  const searchId = useId();
 
   const loadHistory = useCallback(async () => {
-    if (!accessToken) return;
+    if (!accessToken) {
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     setError(null);
 
     try {
-      const records = await verifierService.listVerificationHistory(accessToken);
-      setHistory(records || []);
+      setHistory((await verifierService.listVerificationHistory(accessToken)) || []);
     } catch (err) {
-      setError(err.message || 'Failed to load verification history.');
+      setError(err.message || 'The history could not be loaded.');
     } finally {
       setLoading(false);
     }
@@ -33,107 +42,99 @@ export function VerificationHistoryView() {
     loadHistory();
   }, [loadHistory]);
 
-  const filteredHistory = history.filter(item =>
-    (item.credentialNumber && item.credentialNumber.toLowerCase().includes(searchQuery.toLowerCase())) ||
-    (item.result && item.result.toLowerCase().includes(searchQuery.toLowerCase())) ||
-    (item.reason && item.reason.toLowerCase().includes(searchQuery.toLowerCase()))
+  const needle = query.trim().toLowerCase();
+  const matches = history.filter((item) =>
+    needle
+      ? [item.credentialNumber, item.result, item.reason].some((v) =>
+          v?.toLowerCase().includes(needle)
+        )
+      : true
   );
 
   return (
-    <div className="animate-fade-in" style={{ maxWidth: '1000px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-      {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
-        <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <div style={{
-              width: '36px',
-              height: '36px',
-              borderRadius: '10px',
-              backgroundColor: 'rgba(245, 158, 11, 0.15)',
-              border: '1px solid var(--border-amber)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'var(--amber-primary)',
-            }}>
-              <History size={20} />
-            </div>
-            <div>
-              <h1 className="font-display" style={{ fontSize: '1.65rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-                Audit History
-              </h1>
-              <p style={{ fontSize: '13.5px', color: 'var(--text-secondary)' }}>
-                Ledger of verification checks performed under your account.
-              </p>
-            </div>
-          </div>
+    <div className="animate-fade-in">
+      <div className="toolbar">
+        <div className="toolbar__search">
+          {/* Visible label would unbalance the toolbar; the name is still
+              announced, which is what the filter needs. */}
+          <label className="sr-only" htmlFor={searchId}>
+            Filter history
+          </label>
+          <Search size={15} aria-hidden="true" />
+          <input
+            id={searchId}
+            type="search"
+            className="input-field"
+            placeholder="Filter by certificate, outcome or reason"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+          />
         </div>
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <div style={{ position: 'relative', width: '220px' }}>
-            <input
-              type="text"
-              placeholder="Filter audit log..."
-              className="input-field"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              style={{ paddingLeft: '32px', height: '36px', fontSize: '13px' }}
-            />
-            <Search size={14} color="var(--text-muted)" style={{ position: 'absolute', left: '10px', top: '11px' }} />
-          </div>
-
-          <Button variant="secondary" size="sm" onClick={loadHistory} loading={loading} icon={RefreshCw}>
-            Refresh
-          </Button>
-        </div>
+        <Button variant="secondary" onClick={loadHistory} loading={loading} icon={RefreshCw}>
+          Refresh
+        </Button>
       </div>
 
-      {error && <ErrorState message={error} onRetry={loadHistory} />}
+      {error && (
+        <div style={{ marginBottom: 'var(--space-4)' }}>
+          <ErrorState message={error} onRetry={loadHistory} />
+        </div>
+      )}
 
-      {/* Main Table Panel */}
-      <div className="glass-panel" style={{ padding: '24px', borderRadius: 'var(--radius-lg)' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-          <h3 className="font-display" style={{ fontSize: '1.15rem', fontWeight: 600 }}>
-            Past Verifications
-          </h3>
-          <span className="badge badge-amber">
-            {history.length} Audits Logged
+      <div className="card card--flush">
+        <div className="card__header">
+          <h2 className="section-title" style={{ margin: 0 }}>
+            Checks
+          </h2>
+          {/* Counts what is on screen, not what is in memory. */}
+          <span className="count-note">
+            {matches.length} of {history.length}
           </span>
         </div>
 
-        {filteredHistory.length === 0 ? (
-          <EmptyState
-            icon={History}
-            title="No verifications yet"
-            description="Verify a credential file to see it recorded here in your audit ledger."
-          />
+        {matches.length === 0 ? (
+          // An empty log and an over-narrow filter are different states and the
+          // user needs different actions for each.
+          needle ? (
+            <EmptyState
+              icon={Search}
+              title="No matching checks"
+              description={`Nothing in your history matches "${query.trim()}".`}
+              actionLabel="Clear filter"
+              onAction={() => setQuery('')}
+            />
+          ) : (
+            <EmptyState
+              icon={History}
+              title="No checks yet"
+              description="Verifying a credential records it here."
+            />
+          )
         ) : (
           <div className="table-container">
             <table className="table">
               <thead>
                 <tr>
-                  <th>Credential #</th>
-                  <th>Outcome</th>
-                  <th>Reason / Details</th>
-                  <th style={{ textAlign: 'right' }}>Verified At</th>
+                  <th scope="col">Certificate</th>
+                  <th scope="col">Outcome</th>
+                  <th scope="col">Detail</th>
+                  <th scope="col" style={{ textAlign: 'right' }}>
+                    Checked
+                  </th>
                 </tr>
               </thead>
               <tbody>
-                {filteredHistory.map((item) => (
+                {matches.map((item) => (
                   <tr key={item.id}>
-                    <td>
-                      <code className="font-mono" style={{ color: 'var(--cyan-primary)', fontSize: '13px', fontWeight: 600 }}>
-                        {item.credentialNumber || 'Anonymous'}
-                      </code>
-                    </td>
+                    <th scope="row" className="table__primary font-mono">
+                      {item.credentialNumber || 'Not stated'}
+                    </th>
                     <td>
                       <Badge status={item.result} />
                     </td>
-                    <td style={{ color: item.reason && item.result !== 'VALID' ? '#fb7185' : 'var(--text-secondary)' }}>
-                      {item.reason || 'Verified successfully'}
-                    </td>
-                    <td style={{ textAlign: 'right', fontSize: '13px', color: 'var(--text-muted)' }}>
-                      {item.verifiedAt ? new Date(item.verifiedAt).toLocaleString() : 'N/A'}
+                    <td>{item.reason || 'No detail recorded'}</td>
+                    <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
+                      {formatDateTime(item.verifiedAt)}
                     </td>
                   </tr>
                 ))}

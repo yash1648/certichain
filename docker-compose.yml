@@ -47,6 +47,7 @@ services:
       CERT_DB_PASSWORD: certichain_password
       SSDCVE_JWT_SECRET: ${SSDCVE_JWT_SECRET:-change-me-in-production-minimum-32-bytes-long!!!}
       SSDCVE_KEYSTORE_PASSWORD: ${SSDCVE_KEYSTORE_PASSWORD:-change-me-keystore-password}
+      SSDCVE_KEYSTORE_PATH: /app/keystore/ssdcve.p12
       SSDCVE_IPFS_API_URL: http://ipfs:5001
       SSDCVE_BLOCKCHAIN_RPC_URL: http://anvil:8545
       SSDCVE_BLOCKCHAIN_FROM: 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266

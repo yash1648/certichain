@@ -1,5 +1,7 @@
 package com.certchain.certchain.service;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -20,6 +22,9 @@ import java.security.spec.PKCS8EncodedKeySpec;
 
 @Service
 public class KeyStoreService {
+
+    private static final Logger LOG =
+            LoggerFactory.getLogger(KeyStoreService.class);
 
     private static final String KEYSTORE_TYPE = "PKCS12";
     private static final String KEY_ALGORITHM = "Ed25519";
@@ -46,8 +51,26 @@ public class KeyStoreService {
             );
         }
 
-        this.keystorePath = Path.of(keystorePath);
+        this.keystorePath = Path.of(keystorePath).toAbsolutePath()
+                .normalize();
         this.keystorePassword = keystorePassword.toCharArray();
+
+        // The signing key must be the same one that anchored existing
+        // credentials. A wrong path silently mints a fresh keystore, so
+        // make the resolved location obvious instead.
+        if (Files.exists(this.keystorePath)) {
+
+            LOG.info("Issuer keystore: {}", this.keystorePath);
+
+        } else {
+
+            LOG.warn(
+                    "Issuer keystore not found at {}; a new one will be "
+                            + "created there. Set SSDCVE_KEYSTORE_PATH to "
+                            + "reuse an existing key.",
+                    this.keystorePath
+            );
+        }
     }
 
     public KeyPair generateEd25519KeyPair()

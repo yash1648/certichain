@@ -3,6 +3,8 @@
  * Interacts with Spring Boot IssuerController (/api/issuer/**)
  */
 
+import { fetchWithTimeout } from './fetchUtils.js';
+
 const API_BASE = '/api/issuer';
 
 async function handleIssuerResponse(response) {
@@ -34,12 +36,26 @@ async function handleIssuerResponse(response) {
 
 export const issuerService = {
   /**
+   * Get the authenticated user's issuer profile (404 if not registered)
+   * @param {string} token Bearer JWT
+   */
+  async getIssuerProfile(token) {
+    const response = await fetchWithTimeout(`${API_BASE}/me`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+    return handleIssuerResponse(response);
+  },
+
+  /**
    * Register as an issuer
    * @param {Object} payload { name, domain }
    * @param {string} token Bearer JWT
    */
   async registerIssuer({ name, domain }, token) {
-    const response = await fetch(`${API_BASE}/register`, {
+    const response = await fetchWithTimeout(`${API_BASE}/register`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -58,7 +74,7 @@ export const issuerService = {
    * @param {string} token Bearer JWT
    */
   async createSigningKey(token) {
-    const response = await fetch(`${API_BASE}/keys`, {
+    const response = await fetchWithTimeout(`${API_BASE}/keys`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -73,7 +89,7 @@ export const issuerService = {
    * @param {string} token Bearer JWT
    */
   async issueCredential({ subjectId, type, title, claims }, token) {
-    const response = await fetch(`${API_BASE}/credentials`, {
+    const response = await fetchWithTimeout(`${API_BASE}/credentials`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -94,7 +110,7 @@ export const issuerService = {
    * @param {string} token Bearer JWT
    */
   async listCredentials(token) {
-    const response = await fetch(`${API_BASE}/credentials`, {
+    const response = await fetchWithTimeout(`${API_BASE}/credentials`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -109,7 +125,7 @@ export const issuerService = {
    * @param {string} token Bearer JWT
    */
   async getCredential(id, token) {
-    const response = await fetch(`${API_BASE}/credentials/${id}`, {
+    const response = await fetchWithTimeout(`${API_BASE}/credentials/${id}`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -125,7 +141,7 @@ export const issuerService = {
    * @param {string} token Bearer JWT
    */
   async revokeCredential(id, reason, token) {
-    const response = await fetch(`${API_BASE}/credentials/${id}/revoke`, {
+    const response = await fetchWithTimeout(`${API_BASE}/credentials/${id}/revoke`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -143,7 +159,7 @@ export const issuerService = {
    * @param {string} token Bearer JWT
    */
   async listVerifications(token) {
-    const response = await fetch(`${API_BASE}/verifications`, {
+    const response = await fetchWithTimeout(`${API_BASE}/verifications`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,

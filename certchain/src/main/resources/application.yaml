@@ -36,7 +36,7 @@ certichain:
 
 ssdcve:
   keystore:
-    path: ./keystore/ssdcve.p12
+    path: ${SSDCVE_KEYSTORE_PATH:./keystore/ssdcve.p12}
     password: ${SSDCVE_KEYSTORE_PASSWORD:change-me-keystore-password}
   ipfs:
     api-url: http://localhost:5001

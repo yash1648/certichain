@@ -1,44 +1,51 @@
 import React from 'react';
 
+const VARIANT_CLASS = {
+  primary: 'btn-primary',
+  secondary: 'btn-secondary',
+  outline: 'btn-outline',
+  ghost: 'btn-ghost',
+  danger: 'btn-danger',
+  'danger-soft': 'btn-danger-soft',
+};
+
+const SIZE_CLASS = {
+  sm: 'btn-sm',
+  lg: 'btn-lg',
+};
+
 export function Button({
   children,
-  variant = 'primary', // 'primary' | 'secondary' | 'danger' | 'emerald' | 'purple'
-  size = 'md',        // 'md' | 'sm'
+  variant = 'primary',
+  size = 'md',
   loading = false,
   disabled = false,
+  block = false,
   icon: Icon,
   className = '',
-  style = {},
   type = 'button',
   onClick,
   ...props
 }) {
-  const getVariantClass = () => {
-    switch (variant) {
-      case 'secondary':
-      case 'outline':
-        return 'btn-outline';
-      case 'danger':
-        return 'btn-danger';
-      case 'emerald':
-        return 'btn-emerald';
-      case 'purple':
-        return 'btn-purple';
-      case 'primary':
-      default:
-        return 'btn-primary';
-    }
-  };
-
-  const sizeClass = size === 'sm' ? 'btn-sm' : '';
+  const classes = [
+    'btn',
+    VARIANT_CLASS[variant] ?? VARIANT_CLASS.primary,
+    SIZE_CLASS[size] ?? '',
+    block ? 'btn-block' : '',
+    className,
+  ]
+    .filter(Boolean)
+    .join(' ');
 
   return (
     <button
       type={type}
-      className={`btn ${getVariantClass()} ${sizeClass} ${className}`}
+      className={classes}
       disabled={disabled || loading}
+      // Communicates the pending state to assistive tech, which a
+      // disabled attribute alone does not convey.
+      aria-busy={loading || undefined}
       onClick={onClick}
-      style={style}
       {...props}
     >
       {loading ? (

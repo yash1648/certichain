@@ -3,6 +3,8 @@
  * Interacts with Spring Boot HolderController (/api/holder/**)
  */
 
+import { fetchWithTimeout } from './fetchUtils.js';
+
 const API_BASE = '/api/holder';
 
 async function handleResponse(response) {
@@ -43,7 +45,7 @@ export const holderService = {
    * @param {string} token Bearer JWT
    */
   async listWallet(token) {
-    const response = await fetch(`${API_BASE}/wallet`, {
+    const response = await fetchWithTimeout(`${API_BASE}/wallet`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -59,7 +61,7 @@ export const holderService = {
    * @param {string} token Bearer JWT
    */
   async addToWallet(credentialId, token) {
-    const response = await fetch(`${API_BASE}/wallet/${credentialId}`, {
+    const response = await fetchWithTimeout(`${API_BASE}/wallet/${credentialId}`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -75,7 +77,7 @@ export const holderService = {
    * @param {string} token Bearer JWT
    */
   async removeFromWallet(credentialId, token) {
-    const response = await fetch(`${API_BASE}/wallet/${credentialId}`, {
+    const response = await fetchWithTimeout(`${API_BASE}/wallet/${credentialId}`, {
       method: 'DELETE',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -92,7 +94,7 @@ export const holderService = {
    * @param {string} suggestedFilename fallback filename
    */
   async downloadCredential(credentialId, token, suggestedFilename = 'credential.json') {
-    const response = await fetch(`${API_BASE}/credentials/${credentialId}/download`, {
+    const response = await fetchWithTimeout(`${API_BASE}/credentials/${credentialId}/download`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -105,10 +107,22 @@ export const holderService = {
 
     let filename = suggestedFilename;
     const disposition = response.headers.get('content-disposition');
-    if (disposition && disposition.includes('filename=')) {
-      const match = disposition.match(/filename="?([^"]+)"?/);
-      if (match && match[1]) {
-        filename = match[1];
+    if (disposition) {
+      // Try RFC 5987 encoded filename first (filename*=utf-8''...)
+      const rfc5987Match = disposition.match(/filename\*=([^']*)'([^']*)'(.+)/);
+      if (rfc5987Match) {
+        try {
+          filename = decodeURIComponent(rfc5987Match[3]);
+        } catch {
+          // Fall through to standard filename
+        }
+      }
+      // Fallback to standard filename
+      if (filename === suggestedFilename) {
+        const match = disposition.match(/filename="?([^"]+)"?/);
+        if (match && match[1]) {
+          filename = match[1];
+        }
       }
     }
 

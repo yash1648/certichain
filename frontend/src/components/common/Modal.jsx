@@ -1,5 +1,8 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef, useCallback, useId } from 'react';
 import { X } from 'lucide-react';
+
+const FOCUSABLE =
+  'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
 export function Modal({
   isOpen,
@@ -10,121 +13,110 @@ export function Modal({
   footer,
   maxWidth = '540px',
 }) {
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (e.key === 'Escape' && isOpen) {
+  const panelRef = useRef(null);
+  const previouslyFocused = useRef(null);
+  const titleId = useId();
+
+  // Escape to close, Tab cycles inside the panel. Without the trap, a
+  // keyboard user tabs straight out of the dialog into the page behind.
+  const handleKeyDown = useCallback(
+    (e) => {
+      if (!isOpen) return;
+
+      if (e.key === 'Escape') {
+        e.stopPropagation();
         onClose();
+        return;
       }
+
+      if (e.key !== 'Tab' || !panelRef.current) return;
+
+      const focusable = Array.from(
+        panelRef.current.querySelectorAll(FOCUSABLE)
+      ).filter((el) => el.offsetParent !== null);
+
+      if (focusable.length === 0) {
+        e.preventDefault();
+        return;
+      }
+
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    },
+    [isOpen, onClose]
+  );
+
+  useEffect(() => {
+    if (!isOpen) return undefined;
+
+    previouslyFocused.current = document.activeElement;
+    document.addEventListener('keydown', handleKeyDown);
+
+    // Stop the page behind the dialog from scrolling.
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    // Move focus in, preferring the first control over the close button.
+    const timer = window.setTimeout(() => {
+      if (!panelRef.current) return;
+      const target =
+        panelRef.current.querySelector(FOCUSABLE) ??
+        panelRef.current;
+      target.focus();
+    }, 0);
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = previousOverflow;
+      window.clearTimeout(timer);
+      previouslyFocused.current?.focus?.();
     };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose]);
+  }, [isOpen, handleKeyDown]);
 
   if (!isOpen) return null;
 
   return (
     <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.72)',
-        backdropFilter: 'blur(8px)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 100,
-        padding: '20px',
-      }}
-      onClick={(e) => {
+      className="modal-overlay animate-fade-in"
+      onMouseDown={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
-      role="dialog"
-      aria-modal="true"
     >
       <div
-        className="glass-panel animate-fade-in"
-        style={{
-          width: '100%',
-          maxWidth,
-          backgroundColor: 'var(--bg-card-elevated)',
-          border: '1px solid var(--border-subtle)',
-          borderRadius: 'var(--radius-lg)',
-          boxShadow: 'var(--shadow-modal)',
-          maxHeight: '90vh',
-          display: 'flex',
-          flexDirection: 'column',
-          overflow: 'hidden',
-        }}
+        ref={panelRef}
+        className="modal-panel"
+        style={{ maxWidth }}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={title ? titleId : undefined}
+        tabIndex={-1}
       >
-        {/* Header */}
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '18px 24px',
-          borderBottom: '1px solid var(--border-subtle)',
-        }}>
+        <div className="modal-panel__header">
           <div>
-            <h3 className="font-display" style={{ fontSize: '1.15rem', fontWeight: 600, color: 'var(--text-primary)' }}>
-              {title}
-            </h3>
-            {subtitle && (
-              <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '2px' }}>
-                {subtitle}
-              </p>
-            )}
+            <h2 className="modal-panel__title">{title}</h2>
+            {subtitle && <p className="modal-panel__subtitle">{subtitle}</p>}
           </div>
           <button
+            type="button"
             onClick={onClose}
-            style={{
-              background: 'transparent',
-              border: 'none',
-              color: 'var(--text-muted)',
-              cursor: 'pointer',
-              padding: '6px',
-              borderRadius: 'var(--radius-sm)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              transition: 'all 0.2s ease',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.color = 'var(--text-primary)';
-              e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.06)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.color = 'var(--text-muted)';
-              e.currentTarget.style.backgroundColor = 'transparent';
-            }}
-            aria-label="Close modal"
+            className="modal-panel__close"
+            aria-label={`Close ${title || 'dialog'}`}
           >
-            <X size={20} />
+            <X size={18} />
           </button>
         </div>
 
-        {/* Body */}
-        <div style={{
-          padding: '24px',
-          overflowY: 'auto',
-          flex: 1,
-        }}>
-          {children}
-        </div>
+        <div className="modal-panel__body">{children}</div>
 
-        {/* Footer */}
-        {footer && (
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'flex-end',
-            gap: '12px',
-            padding: '16px 24px',
-            borderTop: '1px solid var(--border-subtle)',
-            backgroundColor: 'rgba(10, 15, 26, 0.7)',
-          }}>
-            {footer}
-          </div>
-        )}
+        {footer && <div className="modal-panel__footer">{footer}</div>}
       </div>
     </div>
   );
