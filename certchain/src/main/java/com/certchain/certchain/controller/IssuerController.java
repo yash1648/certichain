@@ -38,6 +38,20 @@ public class IssuerController {
                 ));
     }
 
+    /**
+     * Resolves a recipient by email. Returns 404 rather than creating an
+     * account, so an issuer can only issue to someone who can actually
+     * receive it.
+     */
+    @GetMapping("/holders")
+    public ResponseEntity<UserResponse> holder(
+            @RequestParam String email) {
+
+        return ResponseEntity.ok(
+                issuerService.findHolderByEmail(email)
+        );
+    }
+
     @GetMapping("/me")
     public ResponseEntity<IssuerResponse> me(
             Authentication authentication) {

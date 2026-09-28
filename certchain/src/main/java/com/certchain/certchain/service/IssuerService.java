@@ -29,6 +29,7 @@ public class IssuerService {
     private final RevocationService revocationService;
     private final CredentialAnchorRepository anchorRepository;
     private final BlockchainAnchorService blockchainAnchorService;
+    private final HolderWalletRepository walletRepository;
     private final ObjectMapper objectMapper;
 
     public IssuerService(
@@ -42,6 +43,7 @@ public class IssuerService {
             RevocationService revocationService,
             CredentialAnchorRepository anchorRepository,
             BlockchainAnchorService blockchainAnchorService,
+            HolderWalletRepository walletRepository,
             ObjectMapper objectMapper) {
 
         this.userRepository = userRepository;
@@ -54,6 +56,7 @@ public class IssuerService {
         this.revocationService = revocationService;
         this.anchorRepository = anchorRepository;
         this.blockchainAnchorService = blockchainAnchorService;
+        this.walletRepository = walletRepository;
         this.objectMapper = objectMapper;
     }
 
@@ -204,7 +207,72 @@ public class IssuerService {
                 )
         );
 
+        deliverToSubject(subject, credential);
+
         return toCredentialResponse(credential);
+    }
+
+    /**
+     * Puts a freshly issued credential straight into its recipient's
+     * wallet, so issuing IS delivery and the holder has nothing to do.
+     *
+     * <p>Written before the transaction commits, so a later failure
+     * takes the delivery with it rather than leaving a credential in a
+     * wallet whose issuance rolled back. Idempotent via the unique
+     * index on (user, credential), which is what makes a re-issued or
+     * re-anchored credential safe to deliver twice.
+     *
+     * <p>Deliberately not routed through HolderService: this class
+     * already holds the subject, and a wallet row is four lines, so a
+     * service hop would only add a dependency.
+     */
+    private void deliverToSubject(
+            User subject,
+            Credential credential) {
+
+        if (walletRepository.existsByUserIdAndCredentialId(
+                subject.getId(),
+                credential.getId())) {
+
+            return;
+        }
+
+        HolderWallet entry = new HolderWallet();
+        entry.setUser(subject);
+        entry.setCredential(credential);
+        walletRepository.save(entry);
+    }
+
+    /**
+     * Resolves a recipient by email so the issuer picks a person rather
+     * than a pasted account id. Exact match only, and never creates an
+     * account: delivery is only automatic when the recipient provably
+     * has somewhere for the credential to land.
+     */
+    @Transactional(readOnly = true)
+    public UserResponse findHolderByEmail(String email) {
+
+        if (email == null || email.isBlank()) {
+            throw new IllegalArgumentException(
+                    "An email address is required"
+            );
+        }
+
+        User holder =
+                userRepository
+                        .findByEmail(email.trim().toLowerCase())
+                        .orElseThrow(() ->
+                                new ResponseStatusException(
+                                        HttpStatus.NOT_FOUND,
+                                        "No holder with that email"
+                                ));
+
+        return new UserResponse(
+                holder.getId(),
+                holder.getEmail(),
+                holder.getFullName(),
+                holder.getRole()
+        );
     }
 
     @Transactional(readOnly = true)

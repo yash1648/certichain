@@ -110,8 +110,9 @@ export function HolderWalletView() {
         <div className="card__body">
           <h2 className="section-title">Claim a credential</h2>
           <p className="section-note" style={{ marginBottom: 'var(--space-4)' }}>
-            Enter the credential ID your issuer gave you. It is only added to your wallet if
-            the credential names you as its subject.
+            Credentials are delivered here automatically once your issuer signs them. Use
+            this to recover one you removed, or one issued before this worked. It is only
+            added to your wallet if the credential names you as its subject.
           </p>
 
           <form onSubmit={handleClaim} className="toolbar" style={{ marginBottom: 0 }}>

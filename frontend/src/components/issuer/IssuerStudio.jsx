@@ -53,7 +53,10 @@ export function IssuerStudio() {
   
   // Step 1: Recipient
   const [recipientName, setRecipientName] = useState('');
-  const [subjectId, setSubjectId] = useState('');
+  const [recipientEmail, setRecipientEmail] = useState('');
+  const [resolvedHolder, setResolvedHolder] = useState(null);
+  const [lookingUpHolder, setLookingUpHolder] = useState(false);
+  const [recipientError, setRecipientError] = useState(null);
   
   // Step 2: Credential Details
   const [credType, setCredType] = useState('Degree');
@@ -110,12 +113,37 @@ export function IssuerStudio() {
     loadIssuerData();
   }, [loadIssuerData]);
 
-  // Set default subject ID to current user ID if empty (for convenient testing)
-  useEffect(() => {
-    if (!subjectId && user?.id) {
-      setSubjectId(user.id);
+  /**
+   * Resolve the recipient email to a real holder. The resolved id is
+   * what gets issued to, so a typo or an unregistered address fails
+   * here rather than minting a certificate nobody can ever open.
+   */
+  const handleResolveHolder = async () => {
+    if (!recipientEmail.trim()) return;
+
+    setLookingUpHolder(true);
+    setRecipientError(null);
+    setResolvedHolder(null);
+
+    try {
+      const holder = await issuerService.findHolderByEmail(
+        recipientEmail.trim(),
+        accessToken
+      );
+      setResolvedHolder(holder);
+      if (!recipientName.trim() && holder?.fullName) {
+        setRecipientName(holder.fullName);
+      }
+    } catch (err) {
+      setRecipientError(
+        err.status === 404
+          ? 'No holder is registered with that email. Ask them to register first.'
+          : err.message || 'Could not look up that holder.'
+      );
+    } finally {
+      setLookingUpHolder(false);
     }
-  }, [user?.id, subjectId]);
+  };
 
   // Register Organization Authority
   const handleRegisterIssuer = async (e) => {
@@ -167,14 +195,14 @@ export function IssuerStudio() {
 
   // Issue Credential Submission
   const handleIssueCredential = async () => {
-    if (!subjectId.trim() || !credTitle.trim()) return;
+    if (!resolvedHolder?.id || !credTitle.trim()) return;
 
     setIssuing(true);
     setIssueError(null);
     setIssuedResult(null);
 
     const payload = {
-      subjectId: subjectId.trim(),
+      subjectId: resolvedHolder.id,
       type: credType.trim(),
       title: credTitle.trim(),
       claims: assembleClaims(),
@@ -189,7 +217,7 @@ export function IssuerStudio() {
         setSigningKey({ keyId: newCred.keyId, active: true });
       }
     } catch (err) {
-      setIssueError(err.message || 'Could not issue credential. Please check that recipient ID exists and the digital seal is active.');
+      setIssueError(err.message || 'Could not issue credential. Please check that the recipient holder exists and the digital seal is active.');
     } finally {
       setIssuing(false);
     }
@@ -515,41 +543,60 @@ export function IssuerStudio() {
                   </div>
 
                   <div className="form-group" style={{ marginBottom: 0 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <label className="form-label" htmlFor="subId" style={{ marginBottom: 0 }}>
-                        Recipient Account ID (User UUID)
-                      </label>
-                      {user?.id && (
-                        <button
-                          type="button"
-                          onClick={() => setSubjectId(user.id)}
-                          className="btn btn-ghost btn-sm"
-                          style={{ color: 'var(--accent)' }}
-                        >
-                          Use My Account ID (for testing)
-                        </button>
-                      )}
-                    </div>
+                    <label className="form-label" htmlFor="subEmail">
+                      Recipient Email Address
+                    </label>
                     <input
-                      id="subId"
-                      type="text"
-                      className="input-field font-mono"
-                      placeholder="e.g. 550e8400-e29b-41d4-a716-446655440000"
-                      value={subjectId}
-                      onChange={(e) => setSubjectId(e.target.value)}
+                      id="subEmail"
+                      type="email"
+                      className="input-field"
+                      placeholder="e.g. jane.doe@example.com"
+                      value={recipientEmail}
+                      onChange={(e) => {
+                        setRecipientEmail(e.target.value);
+                        setResolvedHolder(null);
+                        setRecipientError(null);
+                      }}
                       required
-                      style={{ marginTop: '6px' }}
                     />
                     <span className="form-helper">
-                      The registered student's account identifier where this certificate will be securely delivered.
+                      The certificate is delivered straight to the wallet of the holder
+                      registered with this email address. No account is created here.
                     </span>
+                    {resolvedHolder && (
+                      <div
+                        style={{
+                          marginTop: '8px',
+                          padding: '8px 10px',
+                          borderRadius: '6px',
+                          border: '1px solid var(--success, #2f9e6e)',
+                          fontSize: '0.85rem',
+                        }}
+                      >
+                        Matched holder: <strong>{resolvedHolder.fullName}</strong> ({resolvedHolder.email})
+                      </div>
+                    )}
+                    {recipientError && (
+                      <div style={{ marginTop: '8px', color: 'var(--danger, #d9534f)', fontSize: '0.85rem' }}>
+                        {recipientError}
+                      </div>
+                    )}
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '8px' }}>
+                      <Button
+                        variant="secondary"
+                        disabled={!recipientEmail.trim() || lookingUpHolder}
+                        onClick={handleResolveHolder}
+                      >
+                        {lookingUpHolder ? 'Checking...' : 'Find Holder'}
+                      </Button>
+                    </div>
                   </div>
 
                   <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '12px' }}>
                     <Button
                       variant="primary"
                       icon={ArrowRight}
-                      disabled={!recipientName.trim() || !subjectId.trim()}
+                      disabled={!recipientName.trim() || !resolvedHolder}
                       onClick={() => setWizardStep(2)}
                     >
                       Next: Certificate Details

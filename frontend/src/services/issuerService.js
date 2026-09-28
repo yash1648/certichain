@@ -84,6 +84,25 @@ export const issuerService = {
   },
 
   /**
+   * Resolve a recipient by email, so issuance targets a person instead
+   * of a pasted account id. 404 when no holder has that email.
+   * @param {string} email
+   * @param {string} token Bearer JWT
+   */
+  async findHolderByEmail(email, token) {
+    const response = await fetchWithTimeout(
+      `${API_BASE}/holders?email=${encodeURIComponent(email.trim())}`,
+      {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      }
+    );
+    return handleIssuerResponse(response);
+  },
+
+  /**
    * Issue a verifiable credential
    * @param {Object} payload { subjectId, type, title, claims }
    * @param {string} token Bearer JWT
