@@ -19,6 +19,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -26,8 +27,11 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class HolderDisclosureServiceTest {
@@ -210,6 +214,72 @@ class HolderDisclosureServiceTest {
 
         assertThatThrownBy(() ->
                 holderService.getDisclosure(userId, credentialId))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("404");
+    }
+
+    @Test
+    @DisplayName("a valid hidden set is saved and echoed back")
+    void savesValidHiddenSet() {
+        when(disclosureRepository.findByCredentialId(credentialId))
+                .thenReturn(Optional.empty());
+        when(disclosureRepository.save(any(CredentialDisclosure.class)))
+                .thenAnswer(i -> i.getArgument(0));
+
+        DisclosureResponse response = holderService.setDisclosure(
+                userId, credentialId, List.of("gpa"));
+
+        assertThat(response.hiddenClaims()).containsExactly("gpa");
+        assertThat(response.claims()).hasSize(2);
+        verify(disclosureRepository).save(any(CredentialDisclosure.class));
+    }
+
+    @Test
+    @DisplayName("hiding a claim the credential does not have is rejected by name")
+    void rejectsUnknownClaimKey() {
+        assertThatThrownBy(() -> holderService.setDisclosure(
+                userId, credentialId, List.of("gpa", "salary")))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("400")
+                .hasMessageContaining("salary");
+
+        verify(disclosureRepository, never()).save(any(CredentialDisclosure.class));
+    }
+
+    @Test
+    @DisplayName("an empty set resets the credential to showing everything")
+    void emptySetResetsToVisible() {
+        when(disclosureRepository.findByCredentialId(credentialId))
+                .thenReturn(Optional.empty());
+        when(disclosureRepository.save(any(CredentialDisclosure.class)))
+                .thenAnswer(i -> i.getArgument(0));
+
+        assertThat(holderService.setDisclosure(
+                userId, credentialId, List.of()).hiddenClaims())
+                .isEmpty();
+    }
+
+    @Test
+    @DisplayName("hiding every claim is allowed")
+    void allowsHidingEverything() {
+        when(disclosureRepository.findByCredentialId(credentialId))
+                .thenReturn(Optional.empty());
+        when(disclosureRepository.save(any(CredentialDisclosure.class)))
+                .thenAnswer(i -> i.getArgument(0));
+
+        assertThat(holderService.setDisclosure(
+                userId, credentialId, List.of("major", "gpa")).hiddenClaims())
+                .hasSize(2);
+    }
+
+    @Test
+    @DisplayName("another holder cannot set disclosure on a credential they do not hold")
+    void refusesSettingDisclosureForForeignCredential() {
+        when(walletRepository.findByUserIdAndCredentialId(userId, credentialId))
+                .thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> holderService.setDisclosure(
+                userId, credentialId, List.of("gpa")))
                 .isInstanceOf(ResponseStatusException.class)
                 .hasMessageContaining("404");
     }

@@ -22,8 +22,10 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.ZoneOffset;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
@@ -181,6 +183,59 @@ public class HolderService {
         return new DisclosureResponse(
                 loadClaims(credential),
                 hiddenClaimKeys(credentialId)
+        );
+    }
+
+    @Transactional
+    public DisclosureResponse setDisclosure(
+            UUID userId,
+            UUID credentialId,
+            List<String> hiddenClaims) {
+
+        Credential credential =
+                requireWalletEntry(userId, credentialId)
+                        .getCredential();
+
+        Map<String, Object> claims = loadClaims(credential);
+
+        Set<String> requested = new LinkedHashSet<>(hiddenClaims);
+
+        /*
+         * Core fields are never hideable: only keys the credential
+         * actually carries are choosable. Rejecting an unknown key by
+         * name means a typo is a 400 rather than a preference that
+         * silently does nothing.
+         */
+        Set<String> unknown = new LinkedHashSet<>(requested);
+        unknown.removeAll(claims.keySet());
+
+        if (!unknown.isEmpty()) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Not claims on this credential: " + unknown
+            );
+        }
+
+        /*
+         * An empty request still writes a row, so "hide nothing" is
+         * a stored decision rather than the absence of one. The
+         * request set is a fresh copy, never the entity's own live
+         * collection: passing that in would make the setter's clear()
+         * wipe it before addAll could read it.
+         */
+        CredentialDisclosure disclosure =
+                disclosureRepository
+                        .findByCredentialId(credentialId)
+                        .orElseGet(() -> new CredentialDisclosure(
+                                credential, requested));
+
+        disclosure.setHiddenClaims(requested);
+
+        disclosureRepository.save(disclosure);
+
+        return new DisclosureResponse(
+                claims,
+                List.copyOf(requested)
         );
     }
 

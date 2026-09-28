@@ -1,7 +1,10 @@
 package com.certchain.certchain.controller;
 
+import com.certchain.certchain.dto.request.DisclosureUpdateRequest;
+import com.certchain.certchain.dto.response.DisclosureResponse;
 import com.certchain.certchain.dto.response.WalletCredentialResponse;
 import com.certchain.certchain.service.HolderService;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -89,6 +92,34 @@ public class HolderController {
                                 + "\""
                 )
                 .body(envelope);
+    }
+
+    @GetMapping("/credentials/{id}/disclosure")
+    public ResponseEntity<DisclosureResponse> getDisclosure(
+            Authentication authentication,
+            @PathVariable UUID id) {
+
+        return ResponseEntity.ok(
+                holderService.getDisclosure(
+                        currentUserId(authentication),
+                        id
+                )
+        );
+    }
+
+    @PutMapping("/credentials/{id}/disclosure")
+    public ResponseEntity<DisclosureResponse> setDisclosure(
+            Authentication authentication,
+            @PathVariable UUID id,
+            @Valid @RequestBody DisclosureUpdateRequest request) {
+
+        return ResponseEntity.ok(
+                holderService.setDisclosure(
+                        currentUserId(authentication),
+                        id,
+                        request.hiddenClaims()
+                )
+        );
     }
 
     private UUID currentUserId(
