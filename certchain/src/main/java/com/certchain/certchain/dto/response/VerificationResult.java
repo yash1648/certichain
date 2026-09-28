@@ -38,6 +38,8 @@ public record VerificationResult(
 
         Long anchorChainId,
 
-        boolean anchorVerified
+        boolean anchorVerified,
+
+        DisclosureInfo disclosure
 ) {
 }

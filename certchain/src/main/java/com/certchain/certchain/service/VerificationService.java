@@ -3,14 +3,17 @@ package com.certchain.certchain.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.certchain.certchain.dto.response.SignedCredentialEnvelope;
 import com.certchain.certchain.dto.response.AnchorLookupResponse;
+import com.certchain.certchain.dto.response.DisclosureInfo;
 import com.certchain.certchain.dto.response.VerificationResult;
 import com.certchain.certchain.model.Credential;
 import com.certchain.certchain.model.CredentialAnchor;
+import com.certchain.certchain.model.CredentialDisclosure;
 import com.certchain.certchain.model.CredentialStatus;
 import com.certchain.certchain.model.CredentialStatus.Status;
 import com.certchain.certchain.model.IssuerKey;
 import com.certchain.certchain.model.VerificationStatus;
 import com.certchain.certchain.repository.CredentialAnchorRepository;
+import com.certchain.certchain.repository.CredentialDisclosureRepository;
 import com.certchain.certchain.repository.CredentialRepository;
 import com.certchain.certchain.repository.CredentialStatusRepository;
 import com.certchain.certchain.repository.IssuerKeyRepository;
@@ -20,8 +23,10 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 @Service
 public class VerificationService {
@@ -35,6 +40,7 @@ public class VerificationService {
     private final CryptoService cryptoService;
     private final CredentialAnchorRepository anchorRepository;
     private final BlockchainAnchorService blockchainAnchorService;
+    private final CredentialDisclosureRepository disclosureRepository;
 
     public VerificationService(
             ObjectMapper objectMapper,
@@ -45,7 +51,8 @@ public class VerificationService {
             CanonicalizationService canonicalizationService,
             CryptoService cryptoService,
             CredentialAnchorRepository anchorRepository,
-            BlockchainAnchorService blockchainAnchorService) {
+            BlockchainAnchorService blockchainAnchorService,
+            CredentialDisclosureRepository disclosureRepository) {
 
         this.objectMapper = objectMapper;
         this.credentialRepository = credentialRepository;
@@ -56,6 +63,7 @@ public class VerificationService {
         this.cryptoService = cryptoService;
         this.anchorRepository = anchorRepository;
         this.blockchainAnchorService = blockchainAnchorService;
+        this.disclosureRepository = disclosureRepository;
     }
 
     @Transactional(readOnly = true)
@@ -410,6 +418,14 @@ public class VerificationService {
             }
         }
 
+        Map<String, Object> allClaims = envelope == null
+                ? Map.of()
+                : envelope.credential().claims();
+
+        DisclosedView disclosed = applyDisclosure(
+                credential,
+                allClaims);
+
         return new VerificationResult(
                 status == VerificationStatus.VALID,
                 status,
@@ -419,9 +435,7 @@ public class VerificationService {
                 credential.getIssuer().getName(),
                 credential.getIssuer().getDomain(),
                 credential.getIssuer().isVerified(),
-                envelope == null
-                        ? Map.of()
-                        : envelope.credential().claims(),
+                disclosed.visible(),
                 credential.getIssuedAt()
                         .toInstant(ZoneOffset.UTC),
                 credential.getExpiresAt() == null
@@ -440,8 +454,66 @@ public class VerificationService {
                 anchor == null
                         ? null
                         : anchor.getChainId(),
-                anchorVerified
+                anchorVerified,
+                disclosed.info()
         );
+    }
+
+    /*
+     * Presentation only. Every integrity check above this point has
+     * already run against the COMPLETE payload, so a verifier looking
+     * at a partial view still knows the whole credential is authentic
+     * - their view is narrow, their assurance is not.
+     *
+     * Package-private rather than private so the unit test can call
+     * it directly instead of through reflection.
+     */
+    DisclosedView applyDisclosure(
+            Credential credential,
+            Map<String, Object> allClaims) {
+
+        Set<String> hidden = disclosureRepository
+                .findByCredentialId(credential.getId())
+                .map(CredentialDisclosure::getHiddenClaims)
+                .orElseGet(Set::of);
+
+        /*
+         * LinkedHashMap deliberately: Collectors.toMap would scramble
+         * the order and the verifier's view would change between runs
+         * for no reason.
+         */
+        Map<String, Object> visible = new LinkedHashMap<>();
+
+        allClaims.forEach((key, value) -> {
+            if (!hidden.contains(key)) {
+                visible.put(key, value);
+            }
+        });
+
+        /*
+         * complete reflects what was ACTUALLY withheld, not what the
+         * policy intended. A hidden key with no matching claim - a
+         * claim dropped from the envelope, a policy row left behind -
+         * withholds nothing, so the view is complete. Deriving it from
+         * hidden.isEmpty() would announce "the holder hid some claims"
+         * on every future verification of a credential hiding nothing
+         * that exists.
+         */
+        return new DisclosedView(
+                visible,
+                new DisclosureInfo(
+                        visible.size(),
+                        allClaims.size(),
+                        visible.size() == allClaims.size()
+                )
+        );
+    }
+
+    /** The claims a verifier is shown, plus a count of what was withheld. */
+    record DisclosedView(
+            Map<String, Object> visible,
+            DisclosureInfo info
+    ) {
     }
 
     private VerificationResult failureForCredential(
@@ -477,7 +549,8 @@ public class VerificationService {
                 null,
                 null,
                 null,
-                false
+                false,
+                new DisclosureInfo(0, 0, true)
         );
     }
 }

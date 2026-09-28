@@ -1,6 +1,7 @@
 package com.certchain.certchain.controller;
 
 import com.certchain.certchain.dto.response.AnchorLookupResponse;
+import com.certchain.certchain.dto.response.DisclosureInfo;
 import com.certchain.certchain.dto.response.VerificationHistoryResponse;
 import com.certchain.certchain.dto.response.VerificationResult;
 import com.certchain.certchain.model.VerificationStatus;
@@ -62,7 +63,8 @@ public class VerifierController {
                             null,
                             null,
                             null,
-                            false
+                            false,
+                            new DisclosureInfo(0, 0, true)
                     )
             );
         }
