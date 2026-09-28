@@ -264,7 +264,6 @@ import com.certchain.certchain.dto.response.DisclosureResponse;
 import com.certchain.certchain.model.Credential;
 import com.certchain.certchain.model.CredentialDisclosure;
 import com.certchain.certchain.model.HolderWallet;
-import com.certchain.certchain.model.Issuer;
 import com.certchain.certchain.model.Role;
 import com.certchain.certchain.model.User;
 import com.certchain.certchain.repository.CredentialAnchorRepository;
