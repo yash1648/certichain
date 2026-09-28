@@ -54,13 +54,7 @@ public class CredentialDisclosure {
         return hiddenClaims;
     }
 
-    /*
-     * Mutates the live set instead of replacing it. Under field access
-     * Hibernate only tracks the collection wrapper it created at load
-     * time, so a new Set assigned here would never be written back.
-     */
     public void setHiddenClaims(Set<String> hiddenClaims) {
-        this.hiddenClaims.clear();
-        this.hiddenClaims.addAll(hiddenClaims);
+        this.hiddenClaims = new LinkedHashSet<>(hiddenClaims);
     }
 }
