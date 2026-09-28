@@ -5,9 +5,11 @@ import com.certchain.certchain.model.HolderWallet;
 import com.certchain.certchain.model.Issuer;
 import com.certchain.certchain.model.User;
 import com.certchain.certchain.repository.CredentialAnchorRepository;
+import com.certchain.certchain.repository.CredentialDisclosureRepository;
 import com.certchain.certchain.repository.CredentialRepository;
 import com.certchain.certchain.repository.CredentialStatusRepository;
 import com.certchain.certchain.repository.HolderWalletRepository;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -53,7 +55,9 @@ class HolderServiceClaimTest {
                 credentialRepository,
                 mock(CredentialStatusRepository.class),
                 mock(IpfsService.class),
-                mock(CredentialAnchorRepository.class)
+                mock(CredentialAnchorRepository.class),
+                mock(CredentialDisclosureRepository.class),
+                new ObjectMapper()
         );
 
         User owner = new User();
