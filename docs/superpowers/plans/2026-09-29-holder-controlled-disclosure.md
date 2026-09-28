@@ -854,7 +854,7 @@ resets to showing everything, so no separate delete endpoint."
 **Interfaces:**
 - Consumes: `CredentialDisclosureRepository#findByCredentialId`.
 - Produces:
-  - `record DisclosureInfo(int disclosed, int total, boolean complete)` — as `VerificationResult.DisclosureInfo`
+  - `record DisclosureInfo(int disclosed, int total, boolean complete)` — a top-level type in `dto/response`, alongside `DisclosureResponse`, not a nested member of `VerificationResult`
   - `VerificationResult#disclosure() -> DisclosureInfo`
   - `VerificationService#applyDisclosure(Credential, Map<String,Object>) -> VerificationService.DisclosedView` (package-private)
   - `record VerificationService.DisclosedView(Map<String,Object> visible, DisclosureInfo info)`
@@ -1034,7 +1034,7 @@ class DisclosureFilterTest {
 
 Run: `cd certchain && ./mvnw -B test -Dtest=DisclosureFilterTest`
 
-Expected: compile failure — `VerificationService` has no eight-argument constructor and no `applyDisclosure` method. Correct.
+Expected: compile failure — `VerificationService` has no ten-argument constructor and no `applyDisclosure` method. Correct.
 
 - [ ] **Step 5: Inject the repository**
 
