@@ -11,7 +11,6 @@ import com.certchain.certchain.repository.CredentialAnchorRepository;
 import com.certchain.certchain.repository.CredentialRepository;
 import com.certchain.certchain.repository.CredentialStatusRepository;
 import com.certchain.certchain.repository.HolderWalletRepository;
-import com.certchain.certchain.repository.UserRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,7 +23,6 @@ import java.util.UUID;
 @Service
 public class HolderService {
 
-    private final UserRepository userRepository;
     private final HolderWalletRepository walletRepository;
     private final CredentialRepository credentialRepository;
     private final CredentialStatusRepository statusRepository;
@@ -32,14 +30,12 @@ public class HolderService {
     private final CredentialAnchorRepository anchorRepository;
 
     public HolderService(
-            UserRepository userRepository,
             HolderWalletRepository walletRepository,
             CredentialRepository credentialRepository,
             CredentialStatusRepository statusRepository,
             IpfsService ipfsService,
             CredentialAnchorRepository anchorRepository) {
 
-        this.userRepository = userRepository;
         this.walletRepository = walletRepository;
         this.credentialRepository = credentialRepository;
         this.statusRepository = statusRepository;
@@ -73,6 +69,25 @@ public class HolderService {
                                 ));
 
         /*
+         * A credential id is not a secret. It turns up in issuer
+         * screens, logs and screenshots, so the claim only returns a
+         * credential to the person it was issued to. Delivery happens
+         * automatically at issuance; this path exists to recover one
+         * that was removed or has not arrived, never to collect
+         * somebody else's.
+         */
+        User subject = credential.getSubject();
+
+        if (subject == null
+                || !subject.getId().equals(userId)) {
+
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "This credential was issued to someone else"
+            );
+        }
+
+        /*
          * Idempotent: an existing wallet entry is returned as-is.
          */
         HolderWallet wallet =
@@ -83,20 +98,10 @@ public class HolderService {
                         )
                         .orElseGet(() -> {
 
-                            User user =
-                                    userRepository
-                                            .findById(userId)
-                                            .orElseThrow(() ->
-                                                    new ResponseStatusException(
-                                                            HttpStatus.NOT_FOUND,
-                                                            "User not found: "
-                                                                    + userId
-                                                    ));
-
                             HolderWallet entry =
                                     new HolderWallet();
 
-                            entry.setUser(user);
+                            entry.setUser(subject);
                             entry.setCredential(credential);
 
                             return walletRepository.save(entry);

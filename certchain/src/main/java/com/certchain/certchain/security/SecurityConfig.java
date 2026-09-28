@@ -75,6 +75,15 @@ public class SecurityConfig {
 
                     auth.requestMatchers("/api/auth/**")
                             .permitAll()
+                            /*
+                             * Tomcat dispatches here to render the body
+                             * of a response that already has a status.
+                             * Without this, anyRequest().authenticated()
+                             * below rejects the dispatch and rewrites
+                             * every 404/403 as a 401.
+                             */
+                            .requestMatchers("/error")
+                            .permitAll()
                             .requestMatchers(
                                     HttpMethod.POST,
                                     "/api/verifier/verify"
