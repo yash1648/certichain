@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "origin": "failed-assert",
+  "expected": "declared consequence",
+  "observed": "no element matched {\"text\":\"ANCHORED\"}",
+  "steps": [
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "e17",
+        "source": {
+          "file": "src/components/common/Button.jsx",
+          "line": 41,
+          "column": 4
+        }
+      },
+      "action": "click"
+    }
+  ],
+  "id": "1790612806146-click-c01f08cc",
+  "createdAt": 1790612806146,
+  "seen": 1,
+  "lastSeenAt": 1790612806146
+}
