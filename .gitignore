@@ -45,3 +45,8 @@ build/
 
 ### UAT scratch (test artifacts, not shipped) ###
 .uat/
+
+# Reticle browser session recordings: per-machine captures whose filenames
+# embed session ids. They regenerate on every drive and are not project content.
+.reticle/
+frontend/.reticle/
