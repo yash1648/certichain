@@ -83,18 +83,54 @@ export function IssuerStudio() {
     { key: 'department', value: '' },
   ];
 
-  // Derived on every render, so a duplicate surfaces as it is typed.
+  // Derived on every render, so a problem surfaces as it is typed.
+  //
+  // keyedRows is every row with a name; signedRows is the subset that
+  // also has a value, and is the only list assembleClaims reads. A row
+  // with no name is not a claim, and a row with a name but no value is
+  // a claim with nothing to say - signing either one in writes a blank
+  // entry onto a credential that cannot be corrected afterwards.
+  const seededName = recipientName.trim();
+  const keyedRows = claimRows.filter((r) => r.key.trim());
+  const signedRows = claimRows.filter((r) => r.key.trim() && r.value.trim());
+
+  // What the backend will actually count, and therefore what the UI
+  // has to measure itself against. The recipient name is seeded into
+  // the same map and the ledger caps that map at 50, so it consumes a
+  // slot the issuer cannot see: 50 rows plus a name is 51, and the
+  // request comes back 400 with the counter reading a cheerful 50/50.
+  const claimCount = signedRows.length + (seededName ? 1 : 0);
+  const overCap = claimCount > CLAIM_CAP;
+
   // Set.add() returns the Set, so !seen.add(k) is a falsy side effect
-  // that only records the first sighting; the has() is the real test.
-  // recipientName is seeded by assembleClaims, so a row claiming that
-  // key would be overwritten silently - the same data loss the alert
-  // exists to prevent. Seeding the Set makes it report as a duplicate.
-  const trimmedRows = claimRows.filter((r) => r.key.trim());
+  // that records the first sighting; the has() is the real test. The
+  // seed goes in first so a row claiming recipientName collides with
+  // it: otherwise assembleClaims would overwrite that row silently,
+  // which is the loss this whole block exists to prevent.
   const seenKeys = new Set();
-  if (recipientName.trim()) seenKeys.add('recipientName');
-  const duplicateKey = trimmedRows.find(
+  if (seededName) seenKeys.add('recipientName');
+  const duplicateKey = keyedRows.find(
     (r) => seenKeys.has(r.key.trim()) || !seenKeys.add(r.key.trim())
   )?.key.trim();
+  const clashesWithSeed = Boolean(seededName && duplicateKey === 'recipientName');
+  const conflictingRowIds = new Set(
+    duplicateKey
+      ? claimRows.filter((r) => r.key.trim() === duplicateKey).map((r) => r.id)
+      : []
+  );
+
+  // One reason string, rendered on step 3 and again on step 4, so the
+  // Sign button and the alert can never disagree about why it is stuck.
+  const claimBlockReason = overCap
+    ? `This certificate would carry ${claimCount} claims, and the ledger accepts ${CLAIM_CAP}. Remove one before signing.`
+    : duplicateKey
+      ? (clashesWithSeed
+          ? `“recipientName” is the recipient’s name on the certificate. Rename this claim, or clear the recipient name.`
+          : `“${duplicateKey}” is used by more than one claim. Rename one of them, or remove it.`)
+      : '';
+
+  const issuanceBlocked =
+    !resolvedHolder?.id || !credTitle.trim() || Boolean(claimBlockReason);
 
   // Issuance Execution State
   const [issuing, setIssuing] = useState(false);
@@ -211,17 +247,17 @@ export function IssuerStudio() {
 
   // Build Payload Claims Object
   //
-  // Blank keys are dropped by trimmedRows, so a half-filled row never
-  // reaches the payload as { "": "..." }. recipientName stays a
-  // reserved seed: the verifier reads claims.recipientName for the
-  // name on the certificate, and it is the one entry the issuer does
-  // not type into a row.
+  // Iterates signedRows, not claimRows, so a named row with a blank
+  // value is left out rather than signed in as "gpa": "" - the same
+  // per-field guard the fixed inputs had. recipientName is seeded
+  // separately and last, so it wins any collision the check above
+  // would have blocked anyway.
   const assembleClaims = () => {
     const obj = {};
-    for (const row of trimmedRows) {
+    for (const row of signedRows) {
       obj[row.key.trim()] = row.value.trim();
     }
-    if (recipientName.trim()) obj.recipientName = recipientName.trim();
+    if (seededName) obj.recipientName = seededName;
     return obj;
   };
 
@@ -245,7 +281,7 @@ export function IssuerStudio() {
 
   // Issue Credential Submission
   const handleIssueCredential = async () => {
-    if (!resolvedHolder?.id || !credTitle.trim() || duplicateKey) return;
+    if (issuanceBlocked) return;
 
     setIssuing(true);
     setIssueError(null);
@@ -519,6 +555,11 @@ export function IssuerStudio() {
                   onClick={() => {
                     setIssuedResult(null);
                     setWizardStep(1);
+                    // The next certificate is a new document, not an
+                    // amendment to this one. Leaving the rows would
+                    // silently re-sign every claim under a second
+                    // certificate number.
+                    setClaimRows([{ id: 1, key: '', value: '' }]);
                   }}
                 >
                   Issue Another Certificate
@@ -532,7 +573,7 @@ export function IssuerStudio() {
                 {[
                   { step: 1, label: '1. Recipient' },
                   { step: 2, label: '2. Certificate' },
-                  { step: 3, label: '3. Attributes' },
+                  { step: 3, label: '3. Claims' },
                   { step: 4, label: '4. Preview & Seal' },
                 ].map((item) => (
                   <button
@@ -713,7 +754,7 @@ export function IssuerStudio() {
                       disabled={!credTitle.trim()}
                       onClick={() => setWizardStep(3)}
                     >
-                      Next: Academic Attributes
+                      Next: Certificate Claims
                     </Button>
                   </div>
                 </div>
@@ -744,6 +785,7 @@ export function IssuerStudio() {
                       >
                         <input
                           aria-label={`Claim key ${row.id}`}
+                          aria-invalid={conflictingRowIds.has(row.id)}
                           className="input-field"
                           placeholder="e.g. gpa"
                           value={row.key}
@@ -773,7 +815,7 @@ export function IssuerStudio() {
                         size="sm"
                         icon={Plus}
                         onClick={() => addRow(null)}
-                        disabled={trimmedRows.length >= CLAIM_CAP}
+                        disabled={claimCount >= CLAIM_CAP}
                       >
                         Add claim
                       </Button>
@@ -783,23 +825,20 @@ export function IssuerStudio() {
                           variant="outline"
                           size="sm"
                           onClick={() => addRow(p)}
-                          disabled={trimmedRows.length >= CLAIM_CAP}
+                          disabled={claimCount >= CLAIM_CAP}
                         >
                           + {p.key}
                         </Button>
                       ))}
                       <span className="form-helper">
-                        {trimmedRows.length} / {CLAIM_CAP}
+                        {claimCount} / {CLAIM_CAP}
                       </span>
                     </div>
 
-                    {duplicateKey && (
+                    {claimBlockReason && (
                       <p className="form-error" role="alert" style={{ marginTop: '10px' }}>
                         <AlertTriangle size={14} aria-hidden="true" />
-                        <span>
-                          &ldquo;{duplicateKey}&rdquo; is used more than once. Each claim needs
-                          its own name, or only the last one is kept.
-                        </span>
+                        <span>{claimBlockReason}</span>
                       </p>
                     )}
                   </div>
@@ -872,10 +911,12 @@ export function IssuerStudio() {
                     </h4>
 
                     <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', flexWrap: 'wrap', marginBottom: '20px' }}>
-                      {/* Keyed on r.id: two rows can transiently share a key, and
-                          that is exactly the state the duplicate warning reports.
-                          Keying on r.key would collide while the issuer is mid-edit. */}
-                      {trimmedRows.map((r) => (
+                      {/* signedRows, not claimRows: the preview has to show
+                          exactly what gets signed, or a blank-value row
+                          disappears from here and then appears on the
+                          certificate. Keyed on r.id, because two rows can
+                          share a key and that is the state being reported. */}
+                      {signedRows.map((r) => (
                         <span
                           key={r.id}
                           style={{ backgroundColor: '#ffffff', padding: '4px 12px', borderRadius: '4px', fontSize: '12px', border: '1px solid #e2e8f0' }}
@@ -889,6 +930,19 @@ export function IssuerStudio() {
                       Ready to be cryptographically signed with private key and anchored on the Ethereum ledger.
                     </div>
                   </div>
+
+                  {/*
+                    The step-3 alert is two steps back from the click that
+                    fails, so a disabled button here would be a dead end.
+                    Repeating the reason means the control explains itself
+                    where the issuer is actually looking.
+                  */}
+                  {claimBlockReason && (
+                    <p className="form-error" role="alert">
+                      <AlertTriangle size={14} aria-hidden="true" />
+                      <span>{claimBlockReason}</span>
+                    </p>
+                  )}
 
                   {/* Issuance Action Buttons */}
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
@@ -906,6 +960,7 @@ export function IssuerStudio() {
                       icon={ShieldCheck}
                       onClick={handleIssueCredential}
                       loading={issuing}
+                      disabled={issuanceBlocked}
                       style={{ padding: '0 32px' }}
                     >
                       Sign & Issue Official Certificate
