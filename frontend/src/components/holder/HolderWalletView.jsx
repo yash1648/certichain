@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useCallback, useId } from 'react';
-import { Award, Plus, Download, RefreshCw, Eye, Search } from 'lucide-react';
+import React, { Fragment, useState, useEffect, useCallback, useId } from 'react';
+import { Award, Plus, Download, RefreshCw, Eye, SlidersHorizontal, Search } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { holderService } from '../../services/holderService';
 import { Button } from '../common/Button';
@@ -7,6 +7,7 @@ import { Badge } from '../common/Badge';
 import { EmptyState } from '../common/EmptyState';
 import { ErrorState } from '../common/ErrorState';
 import { CertificateDiplomaModal } from '../common/CertificateDiplomaModal';
+import DisclosurePanel from './DisclosurePanel';
 
 const formatDate = (iso) => {
   if (!iso) return null;
@@ -27,9 +28,11 @@ export function HolderWalletView() {
   const [query, setQuery] = useState('');
   const [downloadingId, setDownloadingId] = useState(null);
   const [viewing, setViewing] = useState(null);
+  const [openDisclosureId, setOpenDisclosureId] = useState(null);
 
   const claimId = useId();
   const searchId = useId();
+  const disclosureId = useId();
 
   const loadWallet = useCallback(async () => {
     if (!accessToken) {
@@ -212,52 +215,81 @@ export function HolderWalletView() {
             </thead>
             <tbody>
               {matches.map((item) => (
-                <tr key={item.credentialId}>
-                  <th scope="row" data-label="Credential">
-                    <span className="table__primary">{item.title || 'Untitled credential'}</span>
-                    <span className="table__sub font-mono">{item.credentialNumber}</span>
-                    {/*
-                      The transaction proves a hash was submitted, not that the
-                      anchor was confirmed. Only claim a block when the row
-                      actually carries one.
-                    */}
-                    {item.txHash && (
-                      <span className="table__sub">
-                        {item.blockNumber != null
-                          ? `Anchored at block #${item.blockNumber}`
-                          : 'Submitted to the ledger, not yet confirmed'}
-                      </span>
-                    )}
-                  </th>
-                  <td data-label="Issuer">{item.issuerName || 'Not stated'}</td>
-                  <td data-label="Status">
-                    <Badge status={item.status} />
-                  </td>
-                  <td data-label="Issued" style={{ whiteSpace: 'nowrap' }}>
-                    {formatDate(item.issuedAt) || 'Not stated'}
-                  </td>
-                  <td data-label="">
-                    <div style={{ display: 'flex', gap: 'var(--space-2)', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        icon={Eye}
-                        onClick={() => setViewing(item)}
-                      >
-                        View
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        icon={Download}
-                        loading={downloadingId === item.credentialId}
-                        onClick={() => handleDownload(item)}
-                      >
-                        Download
-                      </Button>
-                    </div>
-                  </td>
-                </tr>
+                <Fragment key={item.credentialId}>
+                  <tr>
+                    <th scope="row" data-label="Credential">
+                      <span className="table__primary">{item.title || 'Untitled credential'}</span>
+                      <span className="table__sub font-mono">{item.credentialNumber}</span>
+                      {/*
+                        The transaction proves a hash was submitted, not that the
+                        anchor was confirmed. Only claim a block when the row
+                        actually carries one.
+                      */}
+                      {item.txHash && (
+                        <span className="table__sub">
+                          {item.blockNumber != null
+                            ? `Anchored at block #${item.blockNumber}`
+                            : 'Submitted to the ledger, not yet confirmed'}
+                        </span>
+                      )}
+                    </th>
+                    <td data-label="Issuer">{item.issuerName || 'Not stated'}</td>
+                    <td data-label="Status">
+                      <Badge status={item.status} />
+                    </td>
+                    <td data-label="Issued" style={{ whiteSpace: 'nowrap' }}>
+                      {formatDate(item.issuedAt) || 'Not stated'}
+                    </td>
+                    <td data-label="">
+                      <div style={{ display: 'flex', gap: 'var(--space-2)', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          icon={Eye}
+                          onClick={() => setViewing(item)}
+                        >
+                          View
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          icon={SlidersHorizontal}
+                          aria-expanded={openDisclosureId === item.credentialId}
+                          aria-controls={disclosureId}
+                          onClick={() =>
+                            setOpenDisclosureId((open) =>
+                              open === item.credentialId ? null : item.credentialId
+                            )
+                          }
+                        >
+                          Sharing
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          icon={Download}
+                          loading={downloadingId === item.credentialId}
+                          onClick={() => handleDownload(item)}
+                        >
+                          Download
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                  {/* One credential's panel at a time: these are per-credential
+                      settings, and two open panels side by side invite the
+                      question of which one a change applies to. */}
+                  {openDisclosureId === item.credentialId && (
+                    <tr>
+                      <td colSpan={5} data-label="">
+                        <DisclosurePanel
+                          credentialId={item.credentialId}
+                          token={accessToken}
+                        />
+                      </td>
+                    </tr>
+                  )}
+                </Fragment>
               ))}
             </tbody>
           </table>

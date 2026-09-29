@@ -138,4 +138,43 @@ export const holderService = {
 
     return filename;
   },
+
+  /**
+   * The holder's own record of a credential: every claim, plus which of
+   * them are withheld from verifiers. The full claim map is returned
+   * because the holder cannot choose what to hide without seeing it.
+   * GET /api/holder/credentials/{id}/disclosure
+   * @param {string} credentialId UUID
+   * @param {string} token Bearer JWT
+   * @returns {Promise<{claims: Object, hiddenClaims: string[]}>}
+   */
+  async getDisclosure(credentialId, token) {
+    const response = await fetchWithTimeout(`${API_BASE}/credentials/${credentialId}/disclosure`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+    return handleResponse(response);
+  },
+
+  /**
+   * Store which claims are withheld from verifiers.
+   * PUT /api/holder/credentials/{id}/disclosure
+   * @param {string} credentialId UUID
+   * @param {string[]} hiddenClaims claim keys to withhold from verifiers
+   * @param {string} token Bearer JWT
+   * @returns {Promise<{claims: Object, hiddenClaims: string[]}>} the stored set
+   */
+  async setDisclosure(credentialId, hiddenClaims, token) {
+    const response = await fetchWithTimeout(`${API_BASE}/credentials/${credentialId}/disclosure`, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ hiddenClaims }),
+    });
+    return handleResponse(response);
+  },
 };
