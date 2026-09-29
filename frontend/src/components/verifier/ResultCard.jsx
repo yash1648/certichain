@@ -57,6 +57,7 @@ export function ResultCard({ result, onReset }) {
     anchorBlockNumber,
     anchorChainId,
     anchorVerified,
+    disclosure,
   } = result;
 
   const isValid = valid === true;
@@ -189,6 +190,24 @@ export function ResultCard({ result, onReset }) {
                 </table>
               </div>
             </section>
+          )}
+
+          {/* -- Partial disclosure -------------------------------------
+              Deliberately outside the `claimEntries.length > 0` guard above.
+              A holder can withhold every claim, and that is precisely the case
+              that must not read as an empty document: inside the guard this
+              notice would vanish along with the table it explains. */}
+          {disclosure && !disclosure.complete && (
+            <p
+              role="status"
+              className="section-note"
+              style={{ color: 'var(--warn)' }}
+            >
+              Partially disclosed: the holder shared {disclosure.disclosed} of{' '}
+              {disclosure.total} claims. The rest were withheld by the holder.
+              This credential is still valid and anchored — you are seeing fewer
+              details, not a different document.
+            </p>
           )}
 
           {/* -- Audit detail ------------------------------------------- */}
