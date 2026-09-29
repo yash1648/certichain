@@ -1,0 +1,9 @@
+# Keep the decision record -- rulings, retractions, review outcomes and the
+# executed Drive 4 evidence. These briefs and reports are how the work was
+# governed and they record findings that were later overturned.
+!progress.md
+!task-*-brief.md
+!task-*-report.md
+
+# Regenerable review diffs and any scratch output stay out.
+review-*.diff
