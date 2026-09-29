@@ -1,4 +1,4 @@
-import React, { useId, useState } from 'react';
+import React, { useState } from 'react';
 import { Eye, SlidersHorizontal } from 'lucide-react';
 import { holderService } from '../../services/holderService';
 import { Button } from '../common/Button';
@@ -20,25 +20,40 @@ const renderValue = (value) =>
  * save cannot replace the whole wallet with an error banner, and so the
  * failure is still visible when the panel has nothing loaded to show it
  * next to.
+ *
+ * `panelId` is the id the wallet view points its Sharing button at with
+ * aria-controls, so the two agree on one element.
  */
-export default function DisclosurePanel({ credentialId, token }) {
+export default function DisclosurePanel({ credentialId, token, panelId }) {
   const [claims, setClaims] = useState(null);
   const [hidden, setHidden] = useState(() => new Set());
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [preview, setPreview] = useState(false);
   const [error, setError] = useState(null);
-  const panelId = useId();
 
   const open = async () => {
     setLoading(true);
     setError(null);
     try {
       const data = await holderService.getDisclosure(credentialId, token);
-      setClaims(data?.claims || {});
+      const loaded = data?.claims;
+      /*
+       * handleResponse falls back to text() for a non-JSON content type,
+       * so a malformed 200 arrives with no claims in it. That is a
+       * broken response, not an empty credential: rendering it as "no
+       * claims" would tell the holder something false with no way to
+       * tell. A genuine claims: {} passes this and stays empty.
+       */
+      if (!loaded || typeof loaded !== 'object' || !Array.isArray(data?.hiddenClaims)) {
+        throw new Error(
+          'Your sharing settings could not be read: the server sent an unexpected response.'
+        );
+      }
+      setClaims(loaded);
       // No policy row means nothing is hidden, so a first open shows
       // every claim shared.
-      setHidden(new Set(data?.hiddenClaims || []));
+      setHidden(new Set(data.hiddenClaims));
     } catch (err) {
       setError(err.message || 'Your sharing settings could not be loaded.');
     } finally {

@@ -285,6 +285,7 @@ export function HolderWalletView() {
                         <DisclosurePanel
                           credentialId={item.credentialId}
                           token={accessToken}
+                          panelId={disclosureId}
                         />
                       </td>
                     </tr>
