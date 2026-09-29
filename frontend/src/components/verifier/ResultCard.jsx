@@ -196,8 +196,16 @@ export function ResultCard({ result, onReset }) {
               Deliberately outside the `claimEntries.length > 0` guard above.
               A holder can withhold every claim, and that is precisely the case
               that must not read as an empty document: inside the guard this
-              notice would vanish along with the table it explains. */}
-          {disclosure && !disclosure.complete && (
+              notice would vanish along with the table it explains.
+
+              `isValid` is load-bearing, not defensive. The text below asserts
+              the credential is valid and anchored, so an unverified card must
+              never reach it. Today `complete` is only ever false on a valid
+              result -- failure paths pass a null envelope and land on
+              (0,0,true) -- but that is an accident of an argument three files
+              away, and surfacing claims on a failure path is a plausible change
+              that would turn this into a tampered card vouching for itself. */}
+          {isValid && disclosure && !disclosure.complete && (
             <p
               role="status"
               className="section-note"
