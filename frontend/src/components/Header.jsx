@@ -130,6 +130,37 @@ export function Header({ route }) {
                 </a>
               </>
             )}
+
+            {user ? (
+              <div className="mobile-user-section">
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+                  <a href="#/account" className="account-chip" onClick={closeNav} style={{ flex: 1, minHeight: '38px' }}>
+                    <span className="account-chip__avatar" aria-hidden="true">
+                      {(user.fullName || '?').charAt(0).toUpperCase()}
+                    </span>
+                    <span style={{ fontWeight: 600, fontSize: 'var(--text-sm)', color: 'var(--ink)' }}>{user.fullName}</span>
+                    <Badge status={user.role} />
+                  </a>
+                  <button
+                    type="button"
+                    onClick={() => { closeNav(); logout(); }}
+                    className="btn btn-ghost btn-sm"
+                    aria-label="Sign out"
+                    title="Sign out"
+                    style={{ minHeight: '38px', minWidth: '38px' }}
+                  >
+                    <LogOut size={16} aria-hidden="true" />
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="mobile-user-section">
+                <a className="btn btn-primary" href="#/login" onClick={closeNav} style={{ minHeight: '44px', width: '100%' }}>
+                  <LogIn size={16} aria-hidden="true" />
+                  <span>Sign in</span>
+                </a>
+              </div>
+            )}
           </nav>
 
           <div className="header-account">

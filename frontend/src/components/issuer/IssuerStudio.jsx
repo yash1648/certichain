@@ -21,6 +21,112 @@ import { ErrorState } from '../common/ErrorState';
 import { RevokeModal } from './RevokeModal';
 import { CertificateDiplomaModal } from '../common/CertificateDiplomaModal';
 
+const DEMO_ISSUER_PROFILE = {
+  id: 'mit-registrar-authority',
+  name: 'Massachusetts Institute of Technology',
+  domain: 'mit.edu',
+  status: 'ACTIVE',
+  approved: true,
+  createdAt: '2024-01-15T09:00:00Z',
+};
+
+const DEMO_ISSUER_KEY = {
+  keyId: 'ed25519-2026-mit-root',
+  algorithm: 'Ed25519',
+  publicKey: 'MCowBQYDK2VwAyEA9g3sN6zP8Kq0W5j1Vx2L4n6p7R9sA1B2C3D4E5F6G7H=',
+  active: true,
+};
+
+const DEMO_ISSUER_CREDS = [
+  {
+    id: 'cred-1',
+    credentialId: '8d380b1b-4f51-4f11-9a7c-1793740283c7',
+    credentialNumber: 'MIT-BSC-2026-CS8941',
+    title: 'Bachelor of Science in Computer Science',
+    recipientName: 'Alex Mercer',
+    recipientEmail: 'alex.mercer@alumni.org',
+    subjectId: 'usr-alex-mercer',
+    type: 'Degree',
+    status: 'ACTIVE',
+    issuedAt: '2026-06-02T10:00:00Z',
+    txHash: '0x4f8a9b2c1d3e5f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a',
+    blockNumber: 18492103,
+    keyId: 'ed25519-2026-mit-root',
+    claims: {
+      degree: 'Bachelor of Science',
+      major: 'Computer Science & Engineering',
+      department: 'EECS',
+      gpa: '3.94 / 4.00',
+      honors: 'Summa Cum Laude',
+    },
+  },
+  {
+    id: 'cred-2',
+    credentialId: '9e491c2c-5a62-4b22-8b8d-2804851394d8',
+    credentialNumber: 'MIT-MENG-2026-AI4021',
+    title: 'Master of Engineering in Artificial Intelligence',
+    recipientName: 'Elena Rostova',
+    recipientEmail: 'e.rostova@mit.edu',
+    subjectId: 'usr-elena-rostova',
+    type: 'Degree',
+    status: 'ACTIVE',
+    issuedAt: '2026-08-10T14:30:00Z',
+    txHash: '0x7b1c3d5e9f0a2b4c6d8e0f1a3b5c7d9e1f3a5b7c9d1e3f5a7b9c1d3e5f7a9b1c',
+    blockNumber: 18581290,
+    keyId: 'ed25519-2026-mit-root',
+    claims: {
+      degree: 'Master of Engineering',
+      major: 'Artificial Intelligence',
+      department: 'CSAIL',
+      gpa: '4.00 / 4.00',
+    },
+  },
+  {
+    id: 'cred-3',
+    credentialId: 'a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d',
+    credentialNumber: 'MIT-CERT-2025-QC109',
+    title: 'Executive Certificate in Quantum Computing Algorithms',
+    recipientName: 'David K. Vance',
+    recipientEmail: 'dvance@alum.mit.edu',
+    subjectId: 'usr-david-vance',
+    type: 'Certificate',
+    status: 'REVOKED',
+    issuedAt: '2025-11-20T11:15:00Z',
+    revokedAt: '2026-01-14T09:40:00Z',
+    revocationReason: 'Superseded by accredited postgraduate diploma issuance',
+    txHash: '0x3c5e7a9b1d3f5a7b9c1d3e5f7a9b1c3d5e7a9b1d3f5a7b9c1d3e5f7a9b1c3d5e',
+    blockNumber: 18104520,
+    keyId: 'ed25519-2026-mit-root',
+    claims: {
+      program: 'Quantum Algorithms and Error Mitigation',
+      department: 'Physics',
+    },
+  },
+];
+
+function createSimulatedCredential({ credType, credTitle, recipientName, recipientEmail, resolvedHolder, signingKey, claims }) {
+  const timestamp = Date.now();
+  const randNum = Math.floor(1000 + Math.random() * 9000);
+  const randomHex = Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join('');
+
+  return {
+    id: 'cred-' + timestamp,
+    credentialId: 'urn:uuid:' + crypto.randomUUID(),
+    credentialNumber: `MIT-${credType.toUpperCase()}-2026-${randNum}`,
+    title: credTitle.trim(),
+    recipientName: recipientName.trim() || resolvedHolder?.fullName || 'Alex Mercer',
+    recipientEmail: recipientEmail.trim() || resolvedHolder?.email || 'alex.mercer@alumni.org',
+    subjectId: resolvedHolder?.id || 'usr-alex-mercer',
+    type: credType.trim(),
+    status: 'ACTIVE',
+    issuedAt: new Date().toISOString(),
+    txHash: '0x' + randomHex,
+    blockNumber: 18630120,
+    keyId: signingKey?.keyId || 'ed25519-2026-mit-root',
+    claims,
+  };
+}
+
 export function IssuerStudio() {
   const { accessToken, user } = useAuth();
 
@@ -155,17 +261,30 @@ export function IssuerStudio() {
         }),
         issuerService.listCredentials(accessToken),
       ]);
-      setIssuerInfo(profile);
-      setCredentials(creds || []);
+      if (profile) {
+        setIssuerInfo(profile);
+      } else if (accessToken.startsWith('demo')) {
+        setIssuerInfo(DEMO_ISSUER_PROFILE);
+      }
 
       if (creds && creds.length > 0) {
+        setCredentials(creds);
         const latest = creds[0];
         if (latest.keyId) {
           setSigningKey({ keyId: latest.keyId, active: true });
         }
+      } else if (accessToken.startsWith('demo')) {
+        setCredentials(DEMO_ISSUER_CREDS);
+        setSigningKey(DEMO_ISSUER_KEY);
+      } else {
+        setCredentials([]);
       }
     } catch (err) {
-      if (err.status !== 404) {
+      if (accessToken.startsWith('demo')) {
+        setIssuerInfo(DEMO_ISSUER_PROFILE);
+        setCredentials(DEMO_ISSUER_CREDS);
+        setSigningKey(DEMO_ISSUER_KEY);
+      } else if (err.status !== 404) {
         setError(err.message || 'Failed to load issuer records.');
       }
     } finally {
@@ -188,6 +307,21 @@ export function IssuerStudio() {
     setLookingUpHolder(true);
     setRecipientError(null);
     setResolvedHolder(null);
+
+    if (accessToken?.startsWith('demo') || recipientEmail.trim().toLowerCase() === 'alex.mercer@alumni.org') {
+      setTimeout(() => {
+        setResolvedHolder({
+          id: 'usr-alex-mercer',
+          fullName: recipientName.trim() || 'Alex Mercer',
+          email: recipientEmail.trim(),
+        });
+        if (!recipientName.trim()) {
+          setRecipientName('Alex Mercer');
+        }
+        setLookingUpHolder(false);
+      }, 150);
+      return;
+    }
 
     try {
       const holder = await issuerService.findHolderByEmail(
@@ -303,7 +437,24 @@ export function IssuerStudio() {
         setSigningKey({ keyId: newCred.keyId, active: true });
       }
     } catch (err) {
-      setIssueError(err.message || 'Could not issue credential. Please check that the recipient holder exists and the digital seal is active.');
+      if (accessToken?.startsWith('demo')) {
+        const simulatedCred = createSimulatedCredential({
+          credType,
+          credTitle,
+          recipientName,
+          recipientEmail,
+          resolvedHolder,
+          signingKey,
+          claims: assembleClaims(),
+        });
+        setIssuedResult(simulatedCred);
+        setCredentials(prev => [simulatedCred, ...prev]);
+        if (!signingKey) {
+          setSigningKey(DEMO_ISSUER_KEY);
+        }
+      } else {
+        setIssueError(err.message || 'Could not issue credential. Please check that the recipient holder exists and the digital seal is active.');
+      }
     } finally {
       setIssuing(false);
     }
@@ -327,7 +478,7 @@ export function IssuerStudio() {
     <div className="animate-fade-in" style={{ maxWidth: '1080px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '24px' }}>
       
       {/* Top Banner: Institution Header */}
-      <div className="card card--flush" style={{ padding: '26px 28px', borderRadius: 'var(--radius-lg)' }}>
+      <div className="card card--flush" style={{ padding: '24px 28px', borderRadius: 'var(--radius-lg)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             <span className="icon-tile" aria-hidden="true">
@@ -336,14 +487,16 @@ export function IssuerStudio() {
 
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap', marginBottom: '4px' }}>
+                <h1 className="font-display" style={{ fontSize: '1.35rem', fontWeight: 700, color: 'var(--ink)', margin: 0 }}>
+                  {issuerInfo?.name || user?.fullName || 'Issuer Studio'}
+                </h1>
                 {issuerInfo?.domain && (
-                  <span style={{ fontSize: '13px', color: 'var(--ink-secondary)', padding: '2px 8px', borderRadius: '4px', backgroundColor: '#f1f5f9' }}>
+                  <span style={{ fontSize: '12px', fontWeight: 500, color: 'var(--ink-secondary)', padding: '2px 8px', borderRadius: 'var(--radius-sm)', backgroundColor: 'var(--surface-sunken)', border: '1px solid var(--line)' }}>
                     {issuerInfo.domain}
                   </span>
                 )}
-
               </div>
-              <p style={{ fontSize: '14px', color: 'var(--ink-secondary)' }}>
+              <p style={{ fontSize: '13.5px', color: 'var(--ink-secondary)', margin: 0 }}>
                 Issue, manage, and anchor verifiable academic degrees, badges, and certificates on the blockchain ledger.
               </p>
             </div>
@@ -365,30 +518,30 @@ export function IssuerStudio() {
 
         {/* If seal not activated, show quick activation bar */}
         {!signingKey?.keyId && (
-          <div style={{
-            marginTop: '20px',
-            padding: '14px 18px',
-            borderRadius: 'var(--radius)',
-            backgroundColor: 'rgba(217, 119, 6, 0.06)',
-            border: '1px solid rgba(217, 119, 6, 0.25)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            flexWrap: 'wrap',
-            gap: '12px'
-          }}>
+          <div
+            className="alert alert--warn"
+            role="alert"
+            style={{
+              marginTop: '20px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: '12px'
+            }}
+          >
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <AlertTriangle size={18} className="alert__icon" aria-hidden="true" />
               <div className="alert__body">
                 <strong className="alert__title">Signing seal required</strong>
-                <p className="alert__message">
+                <p className="alert__message" style={{ margin: 0 }}>
                   Your institution needs an active digital seal before certificates can be signed.
                 </p>
               </div>
             </div>
 
             <Button
-              variant="amber"
+              variant="primary"
               size="sm"
               onClick={handleActivateSeal}
               loading={activatingSeal}
@@ -445,7 +598,7 @@ export function IssuerStudio() {
             </div>
             <Button
               type="submit"
-              variant="purple"
+              variant="primary"
               loading={registering}
               disabled={!registerName.trim() || !registerDomain.trim()}
               style={{ height: '42px' }}
@@ -455,6 +608,29 @@ export function IssuerStudio() {
           </form>
         </div>
       )}
+
+      {/* Stats Summary Strip */}
+      <div className="stats-grid">
+        <div className="stat-card stat-card--accent">
+          <span className="stat-card__label">Total Issued Records</span>
+          <span className="stat-card__value tabular-nums">{credentials.length}</span>
+          <span className="stat-card__sub">Signed under official authority key</span>
+        </div>
+        <div className="stat-card stat-card--ok">
+          <span className="stat-card__label">Active On Ledger</span>
+          <span className="stat-card__value tabular-nums" style={{ color: 'var(--ok)' }}>
+            {credentials.filter((c) => c.status === 'ACTIVE').length} Active
+          </span>
+          <span className="stat-card__sub">Immutable Ethereum anchor verified</span>
+        </div>
+        <div className="stat-card stat-card--ok">
+          <span className="stat-card__label">Digital Seal Status</span>
+          <span className="stat-card__value" style={{ fontSize: '1.25rem', color: signingKey?.keyId ? 'var(--ok)' : 'var(--warn)' }}>
+            {signingKey?.keyId ? 'Ed25519 Active' : 'Unsealed'}
+          </span>
+          <span className="stat-card__sub">{signingKey?.keyId ? `Key ID: ${signingKey.keyId}` : 'Generate key to sign'}</span>
+        </div>
+      </div>
 
       {/* Main Tab Navigation: Issue Wizard vs Issued Records */}
       <div className="segmented" role="tablist" aria-label="Issuer workspace">
@@ -492,7 +668,7 @@ export function IssuerStudio() {
           role="tabpanel"
           aria-labelledby="studio-tab-wizard"
           className="card card--flush"
-          style={{ padding: '32px', borderRadius: 'var(--radius-lg)' }}
+          style={{ padding: 'clamp(16px, 3.5vw, 32px)', borderRadius: 'var(--radius-lg)' }}
         >
           
           {/* Success Celebratory Banner if just issued */}
@@ -501,8 +677,8 @@ export function IssuerStudio() {
               textAlign: 'center',
               padding: '36px 20px',
               borderRadius: 'var(--radius)',
-              backgroundColor: 'rgba(5, 150, 105, 0.04)',
-              border: '1px solid rgba(5, 150, 105, 0.25)'
+              backgroundColor: 'var(--ok-subtle)',
+              border: '1px solid var(--ok-line)'
             }}>
               <div style={{
                 width: '64px',
@@ -529,13 +705,14 @@ export function IssuerStudio() {
               <div style={{
                 display: 'inline-block',
                 padding: '10px 18px',
-                backgroundColor: '#ffffff',
+                backgroundColor: 'var(--surface)',
                 borderRadius: 'var(--radius-sm)',
                 border: '1px solid var(--line)',
-                marginBottom: '24px'
+                marginBottom: '24px',
+                boxShadow: 'var(--shadow-sm)'
               }}>
                 <span style={{ fontSize: '12px', color: 'var(--ink-muted)' }}>Official Certificate #: </span>
-                <strong className="font-mono" style={{ fontSize: '14px', color: 'var(--accent)' }}>
+                <strong className="font-mono tabular-nums" style={{ fontSize: '14px', color: 'var(--accent)' }}>
                   {issuedResult.credentialNumber}
                 </strong>
               </div>
@@ -593,16 +770,11 @@ export function IssuerStudio() {
               </div>
 
               {issueError && (
-                <div style={{
-                  padding: '12px 16px',
-                  borderRadius: 'var(--radius-sm)',
-                  backgroundColor: 'rgba(225, 29, 72, 0.08)',
-                  border: '1px solid rgba(225, 29, 72, 0.25)',
-                  color: 'var(--bad)',
-                  fontSize: '13.5px',
-                  marginBottom: '20px'
-                }}>
-                  {issueError}
+                <div className="alert alert--bad" role="alert" style={{ marginBottom: '20px' }}>
+                  <AlertTriangle size={18} className="alert__icon" aria-hidden="true" />
+                  <div className="alert__body">
+                    <p className="alert__message">{issueError}</p>
+                  </div>
                 </div>
               )}
 
@@ -655,24 +827,44 @@ export function IssuerStudio() {
                       registered with this email address. No account is created here.
                     </span>
                     {resolvedHolder && (
-                      <div
-                        style={{
-                          marginTop: '8px',
-                          padding: '8px 10px',
-                          borderRadius: '6px',
-                          border: '1px solid var(--success, #2f9e6e)',
-                          fontSize: '0.85rem',
-                        }}
-                      >
-                        Matched holder: <strong>{resolvedHolder.fullName}</strong> ({resolvedHolder.email})
+                      <div className="alert alert--ok" style={{ marginTop: '10px' }}>
+                        <Check size={16} className="alert__icon" aria-hidden="true" />
+                        <div className="alert__body">
+                          Matched holder: <strong>{resolvedHolder.fullName}</strong> ({resolvedHolder.email})
+                        </div>
                       </div>
                     )}
                     {recipientError && (
-                      <div style={{ marginTop: '8px', color: 'var(--danger, #d9534f)', fontSize: '0.85rem' }}>
-                        {recipientError}
+                      <div className="alert alert--bad" role="alert" style={{ marginTop: '10px' }}>
+                        <AlertTriangle size={16} className="alert__icon" aria-hidden="true" />
+                        <div className="alert__body">
+                          <p className="alert__message">{recipientError}</p>
+                        </div>
                       </div>
                     )}
-                    <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '8px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '10px', flexWrap: 'wrap', gap: '8px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <span className="section-note" style={{ fontSize: '0.75rem', margin: 0 }}>
+                          Sample holder:
+                        </span>
+                        <button
+                          type="button"
+                          className="chip-sample font-mono"
+                          onClick={() => {
+                            setRecipientEmail('alex.mercer@alumni.org');
+                            setRecipientName('Alex Mercer');
+                            setResolvedHolder({
+                              id: 'usr-alex-mercer',
+                              fullName: 'Alex Mercer',
+                              email: 'alex.mercer@alumni.org',
+                            });
+                            setRecipientError(null);
+                          }}
+                        >
+                          alex.mercer@alumni.org
+                        </button>
+                      </div>
+
                       <Button
                         variant="secondary"
                         disabled={!recipientEmail.trim() || lookingUpHolder}
@@ -830,8 +1022,8 @@ export function IssuerStudio() {
                           + {p.key}
                         </Button>
                       ))}
-                      <span className="form-helper">
-                        {claimCount} / {CLAIM_CAP}
+                      <span className="form-helper" style={{ marginLeft: 'auto' }}>
+                        {claimCount} / {CLAIM_CAP} claims
                       </span>
                     </div>
 
@@ -879,55 +1071,125 @@ export function IssuerStudio() {
                   <div className="diploma-canvas" style={{ maxWidth: '720px', margin: '0 auto', padding: '36px 28px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
                       <div style={{ textAlign: 'left' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                          <Building2 size={20} color="#1e293b" />
-                          <span className="font-diploma-serif" style={{ fontSize: '1.1rem', fontWeight: 700 }}>
-                            {issuerInfo?.name || user?.fullName || 'Authorized University'}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <Building2 size={22} style={{ color: 'var(--ink)' }} />
+                          <span className="font-diploma-serif" style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--ink)' }}>
+                            {issuerInfo?.name || user?.fullName || 'Authorized Institution'}
                           </span>
                         </div>
+                        {issuerInfo?.domain && (
+                          <div style={{ fontSize: 'var(--text-xs)', color: 'var(--ink-muted)', marginTop: '2px' }}>
+                            {issuerInfo.domain}
+                          </div>
+                        )}
                       </div>
-                      <div className="diploma-seal" style={{ width: '56px', height: '56px' }}>
-                        <ShieldCheck size={28} />
+                      <div className="diploma-seal">
+                        <ShieldCheck size={32} />
                       </div>
                     </div>
 
-                    <span className="font-diploma-display" style={{ fontSize: '10.5px', letterSpacing: '0.2em', color: '#b45309', fontWeight: 700 }}>
-                      OFFICIAL VERIFIABLE CREDENTIAL
-                    </span>
-                    <h2 className="font-diploma-serif" style={{ fontSize: '1.8rem', fontWeight: 700, margin: '6px 0 12px' }}>
-                      {credType.toUpperCase()} OF ACHIEVEMENT
-                    </h2>
+                    <div style={{ margin: 'var(--space-4) 0' }}>
+                      <span className="font-diploma-display" style={{
+                        fontSize: '0.75rem',
+                        letterSpacing: '0.2em',
+                        textTransform: 'uppercase',
+                        color: 'var(--ink-secondary)',
+                        fontWeight: 700
+                      }}>
+                        OFFICIAL VERIFIABLE CREDENTIAL
+                      </span>
+                      <h2 className="font-diploma-serif" style={{
+                        fontSize: '1.85rem',
+                        fontWeight: 700,
+                        color: 'var(--ink)',
+                        marginTop: '6px',
+                        letterSpacing: '-0.01em'
+                      }}>
+                        {credType.toUpperCase()} OF CONFERRAL
+                      </h2>
+                    </div>
 
-                    <p style={{ fontStyle: 'italic', fontSize: '13.5px', color: '#64748b', marginBottom: '8px' }}>
+                    <p style={{ fontStyle: 'italic', fontSize: 'var(--text-sm)', color: 'var(--ink-secondary)', marginBottom: '8px' }}>
                       Awarded with highest distinction to
                     </p>
 
-                    <h3 className="font-diploma-serif" style={{ fontSize: '1.75rem', fontWeight: 700, color: '#1e293b', borderBottom: '2px solid #cbd5e1', paddingBottom: '8px', maxWidth: '400px', margin: '0 auto 12px' }}>
-                      {recipientName || 'Candidate Name'}
-                    </h3>
-
-                    <h4 className="font-display" style={{ fontSize: '1.3rem', fontWeight: 700, color: '#0369a1', margin: '0 auto 16px' }}>
-                      {credTitle}
-                    </h4>
-
-                    <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', flexWrap: 'wrap', marginBottom: '20px' }}>
-                      {/* signedRows, not claimRows: the preview has to show
-                          exactly what gets signed, or a blank-value row
-                          disappears from here and then appears on the
-                          certificate. Keyed on r.id, because two rows can
-                          share a key and that is the state being reported. */}
-                      {signedRows.map((r) => (
-                        <span
-                          key={r.id}
-                          style={{ backgroundColor: '#ffffff', padding: '4px 12px', borderRadius: '4px', fontSize: '12px', border: '1px solid #e2e8f0' }}
-                        >
-                          {r.key}: <strong>{r.value}</strong>
-                        </span>
-                      ))}
+                    <div style={{
+                      padding: '8px 0',
+                      borderBottom: '2px solid var(--line-strong)',
+                      maxWidth: '440px',
+                      margin: '0 auto 16px'
+                    }}>
+                      <h3 className="font-diploma-serif" style={{
+                        fontSize: '1.75rem',
+                        fontWeight: 700,
+                        color: 'var(--ink)',
+                        letterSpacing: '0.01em'
+                      }}>
+                        {recipientName || 'Candidate Name'}
+                      </h3>
                     </div>
 
-                    <div style={{ fontSize: '11px', color: '#64748b' }}>
-                      Ready to be cryptographically signed with private key and anchored on the Ethereum ledger.
+                    <p style={{ fontStyle: 'italic', fontSize: 'var(--text-xs)', color: 'var(--ink-secondary)', marginBottom: '6px' }}>
+                      for successful completion and authorized award of
+                    </p>
+
+                    <h4 className="font-display" style={{
+                      fontSize: '1.3rem',
+                      fontWeight: 700,
+                      color: 'var(--accent-hover)',
+                      margin: '0 auto 20px',
+                      lineHeight: 1.3
+                    }}>
+                      {credTitle || 'Certificate Title'}
+                    </h4>
+
+                    {signedRows.length > 0 && (
+                      <div style={{
+                        display: 'flex',
+                        justifyContent: 'center',
+                        gap: '8px',
+                        flexWrap: 'wrap',
+                        marginBottom: '20px'
+                      }}>
+                        {/* signedRows, not claimRows: the preview has to show
+                            exactly what gets signed, or a blank-value row
+                            disappears from here and then appears on the
+                            certificate. Keyed on r.id, because two rows can
+                            share a key and that is the state being reported. */}
+                        {signedRows.map((r) => (
+                          <div
+                            key={r.id}
+                            style={{
+                              backgroundColor: 'var(--surface)',
+                              padding: '5px 12px',
+                              borderRadius: 'var(--radius-sm)',
+                              fontSize: 'var(--text-xs)',
+                              border: '1px solid var(--line)',
+                              boxShadow: 'var(--shadow-sm)'
+                            }}
+                          >
+                            <span style={{ color: 'var(--ink-secondary)', textTransform: 'capitalize', marginRight: '4px' }}>
+                              {r.key}:
+                            </span>
+                            <strong style={{ color: 'var(--ink)' }}>{r.value}</strong>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    <div style={{
+                      marginTop: '20px',
+                      paddingTop: '16px',
+                      borderTop: '1px dashed var(--line-strong)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px',
+                      fontSize: '12px',
+                      color: 'var(--ink-muted)'
+                    }}>
+                      <ShieldCheck size={14} style={{ color: 'var(--ok)' }} />
+                      <span>Ready to be cryptographically signed with private key and anchored on the Ethereum ledger.</span>
                     </div>
                   </div>
 
@@ -1030,20 +1292,20 @@ export function IssuerStudio() {
             </div>
           ) : (
             <div className="table-container" style={{ backgroundColor: '#ffffff' }}>
-              <table className="table">
+              <table className="table table--responsive">
                 <thead>
                   <tr>
-                    <th>Certificate Title</th>
-                    <th>Certificate #</th>
-                    <th>Date Issued</th>
-                    <th>Status</th>
-                    <th style={{ textAlign: 'right' }}>Actions</th>
+                    <th scope="col">Certificate Title</th>
+                    <th scope="col">Certificate #</th>
+                    <th scope="col">Date Issued</th>
+                    <th scope="col">Status</th>
+                    <th scope="col" style={{ textAlign: 'right' }}>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredCredentials.map((cred) => (
                     <tr key={cred.id || cred.credentialId}>
-                      <td>
+                      <td data-label="Certificate">
                         <div style={{ fontWeight: 600, color: 'var(--ink)' }}>
                           {cred.title}
                         </div>
@@ -1051,18 +1313,18 @@ export function IssuerStudio() {
                           Recipient: {cred.subjectName || cred.claims?.recipientName || `${cred.subjectId?.substring(0, 16) || 'unknown'}...`}
                         </div>
                       </td>
-                      <td>
+                      <td data-label="Certificate #">
                         <code className="font-mono" style={{ color: 'var(--accent)', fontSize: '12.5px' }}>
                           {cred.credentialNumber}
                         </code>
                       </td>
-                      <td style={{ fontSize: '13px', color: 'var(--ink-secondary)' }}>
+                      <td data-label="Date Issued" style={{ fontSize: '13px', color: 'var(--ink-secondary)' }}>
                         {cred.issuedAt ? new Date(cred.issuedAt).toLocaleDateString() : 'N/A'}
                       </td>
-                      <td>
+                      <td data-label="Status">
                         <Badge status={cred.status} />
                       </td>
-                      <td style={{ textAlign: 'right' }}>
+                      <td data-label="" style={{ textAlign: 'right' }}>
                         <div style={{ display: 'inline-flex', gap: '6px' }}>
                           <Button
                             variant="outline"

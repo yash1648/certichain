@@ -45,34 +45,17 @@ export function RevokeModal({ credential, onClose, onRevoked, token, issuerServi
       }
     >
       <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-        <div style={{
-          display: 'flex',
-          alignItems: 'flex-start',
-          gap: '12px',
-          padding: '12px 14px',
-          borderRadius: 'var(--radius-sm)',
-          backgroundColor: 'rgba(244, 63, 94, 0.08)',
-          border: '1px solid rgba(244, 63, 94, 0.25)',
-          color: '#fb7185',
-          fontSize: '13px',
-          lineHeight: 1.4,
-        }}>
-          <AlertTriangle size={18} style={{ flexShrink: 0, marginTop: '2px' }} />
-          <span>
+        <div className="alert alert--bad" role="alert">
+          <AlertTriangle size={18} className="alert__icon" aria-hidden="true" />
+          <div className="alert__body">
             You are revoking <strong>{credential.credentialNumber}</strong> ({credential.title}). This revocation will be permanently recorded in the cryptographic registry.
-          </span>
+          </div>
         </div>
 
         {error && (
-          <div style={{
-            padding: '10px 12px',
-            borderRadius: 'var(--radius-sm)',
-            backgroundColor: 'rgba(244, 63, 94, 0.1)',
-            border: '1px solid rgba(244, 63, 94, 0.3)',
-            color: '#fb7185',
-            fontSize: '13px',
-          }}>
-            {error}
+          <div className="alert alert--bad" role="alert">
+            <AlertTriangle size={18} className="alert__icon" aria-hidden="true" />
+            <div className="alert__body">{error}</div>
           </div>
         )}
 

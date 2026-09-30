@@ -11,7 +11,7 @@ import { VerificationHistoryView } from './components/verifier/VerificationHisto
 import { AdminConsoleView } from './components/admin/AdminConsoleView';
 import { Landing } from './components/Landing';
 import { NotFound } from './components/NotFound';
-import { LogIn, ShieldAlert, ShieldCheck, ArrowRight } from 'lucide-react';
+import { LogIn, ShieldAlert, ArrowRight } from 'lucide-react';
 import './App.css';
 
 /* Hash routing. Normalised so a trailing slash or a stray query does not
@@ -148,14 +148,31 @@ function Footer() {
     <footer className="site-footer">
       <div className="site-footer__inner">
         <div className="site-footer__group">
-          <ShieldCheck size={15} aria-hidden="true" />
-          <span>CertiChain</span>
-          <span>Verifiable digital credentials</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span
+              style={{
+                display: 'inline-block',
+                width: '8px',
+                height: '8px',
+                borderRadius: '50%',
+                backgroundColor: 'var(--ok)',
+                boxShadow: '0 0 0 2px rgba(5, 150, 105, 0.2)',
+              }}
+              aria-hidden="true"
+            />
+            <span style={{ fontWeight: 600, color: 'var(--ink)' }}>Anvil / Ethereum Chain ID 31337</span>
+          </div>
+          <span style={{ color: 'var(--line-strong)' }}>&bull;</span>
+          <span>W3C Verifiable Credentials 2.0</span>
+          <span style={{ color: 'var(--line-strong)' }}>&bull;</span>
+          <span>Ed25519 &bull; SHA-256</span>
         </div>
 
         <div className="site-footer__group">
-          <a href="#/verify">Verify a credential</a>
-          <a href="#/login">Sign in</a>
+          <a href="#/">Overview</a>
+          <a href="#/verify">Verify</a>
+          <a href="#/login">Workspaces</a>
+          <a href="#/history">Audit Trail</a>
         </div>
       </div>
     </footer>

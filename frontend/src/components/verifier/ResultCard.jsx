@@ -1,9 +1,46 @@
 import React, { useState } from 'react';
-import { Eye, Printer, ChevronDown, ChevronUp, Building2, Lock, RotateCcw } from 'lucide-react';
+import { Eye, Printer, ChevronDown, ChevronUp, Building2, Lock, RotateCcw, ShieldCheck, AlertTriangle, Copy, Check } from 'lucide-react';
 import { Badge } from '../common/Badge';
 import { Button } from '../common/Button';
 import { StatusRow } from '../common/StatusRow';
 import { CertificateDiplomaModal } from '../common/CertificateDiplomaModal';
+
+function CopyButton({ value, label = 'Copy' }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    if (!value) return;
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // ignore
+    }
+  };
+
+  return (
+    <button
+      type="button"
+      className="btn btn-ghost btn-sm"
+      style={{
+        padding: '2px 8px',
+        height: '24px',
+        fontSize: '11.5px',
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: '4px',
+        color: copied ? 'var(--ok)' : 'var(--ink-muted)',
+      }}
+      onClick={handleCopy}
+      title={label}
+      aria-label={copied ? 'Copied to clipboard' : label}
+    >
+      {copied ? <Check size={12} aria-hidden="true" /> : <Copy size={12} aria-hidden="true" />}
+      <span>{copied ? 'Copied' : 'Copy'}</span>
+    </button>
+  );
+}
 
 /*
  * A verification screen has one job: tell the truth about what was and was not
@@ -77,23 +114,38 @@ export function ResultCard({ result, onReset }) {
           style={{
             background: isValid ? 'var(--ok-subtle)' : 'var(--bad-subtle)',
             borderBottomColor: isValid ? 'var(--ok-line)' : 'var(--bad-line)',
-            alignItems: 'flex-start',
+            alignItems: 'center',
+            gap: 'var(--space-4)',
+            padding: 'var(--space-4) var(--space-5)'
           }}
         >
-          <div style={{ minWidth: 0 }}>
-            <h2 className="section-title" style={{ color: isValid ? 'var(--ok)' : 'var(--bad)' }}>
-              {isValid ? 'Verified' : 'Not verified'}
-            </h2>
-            <p className="status-row__detail" style={{ marginTop: 'var(--space-1)' }}>
-              {reason ||
-                (isValid
-                  ? 'The signature is valid and the document matches the issued record.'
-                  : 'This document could not be confirmed against the issuing record.')}
-            </p>
+          <div style={{
+            width: '42px',
+            height: '42px',
+            borderRadius: '50%',
+            backgroundColor: isValid ? 'rgba(5, 150, 105, 0.15)' : 'rgba(220, 38, 38, 0.15)',
+            color: isValid ? 'var(--ok)' : 'var(--bad)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0
+          }}>
+            {isValid ? <ShieldCheck size={24} /> : <AlertTriangle size={24} />}
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', flexShrink: 0 }}>
-            <Badge status={status} />
+          <div style={{ minWidth: 0, flex: 1 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+              <h2 className="section-title" style={{ color: isValid ? 'var(--ok)' : 'var(--bad)', margin: 0, fontSize: '1.25rem', fontWeight: 700 }}>
+                {isValid ? 'Verified Credential' : 'Not Verified'}
+              </h2>
+              <Badge status={status} />
+            </div>
+            <p className="status-row__detail" style={{ marginTop: '4px', color: 'var(--ink-secondary)', fontSize: '13.5px' }}>
+              {reason ||
+                (isValid
+                  ? 'Cryptographic signature is valid and confirmed against the issuing record.'
+                  : 'This document could not be confirmed against the issuing record.')}
+            </p>
           </div>
         </div>
 
@@ -101,17 +153,23 @@ export function ResultCard({ result, onReset }) {
           {/* -- What this document is ---------------------------------- */}
           <dl className="kv">
             <dt className="kv__key">Recipient</dt>
-            <dd className="kv__value">{recipientName || 'Not stated in the document'}</dd>
+            <dd className="kv__value" style={{ fontWeight: 600, color: 'var(--ink)' }}>{recipientName || 'Not stated in the document'}</dd>
 
             <dt className="kv__key">Issuing organisation</dt>
             <dd className="kv__value" style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', flexWrap: 'wrap' }}>
               <Building2 size={14} style={{ color: 'var(--accent)' }} aria-hidden="true" />
-              {issuerName || 'Not stated'}
+              <span>{issuerName || 'Not stated'}</span>
+              {issuerDomain && (
+                <span style={{ fontSize: '12px', color: 'var(--ink-muted)' }}>({issuerDomain})</span>
+              )}
               {issuerVerified && <Badge status="VERIFIED" text="Registered issuer" />}
             </dd>
 
-            <dt className="kv__key">Certificate</dt>
-            <dd className="kv__value font-mono">{credentialNumber || 'Not stated'}</dd>
+            <dt className="kv__key">Certificate #</dt>
+            <dd className="kv__value font-mono tabular-nums" style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+              <span style={{ color: 'var(--accent)', fontWeight: 600 }}>{credentialNumber || 'Not stated'}</span>
+              {credentialNumber && <CopyButton value={credentialNumber} label="Copy certificate number" />}
+            </dd>
 
             <dt className="kv__key">Issued</dt>
             <dd className="kv__value">{formatDate(issuedAt) || 'Not stated'}</dd>
@@ -166,7 +224,7 @@ export function ResultCard({ result, onReset }) {
             <section>
               <h3 className="section-title">Certified attributes</h3>
               <div className="table-container" style={{ marginTop: 'var(--space-3)' }}>
-                <table className="table">
+                <table className="table table--responsive">
                   <thead>
                     <tr>
                       <th scope="col">Attribute</th>
@@ -176,10 +234,10 @@ export function ResultCard({ result, onReset }) {
                   <tbody>
                     {claimEntries.map(([key, val]) => (
                       <tr key={key}>
-                        <th scope="row" className="table__primary">
+                        <th scope="row" className="table__primary" data-label="Attribute">
                           {key}
                         </th>
-                        <td>
+                        <td data-label="Certified value" style={{ wordBreak: 'break-word' }}>
                           {typeof val === 'object' && val !== null
                             ? JSON.stringify(val)
                             : String(val)}
@@ -244,33 +302,36 @@ export function ResultCard({ result, onReset }) {
             </button>
 
             {showTechnicalDetails && (
-              <dl className="card__body kv" id={detailId} style={{ margin: 0 }}>
+              <dl className="card__body kv" id={detailId} style={{ margin: 0, borderTop: '1px solid var(--line)' }}>
                 <dt className="kv__key">Checked at</dt>
                 <dd className="kv__value">
                   {formatDateTime(verifiedAt) || 'Not recorded by the server'}
                 </dd>
 
                 <dt className="kv__key">Block</dt>
-                <dd className="kv__value font-mono">
+                <dd className="kv__value font-mono tabular-nums">
                   {anchorBlockNumber != null ? `#${anchorBlockNumber}` : 'No anchor'}
                 </dd>
 
-                <dt className="kv__key">Chain id</dt>
-                <dd className="kv__value font-mono">{anchorChainId ?? 'No anchor'}</dd>
+                <dt className="kv__key">Chain ID</dt>
+                <dd className="kv__value font-mono tabular-nums">{anchorChainId ?? 'No anchor'}</dd>
 
                 <dt className="kv__key">Anchor transaction</dt>
-                <dd className="kv__value font-mono">{anchorTxHash || 'No anchor'}</dd>
+                <dd className="kv__value font-mono tabular-nums" style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', wordBreak: 'break-all' }}>
+                  <span>{anchorTxHash || 'No anchor'}</span>
+                  {anchorTxHash && <CopyButton value={anchorTxHash} label="Copy transaction hash" />}
+                </dd>
               </dl>
             )}
           </section>
         </div>
 
         {/* -- Actions -------------------------------------------------- */}
-        <div className="card__footer">
+        <div className="card__footer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 'var(--space-2)' }}>
           <Button variant="ghost" onClick={onReset} icon={RotateCcw}>
             Verify another document
           </Button>
-          <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
+          <div style={{ display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap' }}>
             <Button variant="outline" onClick={() => window.print()} icon={Printer}>
               Print
             </Button>

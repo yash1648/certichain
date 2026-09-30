@@ -184,16 +184,34 @@ export function AuthProvider({ children }) {
 
     const target = defaultData[normalizedRole] || defaultData.HOLDER;
 
-    const data = await authService.login({
-      email: target.email,
-      password: target.password,
-    });
-    handleAuthSuccess(data);
-    setLastActionStatus({
-      type: 'success',
-      message: `Signed in as Demo ${target.role} (${target.fullName})!`,
-    });
-    return data;
+    try {
+      const data = await authService.login({
+        email: target.email,
+        password: target.password,
+      });
+      handleAuthSuccess(data);
+      setLastActionStatus({
+        type: 'success',
+        message: `Signed in as Demo ${target.role} (${target.fullName})!`,
+      });
+      return data;
+    } catch {
+      // Offline fallback: enable seamless UI inspection of all workspaces when backend is offline
+      const simulatedData = {
+        accessToken: `demo.${btoa(JSON.stringify({ sub: target.email, role: target.role, fullName: target.fullName, exp: Math.floor(Date.now() / 1000) + 3600 }))}.sig`,
+        expiresInSeconds: 3600,
+        userId: `usr-demo-${normalizedRole.toLowerCase()}-01`,
+        email: target.email,
+        fullName: target.fullName,
+        role: target.role,
+      };
+      handleAuthSuccess(simulatedData);
+      setLastActionStatus({
+        type: 'info',
+        message: `Signed in as Demo ${target.role} (${target.fullName}) [Demo Session]`,
+      });
+      return simulatedData;
+    }
   };
 
   // Logout handler

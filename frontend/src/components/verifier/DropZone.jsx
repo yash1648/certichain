@@ -4,7 +4,7 @@ import { Button } from '../common/Button';
 
 const MAX_FILE_SIZE = 2 * 1024 * 1024;
 
-export function DropZone({ onFileSelected, loading = false, disabled = false }) {
+export function DropZone({ onFileSelected, onTrySample, loading = false, disabled = false }) {
   const [isDragOver, setIsDragOver] = useState(false);
   const [selectedFileName, setSelectedFileName] = useState(null);
   const [fileError, setFileError] = useState(null);
@@ -103,14 +103,26 @@ export function DropZone({ onFileSelected, loading = false, disabled = false }) 
           both checked.
         </p>
 
-        <Button
-          variant="secondary"
-          disabled={blocked}
-          aria-describedby={hintId}
-          onClick={() => fileInputRef.current?.click()}
-        >
-          {selectedFileName ? 'Choose another file' : 'Browse files'}
-        </Button>
+        <div style={{ display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap', justifyContent: 'center' }}>
+          <Button
+            variant="primary"
+            disabled={blocked}
+            aria-describedby={hintId}
+            onClick={() => fileInputRef.current?.click()}
+          >
+            {selectedFileName ? 'Choose another file' : 'Browse files'}
+          </Button>
+
+          {onTrySample && (
+            <Button
+              variant="outline"
+              disabled={blocked}
+              onClick={onTrySample}
+            >
+              Try sample credential
+            </Button>
+          )}
+        </div>
       </div>
 
       {fileError && (

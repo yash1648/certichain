@@ -112,7 +112,7 @@ export function VerificationHistoryView() {
           )
         ) : (
           <div className="table-container">
-            <table className="table">
+            <table className="table table--responsive">
               <thead>
                 <tr>
                   <th scope="col">Certificate</th>
@@ -126,14 +126,14 @@ export function VerificationHistoryView() {
               <tbody>
                 {matches.map((item) => (
                   <tr key={item.id}>
-                    <th scope="row" className="table__primary font-mono">
+                    <th scope="row" className="table__primary font-mono" data-label="Certificate">
                       {item.credentialNumber || 'Not stated'}
                     </th>
-                    <td>
+                    <td data-label="Outcome">
                       <Badge status={item.result} />
                     </td>
-                    <td>{item.reason || 'No detail recorded'}</td>
-                    <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
+                    <td data-label="Detail">{item.reason || 'No detail recorded'}</td>
+                    <td data-label="Checked" style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
                       {formatDateTime(item.verifiedAt)}
                     </td>
                   </tr>

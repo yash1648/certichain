@@ -12,6 +12,7 @@ import {
   ShieldAlert,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { Badge } from './common/Badge';
 
 /*
  * These mirror DemoDataSeeder exactly. They are the only way to reach the
@@ -21,30 +22,36 @@ import { useAuth } from '../context/AuthContext';
 const DEMO_PROFILES = [
   {
     role: 'HOLDER',
+    roleBadge: 'Alumni Holder',
+    name: 'Alex Mercer',
     label: 'Credential holder',
     note: 'Alex Mercer',
     icon: Award,
     email: 'alex.mercer@alumni.org',
     password: 'DemoHolder123!',
-    workspace: 'Wallet of claimed credentials',
+    workspace: 'View claimed diplomas, inspect cryptographic signatures, export proofs',
   },
   {
     role: 'ISSUER',
+    roleBadge: 'Issuing Authority',
+    name: 'MIT Registrar Office',
     label: 'Issuing institution',
     note: 'MIT Registrar',
     icon: Building2,
     email: 'registrar@mit.edu',
     password: 'DemoIssuer123!',
-    workspace: 'Issue, key and revoke credentials',
+    workspace: 'Issue accredited credentials, manage Ed25519 signing keys, revoke certificates',
   },
   {
     role: 'ADMIN',
+    roleBadge: 'Registry Admin',
+    name: 'System Administrator',
     label: 'Registry administrator',
     note: 'System Administrator',
     icon: ShieldAlert,
     email: 'admin@certichain.org',
     password: 'DemoAdmin123!',
-    workspace: 'Approve issuers, review audits',
+    workspace: 'Authorize accredited institutions, review global audit logs, promote users',
   },
 ];
 
@@ -122,14 +129,14 @@ export function AuthCard() {
   const applyDemo = (profile, signInImmediately) => {
     setEmail(profile.email);
     setPassword(profile.password);
-    setFullName(profile.note);
+    setFullName(profile.name || profile.note);
     setFormError('');
     setFieldErrors({});
     setMode('login');
 
     if (signInImmediately) {
       setSubmitting(true);
-      loginDemoUser({ role: profile.role, email: profile.email, fullName: profile.note })
+      loginDemoUser({ role: profile.role, email: profile.email, fullName: profile.name || profile.note })
         .catch((err) => setFormError(err.message || 'Demo sign-in failed.'))
         .finally(() => setSubmitting(false));
     }
@@ -264,53 +271,68 @@ export function AuthCard() {
       </div>
 
       <aside className="card auth__demo">
-        <div className="card__header">
-          <h2 className="section-title">Demo accounts</h2>
-          <span className="section-note">Seeded on startup</span>
+        <div className="card__header" style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 'var(--space-2)' }}>
+            <h2 className="section-title" style={{ margin: 0, fontSize: '1.05rem', fontWeight: 700 }}>
+              Pre-configured Sandbox Roles
+            </h2>
+            <span className="badge badge--ok" style={{ fontSize: '0.6875rem' }}>Instant Evaluation</span>
+          </div>
+          <p className="section-note" style={{ margin: 0, fontSize: '0.8125rem' }}>
+            Fully populated demo roles ready for live testing. Click <strong>1-Click Sign In</strong> to explore the full dashboard.
+          </p>
         </div>
 
-        <ul className="demo-list">
+        <div className="demo-list">
           {DEMO_PROFILES.map((profile) => {
             const Icon = profile.icon;
             return (
-              <li key={profile.role} className="demo-list__item">
+              <div key={profile.role} className="demo-list__item">
                 <div className="demo-list__main">
-                  <span className="demo-list__icon">
-                    <Icon size={15} aria-hidden="true" />
+                  <span className="demo-list__icon" aria-hidden="true">
+                    <Icon size={16} />
                   </span>
-                  <div>
-                    <p className="demo-list__label">{profile.label}</p>
+                  <div className="demo-list__details">
+                    <div className="demo-list__header">
+                      <span className="demo-list__name">{profile.name}</span>
+                      <Badge status={profile.role} text={profile.roleBadge} />
+                    </div>
                     <p className="demo-list__note">{profile.workspace}</p>
+                    <div className="demo-list__creds">
+                      <code>{profile.email}</code>
+                    </div>
                   </div>
                 </div>
 
                 <div className="demo-list__actions">
                   <button
                     type="button"
-                    className="btn btn-ghost btn-sm"
-                    onClick={() => applyDemo(profile, false)}
-                  >
-                    Fill
-                  </button>
-                  <button
-                    type="button"
                     className="btn btn-secondary btn-sm"
                     onClick={() => applyDemo(profile, true)}
                     disabled={submitting}
                   >
-                    Enter
+                    <span>1-Click Sign In</span>
+                    <ArrowRight size={13} aria-hidden="true" />
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-ghost btn-sm"
+                    onClick={() => applyDemo(profile, false)}
+                    title="Populate sign-in credentials into the form"
+                  >
+                    Fill form
                   </button>
                 </div>
-              </li>
+              </div>
             );
           })}
-        </ul>
+        </div>
 
-        <p className="auth__demo-note">
-          Issuer and administrator accounts cannot be self-registered. A
-          holder account is created by registering; elevated roles are
-          granted by an administrator.
-        </p>
+        <div className="auth__demo-note">
+          <p style={{ margin: 0 }}>
+            <strong>Institutional Security Note:</strong> Issuing institutions and registry governors require cryptographic authorization and cannot be self-registered. Registration creates a holder account.
+          </p>
+        </div>
       </aside>
     </div>
   );

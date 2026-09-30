@@ -57,48 +57,49 @@ export function CertificateDiplomaModal({ credential, issuerName: issuerNameProp
         position: 'fixed',
         inset: 0,
         backgroundColor: 'rgba(15, 23, 42, 0.75)',
-        backdropFilter: 'blur(6px)',
+        backdropFilter: 'blur(8px)',
+        WebkitBackdropFilter: 'blur(8px)',
         zIndex: 100,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '20px',
+        padding: 'clamp(8px, 2.5vw, 20px)',
         overflowY: 'auto'
       }}
     >
       <div 
-        className="modal-content"
+        className="modal-content animate-fade-in"
         onClick={(e) => e.stopPropagation()}
         style={{
           width: '100%',
           maxWidth: '860px',
-          maxHeight: '92vh',
+          maxHeight: '94vh',
           overflowY: 'auto',
           backgroundColor: 'var(--surface)',
-          border: '1px solid var(--line)',
+          border: '1px solid var(--line-strong)',
           borderRadius: 'var(--radius-lg)',
-          boxShadow: '0 25px 60px -15px rgba(0, 0, 0, 0.8), 0 0 30px rgba(0, 240, 255, 0.15)',
+          boxShadow: 'var(--shadow-overlay)',
           display: 'flex',
           flexDirection: 'column',
         }}
       >
         {/* Modal Top Bar (Action Header - Hidden in Print) */}
         <div className="no-print" style={{
-          padding: '16px 24px',
+          padding: '12px 18px',
           borderBottom: '1px solid var(--line)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
           flexWrap: 'wrap',
-          gap: '12px',
+          gap: '10px',
           backgroundColor: 'var(--surface-sunken)',
           borderTopLeftRadius: 'var(--radius-lg)',
           borderTopRightRadius: 'var(--radius-lg)'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Award size={18} color="var(--warn)" />
-            <span style={{ fontWeight: 600, fontSize: '14px', color: 'var(--ink)' }}>
-              Official Verifiable Certificate View
+            <Award size={18} style={{ color: 'var(--accent)' }} />
+            <span style={{ fontWeight: 600, fontSize: 'var(--text-sm)', color: 'var(--ink)' }}>
+              Official Verifiable Credential
             </span>
             <Badge status={status} />
           </div>
@@ -111,7 +112,7 @@ export function CertificateDiplomaModal({ credential, issuerName: issuerNameProp
               onClick={handlePrint}
               title="Print or Save as PDF"
             >
-              Print / Save PDF
+              Print / PDF
             </Button>
 
             {onDownload && (
@@ -121,13 +122,13 @@ export function CertificateDiplomaModal({ credential, issuerName: issuerNameProp
                 icon={Download}
                 onClick={onDownload}
               >
-                Download File
+                Download Envelope
               </Button>
             )}
 
             <button
               onClick={onClose}
-              className="btn btn-outline btn-sm"
+              className="btn btn-ghost btn-sm"
               style={{ padding: '6px', minWidth: '32px' }}
               aria-label="Close modal"
             >
@@ -137,24 +138,25 @@ export function CertificateDiplomaModal({ credential, issuerName: issuerNameProp
         </div>
 
         {/* Modal Scrollable Body - The Diploma Canvas */}
-        <div style={{ padding: '32px 28px', backgroundColor: '#e2e8f0' }}>
+        <div style={{ padding: 'clamp(var(--space-3), 3vw, var(--space-6))', backgroundColor: 'var(--surface-sunken)' }}>
           <div className="diploma-canvas">
-            {/* Corner Decorative Elements */}
+            {/* Header: Institution & Seal */}
             <div style={{
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'flex-start',
-              marginBottom: '20px'
+              marginBottom: 'var(--space-5)',
+              gap: 'var(--space-3)'
             }}>
               <div style={{ textAlign: 'left' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <Building2 size={24} color="#1e293b" />
-                  <span className="font-diploma-serif" style={{ fontSize: '1.25rem', fontWeight: 700, color: '#0f172a' }}>
+                  <Building2 size={24} style={{ color: 'var(--ink)', flexShrink: 0 }} />
+                  <span className="font-diploma-serif" style={{ fontSize: 'clamp(1.1rem, 2.5vw, 1.35rem)', fontWeight: 700, color: 'var(--ink)' }}>
                     {issuerName}
                   </span>
                 </div>
                 {issuerDomain && (
-                  <div style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>
+                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--ink-muted)', marginTop: '2px' }}>
                     {issuerDomain}
                   </div>
                 )}
@@ -162,63 +164,65 @@ export function CertificateDiplomaModal({ credential, issuerName: issuerNameProp
 
               {/* Verified Digital Seal Emblem */}
               <div className="diploma-seal">
-                <ShieldCheck size={38} />
+                <ShieldCheck size={36} />
               </div>
             </div>
 
             {/* Diploma Main Heading */}
-            <div style={{ margin: '24px 0 16px' }}>
+            <div style={{ margin: 'var(--space-4) 0' }}>
               <span className="font-diploma-display" style={{
-                fontSize: '12px',
-                letterSpacing: '0.25em',
+                fontSize: '0.75rem',
+                letterSpacing: '0.2em',
                 textTransform: 'uppercase',
-                color: '#b45309',
+                color: 'var(--ink-secondary)',
                 fontWeight: 700
               }}>
                 Official Verifiable Credential
               </span>
               <h1 className="font-diploma-serif" style={{
-                fontSize: 'clamp(1.8rem, 4vw, 2.5rem)',
+                fontSize: 'clamp(1.5rem, 3.5vw, 2.35rem)',
                 fontWeight: 700,
-                color: '#0f172a',
+                color: 'var(--ink)',
                 marginTop: '6px',
-                letterSpacing: '-0.01em'
+                letterSpacing: '-0.01em',
+                lineHeight: 1.2
               }}>
-                {type ? type.toUpperCase() : 'CERTIFICATE'} OF ACHIEVEMENT
+                {type ? type.toUpperCase() : 'CERTIFICATE'} OF CONFERRAL
               </h1>
             </div>
 
-            <p style={{ fontStyle: 'italic', fontSize: '15px', color: '#475569', marginBottom: '12px' }}>
-              This is proudly presented and permanently certified to
+            <p style={{ fontStyle: 'italic', fontSize: 'clamp(0.85rem, 1.8vw, var(--text-md))', color: 'var(--ink-secondary)', marginBottom: 'var(--space-3)' }}>
+              This is officially conferred and cryptographically certified to
             </p>
 
             {/* Recipient Full Name */}
             <div style={{
-              padding: '10px 0',
-              borderBottom: '2px solid #cbd5e1',
+              padding: '6px 0',
+              borderBottom: '2px solid var(--line-strong)',
               maxWidth: '520px',
-              margin: '0 auto 20px'
+              margin: '0 auto var(--space-4)'
             }}>
               <h2 className="font-diploma-serif" style={{
-                fontSize: '2.1rem',
+                fontSize: 'clamp(1.5rem, 3.2vw, 2.15rem)',
                 fontWeight: 700,
-                color: '#1e293b',
-                letterSpacing: '0.02em'
+                color: 'var(--ink)',
+                letterSpacing: '0.01em',
+                lineHeight: 1.2
               }}>
                 {displayName}
               </h2>
             </div>
 
-            <p style={{ fontStyle: 'italic', fontSize: '14.5px', color: '#475569', marginBottom: '12px' }}>
-              for successful completion and authorized conferral of
+            <p style={{ fontStyle: 'italic', fontSize: 'var(--text-sm)', color: 'var(--ink-secondary)', marginBottom: 'var(--space-3)' }}>
+              for successful completion and authorized award of
             </p>
 
             {/* Credential Degree / Certification Title */}
-            <div style={{ maxWidth: '640px', margin: '0 auto 28px' }}>
+            <div style={{ maxWidth: '640px', margin: '0 auto var(--space-5)' }}>
               <h3 className="font-display" style={{
-                fontSize: '1.5rem',
+                fontSize: 'clamp(1.15rem, 2.5vw, 1.45rem)',
                 fontWeight: 700,
-                color: '#0369a1',
+                color: 'var(--accent-hover)',
                 lineHeight: 1.3
               }}>
                 {title}
@@ -228,26 +232,26 @@ export function CertificateDiplomaModal({ credential, issuerName: issuerNameProp
             {/* Claims / Academic Highlights Grid */}
             {claims && Object.keys(claims).length > 0 && (
               <div style={{
-                maxWidth: '560px',
-                margin: '0 auto 32px',
+                maxWidth: '580px',
+                margin: '0 auto var(--space-5)',
                 display: 'flex',
                 flexWrap: 'wrap',
                 justifyContent: 'center',
-                gap: '12px'
+                gap: '8px'
               }}>
                 {Object.entries(claims).map(([k, v]) => (
                   <div key={k} style={{
-                    backgroundColor: '#ffffff',
-                    padding: '8px 16px',
+                    backgroundColor: 'var(--surface)',
+                    padding: '6px 12px',
                     borderRadius: 'var(--radius-sm)',
-                    border: '1px solid #e2e8f0',
-                    boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
-                    fontSize: '13px'
+                    border: '1px solid var(--line)',
+                    boxShadow: 'var(--shadow-sm)',
+                    fontSize: 'var(--text-xs)'
                   }}>
-                    <span style={{ color: '#64748b', textTransform: 'capitalize', marginRight: '6px' }}>
+                    <span style={{ color: 'var(--ink-secondary)', textTransform: 'capitalize', marginRight: '6px' }}>
                       {k}:
                     </span>
-                    <strong style={{ color: '#0f172a' }}>
+                    <strong style={{ color: 'var(--ink)' }}>
                       {typeof v === 'object' ? JSON.stringify(v) : String(v)}
                     </strong>
                   </div>
@@ -257,57 +261,46 @@ export function CertificateDiplomaModal({ credential, issuerName: issuerNameProp
 
             {/* Signatures & Verification Footer */}
             <div style={{
-              marginTop: '40px',
-              paddingTop: '24px',
-              borderTop: '1px dashed #cbd5e1',
+              marginTop: 'var(--space-6)',
+              paddingTop: 'var(--space-4)',
+              borderTop: '1px dashed var(--line-strong)',
               display: 'flex',
               alignItems: 'flex-end',
               justifyContent: 'space-between',
               flexWrap: 'wrap',
-              gap: '24px'
+              gap: 'var(--space-4)'
             }}>
               {/* Left: Issue Date */}
-              <div style={{ textAlign: 'left', minWidth: '160px' }}>
-                <div style={{ borderBottom: '1px solid #94a3b8', paddingBottom: '4px', marginBottom: '4px' }}>
-                  <span style={{ fontWeight: 600, fontSize: '13px', color: '#1e293b' }}>
+              <div style={{ textAlign: 'left', flex: '1 1 130px' }}>
+                <div style={{ borderBottom: '1px solid var(--ink-secondary)', paddingBottom: '4px', marginBottom: '4px' }}>
+                  <span style={{ fontWeight: 600, fontSize: 'var(--text-sm)', color: 'var(--ink)' }}>
                     {formatDate(issuedAt)}
                   </span>
                 </div>
-                <span style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#64748b' }}>
-                  Date of Issue
+                <span style={{ fontSize: '0.6875rem', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--ink-muted)' }}>
+                  Date of Conferral
                 </span>
               </div>
 
               {/* Center: Tamper-Proof Digital Verification Stamp */}
-              <div style={{ textAlign: 'center' }}>
-                <div style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  padding: '6px 14px',
-                  borderRadius: 'var(--radius-pill)',
-                  backgroundColor: 'rgba(5, 150, 105, 0.08)',
-                  border: '1px solid rgba(5, 150, 105, 0.3)',
-                  color: '#059669',
-                  fontSize: '12px',
-                  fontWeight: 600
-                }}>
-                  <ShieldCheck size={15} />
+              <div style={{ textAlign: 'center', flex: '1 1 160px', padding: '0 4px' }}>
+                <div className="badge badge--ok" style={{ padding: '4px 12px', fontSize: 'var(--text-xs)' }}>
+                  <ShieldCheck size={14} aria-hidden="true" />
                   <span>Blockchain Anchored & Sealed</span>
                 </div>
-                <div style={{ fontSize: '11px', color: '#64748b', marginTop: '4px' }}>
-                  CertiChain Verified Proof
+                <div style={{ fontSize: '0.6875rem', color: 'var(--ink-muted)', marginTop: '4px' }}>
+                  CertiChain Cryptographic Verification
                 </div>
               </div>
 
               {/* Right: Signature Authority */}
-              <div style={{ textAlign: 'right', minWidth: '160px' }}>
-                <div style={{ borderBottom: '1px solid #94a3b8', paddingBottom: '4px', marginBottom: '4px' }}>
-                  <span className="font-diploma-serif" style={{ fontSize: '1.1rem', fontStyle: 'italic', color: '#0369a1' }}>
+              <div style={{ textAlign: 'right', flex: '1 1 130px' }}>
+                <div style={{ borderBottom: '1px solid var(--ink-secondary)', paddingBottom: '4px', marginBottom: '4px' }}>
+                  <span className="font-diploma-serif" style={{ fontSize: '1.1rem', fontStyle: 'italic', color: 'var(--ink)' }}>
                     {issuerName}
                   </span>
                 </div>
-                <span style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#64748b' }}>
+                <span style={{ fontSize: '0.6875rem', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--ink-muted)' }}>
                   Authorized Signatory
                 </span>
               </div>
@@ -315,21 +308,23 @@ export function CertificateDiplomaModal({ credential, issuerName: issuerNameProp
 
             {/* Bottom Certificate Serial & Blockchain Identification */}
             <div style={{
-              marginTop: '32px',
-              padding: '12px 16px',
-              backgroundColor: '#f8fafc',
+              marginTop: 'var(--space-5)',
+              padding: '10px 14px',
+              backgroundColor: 'var(--surface-sunken)',
+              border: '1px solid var(--line)',
               borderRadius: 'var(--radius-sm)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
               flexWrap: 'wrap',
               gap: '10px',
-              fontSize: '11.5px',
-              color: '#64748b'
+              fontSize: 'var(--text-xs)',
+              color: 'var(--ink-secondary)',
+              wordBreak: 'break-word'
             }}>
               <div>
                 <span>Certificate Number: </span>
-                <strong className="font-mono" style={{ color: '#0f172a' }}>
+                <strong className="font-mono" style={{ color: 'var(--ink)', wordBreak: 'break-all' }}>
                   {credentialNumber || 'N/A'}
                 </strong>
               </div>
@@ -337,8 +332,8 @@ export function CertificateDiplomaModal({ credential, issuerName: issuerNameProp
               {txHash && (
                 <div>
                   <span>Ledger Proof: </span>
-                  <span className="font-mono" style={{ color: '#0369a1' }}>
-                    Block #{blockNumber || 'N/A'} · {txHash.substring(0, 10)}...{txHash.substring(txHash.length - 6)}
+                  <span className="font-mono" style={{ color: 'var(--accent)', wordBreak: 'break-all' }}>
+                    Block #{blockNumber || 'N/A'} &bull; {txHash.substring(0, 10)}...{txHash.substring(txHash.length - 6)}
                   </span>
                 </div>
               )}
