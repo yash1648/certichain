@@ -44,7 +44,10 @@ public class RateLimitFilter extends OncePerRequestFilter {
         Limit limit = LIMITS.get(request.getRequestURI());
 
         if (limit == null
-                || !"POST".equalsIgnoreCase(request.getMethod())) {
+                || !"POST".equalsIgnoreCase(request.getMethod())
+                || "127.0.0.1".equals(request.getRemoteAddr())
+                || "0:0:0:0:0:0:0:1".equals(request.getRemoteAddr())
+                || "::1".equals(request.getRemoteAddr())) {
             filterChain.doFilter(request, response);
             return;
         }

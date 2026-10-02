@@ -76,6 +76,12 @@ public class IssuerKeyService {
 
             privateKeyStored = true;
 
+            issuerKeyRepository.findFirstByIssuerIdAndActiveTrueOrderByCreatedAtDesc(issuer.getId())
+                    .ifPresent(existingKey -> {
+                        existingKey.setActive(false);
+                        issuerKeyRepository.save(existingKey);
+                    });
+
             issuerKey.setActive(true);
 
             return issuerKeyRepository.save(issuerKey);
