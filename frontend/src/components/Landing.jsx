@@ -92,7 +92,7 @@ const ROLES = [
 const ASSURANCES = [
   { icon: Lock, label: 'Ed25519 Signatures' },
   { icon: Link2, label: 'Immutable Ledger Anchors' },
-  { icon: Fingerprint, label: 'Zero-Knowledge Selective Disclosure' },
+  { icon: Fingerprint, label: 'Selective Claim Disclosure' },
   { icon: ShieldCheck, label: 'Instant Revocation Verification' },
 ];
 
@@ -144,7 +144,7 @@ export function Landing() {
           <p className="masthead__lede">
             Issue, hold, and verify tamper-evident academic and professional credentials.
             Every document is cryptographically signed with Ed25519 and anchored to an
-            immutable blockchain ledger &mdash; verifiable by anyone without asking the institution.
+            immutable blockchain ledger, verifiable by anyone without asking the institution.
           </p>
 
           <div className="masthead__actions">

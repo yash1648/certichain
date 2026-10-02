@@ -287,7 +287,7 @@ export function AdminConsoleView() {
               Make issuer
             </Button>
           ) : (
-            <span className="table__sub">—</span>
+            <span className="table__sub">N/A</span>
           ),
       },
     ],

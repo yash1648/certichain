@@ -308,7 +308,7 @@ export function IssuerStudio() {
     setRecipientError(null);
     setResolvedHolder(null);
 
-    if (accessToken?.startsWith('demo') || recipientEmail.trim().toLowerCase() === 'alex.mercer@alumni.org') {
+    if (accessToken?.startsWith('demo')) {
       setTimeout(() => {
         setResolvedHolder({
           id: 'usr-alex-mercer',
@@ -850,15 +850,27 @@ export function IssuerStudio() {
                         <button
                           type="button"
                           className="chip-sample font-mono"
-                          onClick={() => {
+                          onClick={async () => {
                             setRecipientEmail('alex.mercer@alumni.org');
                             setRecipientName('Alex Mercer');
-                            setResolvedHolder({
-                              id: 'usr-alex-mercer',
-                              fullName: 'Alex Mercer',
-                              email: 'alex.mercer@alumni.org',
-                            });
                             setRecipientError(null);
+                            if (accessToken && !accessToken.startsWith('demo')) {
+                              setLookingUpHolder(true);
+                              try {
+                                const h = await issuerService.findHolderByEmail('alex.mercer@alumni.org', accessToken);
+                                setResolvedHolder(h);
+                              } catch {
+                                setRecipientError('Could not find holder record for alex.mercer@alumni.org');
+                              } finally {
+                                setLookingUpHolder(false);
+                              }
+                            } else {
+                              setResolvedHolder({
+                                id: 'usr-alex-mercer',
+                                fullName: 'Alex Mercer',
+                                email: 'alex.mercer@alumni.org',
+                              });
+                            }
                           }}
                         >
                           alex.mercer@alumni.org

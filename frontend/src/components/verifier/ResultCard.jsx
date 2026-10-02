@@ -271,7 +271,7 @@ export function ResultCard({ result, onReset }) {
             >
               Partially disclosed: the holder shared {disclosure.disclosed} of{' '}
               {disclosure.total} claims. The rest were withheld by the holder.
-              This credential is still valid and anchored — you are seeing fewer
+              This credential is still valid and anchored: you are seeing fewer
               details, not a different document.
             </p>
           )}

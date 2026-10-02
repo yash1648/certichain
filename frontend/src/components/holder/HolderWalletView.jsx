@@ -261,7 +261,7 @@ export function HolderWalletView() {
         <div className="stat-card">
           <span className="stat-card__label">Privacy Protection</span>
           <span className="stat-card__value" style={{ fontSize: '1.25rem' }}>Selective Disclosure</span>
-          <span className="stat-card__sub">Zero-knowledge claim withholding ready</span>
+          <span className="stat-card__sub">Holder-controlled claim presentation ready</span>
         </div>
       </div>
 

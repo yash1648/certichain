@@ -50,7 +50,7 @@ export function AnchorLookup() {
       <h2 className="section-title">Look up a ledger record</h2>
       <p className="section-note" id={inputHintId}>
         Enter the certificate number printed on the document. This confirms the record
-        exists in the ledger &mdash; it cannot verify a document you have not uploaded.
+        exists in the ledger (it cannot verify a document you have not uploaded).
       </p>
 
       <form
@@ -151,10 +151,14 @@ export function AnchorLookup() {
             </dd>
 
             <dt className="kv__key">Content hash</dt>
-            <dd className="kv__value font-mono">{anchor.contentHash || 'Not published'}</dd>
+            <dd className="kv__value font-mono" style={{ wordBreak: 'break-all' }}>
+              {anchor.contentHash || 'Not published'}
+            </dd>
 
             <dt className="kv__key">Transaction</dt>
-            <dd className="kv__value font-mono">{anchor.txHash || 'Pending'}</dd>
+            <dd className="kv__value font-mono" style={{ wordBreak: 'break-all' }}>
+              {anchor.txHash || 'Pending'}
+            </dd>
           </dl>
         </div>
       )}

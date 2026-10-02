@@ -220,7 +220,7 @@ export default function DisclosurePanel({ credentialId, token, panelId }) {
                 A verifier sees exactly this:
               </p>
               {visible.length === 0 ? (
-                <p className="form-helper">No claims — just the title, issuer and dates.</p>
+                <p className="form-helper">No claims (just the title, issuer and dates).</p>
               ) : (
                 <ul
                   style={{

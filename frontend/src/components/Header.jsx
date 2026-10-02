@@ -41,6 +41,15 @@ function useNavItems(user) {
   ].filter(Boolean);
 }
 
+const ROUTE_LABELS = {
+  '/verify': 'Verifier',
+  '/wallet': 'Vault',
+  '/issuer': 'Issuer Studio',
+  '/admin': 'Admin',
+  '/account': 'Settings',
+  '/history': 'Audit Log',
+};
+
 export function Header({ route }) {
   const { user, logout } = useAuth();
   const [navOpen, setNavOpen] = useState(false);
@@ -79,16 +88,23 @@ export function Header({ route }) {
 
       <header className="site-header">
         <div className="site-header__bar">
-          <a href="#/" className="brand" aria-label="CertiChain home">
-            <span className="brand__mark">
-              <ShieldCheck size={17} strokeWidth={2.2} aria-hidden="true" />
-            </span>
-            <span>
-              <span className="brand__name">CertiChain</span>
-              <br />
-              <span className="brand__tag">Credential Registry</span>
-            </span>
-          </a>
+          <div className="brand-group">
+            <a href="#/" className="brand" aria-label="CertiChain home">
+              <span className="brand__mark">
+                <ShieldCheck size={17} strokeWidth={2.2} aria-hidden="true" />
+              </span>
+              <span>
+                <span className="brand__name">CertiChain</span>
+                <br />
+                <span className="brand__tag">Credential Registry</span>
+              </span>
+            </a>
+            {ROUTE_LABELS[route] && (
+              <span className="brand-breadcrumb font-mono" aria-hidden="true">
+                /{ROUTE_LABELS[route]}
+              </span>
+            )}
+          </div>
 
           <nav
             id="site-nav"
