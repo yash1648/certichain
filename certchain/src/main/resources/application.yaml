@@ -39,7 +39,7 @@ ssdcve:
     path: ${SSDCVE_KEYSTORE_PATH:./keystore/ssdcve.p12}
     password: ${SSDCVE_KEYSTORE_PASSWORD:change-me-keystore-password}
   ipfs:
-    api-url: http://localhost:5001
+    api-url: ${SSDCVE_IPFS_API_URL:http://localhost:5001}
   blockchain:
     rpc-url: ${SSDCVE_BLOCKCHAIN_RPC_URL:http://localhost:8545}
     from-address: ${SSDCVE_BLOCKCHAIN_FROM:0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266}

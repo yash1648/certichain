@@ -623,12 +623,35 @@ export function IssuerStudio() {
           </span>
           <span className="stat-card__sub">Immutable Ethereum anchor verified</span>
         </div>
-        <div className="stat-card stat-card--ok">
-          <span className="stat-card__label">Digital Seal Status</span>
-          <span className="stat-card__value" style={{ fontSize: '1.25rem', color: signingKey?.keyId ? 'var(--ok)' : 'var(--warn)' }}>
-            {signingKey?.keyId ? 'Ed25519 Active' : 'Unsealed'}
-          </span>
-          <span className="stat-card__sub">{signingKey?.keyId ? `Key ID: ${signingKey.keyId}` : 'Generate key to sign'}</span>
+        <div className="stat-card stat-card--ok" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+          <div>
+            <span className="stat-card__label">Digital Seal Status</span>
+            <span className="stat-card__value" style={{ fontSize: '1.25rem', color: signingKey?.keyId ? 'var(--ok)' : 'var(--warn)' }}>
+              {signingKey?.keyId ? 'Ed25519 Active' : 'Unsealed'}
+            </span>
+            <span className="stat-card__sub">{signingKey?.keyId ? `Key ID: ${signingKey.keyId}` : 'Generate key to sign'}</span>
+          </div>
+          {signingKey?.keyId && (
+            <button
+              type="button"
+              onClick={handleActivateSeal}
+              disabled={activatingSeal}
+              style={{
+                marginTop: '10px',
+                fontSize: '12px',
+                fontWeight: 600,
+                color: 'var(--accent)',
+                background: 'transparent',
+                border: 'none',
+                cursor: 'pointer',
+                textAlign: 'left',
+                padding: 0,
+                textDecoration: 'underline'
+              }}
+            >
+              {activatingSeal ? 'Activating Seal…' : '↻ Re-sync / Rotate Key on Server'}
+            </button>
+          )}
         </div>
       </div>
 
