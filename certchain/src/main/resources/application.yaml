@@ -10,8 +10,8 @@ spring:
 
   servlet:
     multipart:
-      max-file-size: 2MB
-      max-request-size: 2MB
+      max-file-size: 25MB
+      max-request-size: 60MB
 
   jpa:
     hibernate:
@@ -33,6 +33,12 @@ certichain:
     refresh-token-ttl-days: 7
   swagger:
     enabled: true
+  batch-verification:
+    max-files: 500
+    max-file-size-bytes: 2097152 # 2MB
+    max-zip-size-bytes: 20971520 # 20MB
+    max-extracted-size-bytes: 52428800 # 50MB
+    max-concurrency: 10
 
 ssdcve:
   keystore:

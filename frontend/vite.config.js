@@ -17,4 +17,8 @@ export default defineConfig({
   // Serves dist/ as static files. Expose this over a tunnel instead of the dev
   // server: 4 requests per page load vs ~180 unbundled modules.
   preview: { port: 4173, proxy },
+  test: {
+    environment: 'jsdom',
+    globals: true,
+  },
 })

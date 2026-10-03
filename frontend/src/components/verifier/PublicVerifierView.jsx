@@ -1,15 +1,17 @@
 import React, { useState } from 'react';
-import { FileCheck, Search, QrCode } from 'lucide-react';
+import { FileCheck, Search, QrCode, FileStack } from 'lucide-react';
 import { verifierService } from '../../services/verifierService';
 import { useAuth } from '../../context/AuthContext';
 import { DropZone } from './DropZone';
 import { QrScanner } from './QrScanner';
 import { ResultCard } from './ResultCard';
 import { AnchorLookup } from './AnchorLookup';
+import { BatchVerifierView } from './BatchVerifierView';
 import { ErrorState } from '../common/ErrorState';
 
 const MODES = [
-  { id: 'file', label: 'Verify a document', Icon: FileCheck },
+  { id: 'file', label: 'Single Verification', Icon: FileCheck },
+  { id: 'batch', label: 'Batch Verification', Icon: FileStack },
   { id: 'qr', label: 'Scan QR code', Icon: QrCode },
   { id: 'anchor', label: 'Check an anchor record', Icon: Search },
 ];
@@ -166,6 +168,8 @@ export function PublicVerifierView() {
                     Requests are logged to your verification history when you are signed in.
                   </p>
                 </>
+              ) : mode === 'batch' ? (
+                <BatchVerifierView />
               ) : mode === 'qr' ? (
                 <>
                   <QrScanner

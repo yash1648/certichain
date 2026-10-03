@@ -86,7 +86,9 @@ public class SecurityConfig {
                             .permitAll()
                             .requestMatchers(
                                     HttpMethod.POST,
-                                    "/api/verifier/verify"
+                                    "/api/verifier/verify",
+                                    "/api/verifier/verify/batch",
+                                    "/api/verifier/verify/batch/csv"
                             )
                             .permitAll()
                             .requestMatchers(

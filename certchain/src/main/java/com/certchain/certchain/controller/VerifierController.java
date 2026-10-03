@@ -19,20 +19,29 @@ import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
+import com.certchain.certchain.dto.response.BatchVerificationResponse;
+import com.certchain.certchain.service.BatchVerificationService;
+import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.http.HttpHeaders;
+import org.springframework.web.multipart.MultipartHttpServletRequest;
+
+import java.util.ArrayList;
+
 @RestController
 @RequestMapping("/api/verifier")
 public class VerifierController {
 
     private final VerificationService verificationService;
-
     private final VerificationHistoryService verificationHistoryService;
+    private final BatchVerificationService batchVerificationService;
 
     public VerifierController(
             VerificationService verificationService,
-            VerificationHistoryService verificationHistoryService) {
+            VerificationHistoryService verificationHistoryService,
+            BatchVerificationService batchVerificationService) {
         this.verificationService = verificationService;
-        this.verificationHistoryService =
-                verificationHistoryService;
+        this.verificationHistoryService = verificationHistoryService;
+        this.batchVerificationService = batchVerificationService;
     }
 
     @PostMapping(
@@ -84,6 +93,60 @@ public class VerifierController {
         );
 
         return ResponseEntity.ok(result);
+    }
+
+    @PostMapping(
+            value = "/verify/batch",
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE,
+            produces = MediaType.APPLICATION_JSON_VALUE
+    )
+    public ResponseEntity<BatchVerificationResponse> verifyBatch(
+            @RequestPart(value = "files", required = false) List<MultipartFile> files,
+            @RequestPart(value = "file", required = false) MultipartFile file,
+            HttpServletRequest request) throws Exception {
+
+        List<MultipartFile> allFiles = new ArrayList<>();
+        if (files != null) {
+            allFiles.addAll(files);
+        }
+        if (file != null) {
+            allFiles.add(file);
+        }
+        if (request instanceof MultipartHttpServletRequest multipartReq) {
+            multipartReq.getMultiFileMap().forEach((paramName, paramFiles) -> {
+                for (MultipartFile f : paramFiles) {
+                    if (!allFiles.contains(f)) {
+                        allFiles.add(f);
+                    }
+                }
+            });
+        }
+
+        if (allFiles.isEmpty()) {
+            throw new IllegalArgumentException("No files uploaded for batch verification");
+        }
+
+        List<BatchVerificationService.CredentialFileEntry> entries =
+                batchVerificationService.extractAndValidateFiles(allFiles);
+
+        BatchVerificationResponse response =
+                batchVerificationService.processBatch(entries, currentVerifierId());
+
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping(
+            value = "/verify/batch/csv",
+            consumes = MediaType.APPLICATION_JSON_VALUE,
+            produces = "text/csv"
+    )
+    public ResponseEntity<String> exportCsv(
+            @RequestBody BatchVerificationResponse response) {
+
+        String csv = batchVerificationService.generateCsv(response);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"batch-verification-report.csv\"")
+                .body(csv);
     }
 
     @GetMapping(

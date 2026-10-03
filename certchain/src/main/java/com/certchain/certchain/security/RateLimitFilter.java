@@ -26,7 +26,8 @@ public class RateLimitFilter extends OncePerRequestFilter {
             "/api/auth/login", new Limit(10, 15 * 60_000L),
             "/api/auth/register", new Limit(10, 15 * 60_000L),
             "/api/auth/refresh", new Limit(30, 15 * 60_000L),
-            "/api/verifier/verify", new Limit(60, 15 * 60_000L)
+            "/api/verifier/verify", new Limit(60, 15 * 60_000L),
+            "/api/verifier/verify/batch", new Limit(30, 15 * 60_000L)
     );
 
     private record Bucket(long windowStart, int count) {}

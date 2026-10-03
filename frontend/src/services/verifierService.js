@@ -63,6 +63,60 @@ export const verifierService = {
   },
 
   /**
+   * Verify multiple credential JSON files or a ZIP archive in batch
+   * Public endpoint (optional Bearer token to record verification to user history)
+   * @param {File[]|FileList|File} files An array/FileList of .json files or a single .zip file
+   * @param {string|null} token Optional Bearer JWT
+   * @returns {Promise<Object>} BatchVerificationResponse
+   */
+  async verifyBatch(files, token = null) {
+    const formData = new FormData();
+    if (Array.isArray(files) || files instanceof FileList) {
+      for (const file of files) {
+        formData.append('files', file);
+      }
+    } else if (files instanceof File || files instanceof Blob) {
+      formData.append('file', files);
+    }
+
+    const headers = {};
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    const response = await fetchWithTimeout(`${API_BASE}/verify/batch`, {
+      method: 'POST',
+      headers,
+      body: formData,
+      timeoutMs: 60000,
+    });
+
+    return handleResponse(response);
+  },
+
+  /**
+   * Export batch verification results as CSV
+   * @param {Object} batchResponse
+   * @returns {Promise<Blob>}
+   */
+  async exportBatchCsv(batchResponse) {
+    const response = await fetchWithTimeout(`${API_BASE}/verify/batch/csv`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(batchResponse),
+      timeoutMs: 30000,
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to generate CSV export');
+    }
+
+    return response.blob();
+  },
+
+  /**
    * Look up on-chain anchor details for a credential number
    * Public endpoint
    * GET /api/verifier/anchor/{credentialNumber}

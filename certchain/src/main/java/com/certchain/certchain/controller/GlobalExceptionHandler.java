@@ -20,7 +20,7 @@ public class GlobalExceptionHandler {
                 .status(HttpStatus.PAYLOAD_TOO_LARGE)
                 .body(Map.of(
                         "error",
-                        "Upload exceeds the 2MB limit"
+                        "Upload exceeds the maximum file size limit"
                 ));
     }
 

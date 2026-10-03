@@ -3,6 +3,8 @@ import requests
 import sys
 import time
 import uuid
+import io
+import zipfile
 
 BASE_URL = "http://localhost:5173"  # Test through frontend Vite proxy
 BACKEND_URL = "http://localhost:6969"
@@ -73,8 +75,13 @@ def run_tests():
     issuer_profile = me_res.json()
     log(f"Issuer profile: {issuer_profile.get('name')} (verified={issuer_profile.get('verified')})")
 
-    # The issuer already has an active signing key configured
-    log("Issuer signing key is configured.")
+    # Ensure the issuer has an active signing key configured
+    log("Ensuring issuer has active signing key...")
+    key_res = requests.post(f"{BASE_URL}/api/issuer/keys", headers=issuer_headers)
+    if key_res.status_code == 201:
+        log(f"Created active signing key for issuer: {key_res.json().get('keyId')}")
+    else:
+        log("Issuer signing key already present or verified.")
 
     # 4. User Registration (Holder)
     test_email = f"test_{int(time.time())}@example.com"
@@ -214,6 +221,154 @@ def run_tests():
     v_records = admin_v_res.json()
     log(f"Total verification records in system: {len(v_records)}")
     assert_true(len(v_records) >= 3, "All verification attempts (VERIFIED, TAMPERED, REVOKED) recorded")
+
+    # 12. Enterprise Batch Verification End-to-End
+    log("=== 12. Testing Enterprise Batch Credential Verification ===")
+    # 12a. Issue a second fresh valid credential for the batch
+    log("Issuer issuing a second fresh credential for batch testing...")
+    issue2_res = requests.post(f"{BASE_URL}/api/issuer/credentials", headers=issuer_headers, json={
+        "subjectId": new_user_id,
+        "type": "DIPLOMA",
+        "title": "Graduate Certificate in Applied Cryptography",
+        "claims": {
+            "track": "Applied Cryptography",
+            "gpa": "3.99",
+            "completionYear": 2026
+        }
+    })
+    assert_true(issue2_res.status_code in [200, 201], "Issued second credential for batch")
+    cred2_id = issue2_res.json()["id"]
+
+    dl2_res = requests.get(f"{BASE_URL}/api/holder/credentials/{cred2_id}/download", headers=new_holder_headers)
+    assert_true(dl2_res.status_code == 200, "Downloaded second credential")
+    valid_cred2_bytes = dl2_res.content
+
+    # Prepare batch components:
+    # 1. valid credential (cred2)
+    # 2. tampered credential (cred2 with altered claims)
+    # 3. revoked credential (cred from step 10)
+    # 4. malformed JSON file
+    tampered_cred2 = json.loads(valid_cred2_bytes.decode("utf-8"))
+    tampered_cred2["credential"]["claims"]["gpa"] = "4.00"
+    tampered_cred2_bytes = json.dumps(tampered_cred2).encode("utf-8")
+
+    revoked_cred_bytes = cred_bytes  # from step 10, already revoked
+    malformed_bytes = b'{"credential": { incomplete: true, missing_closing_bracket'
+
+    # Build ZIP archive in memory
+    zip_buffer = io.BytesIO()
+    with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zf:
+        zf.writestr("credentials/01-valid.json", valid_cred2_bytes)
+        zf.writestr("credentials/02-tampered.json", tampered_cred2_bytes)
+        zf.writestr("credentials/03-revoked.json", revoked_cred_bytes)
+        zf.writestr("credentials/04-malformed.json", malformed_bytes)
+    zip_bytes = zip_buffer.getvalue()
+
+    log(f"Created batch ZIP archive with 4 test files ({len(zip_bytes)} bytes)")
+
+    # 12b. Upload and process ZIP batch via public verifier endpoint
+    log("Uploading ZIP to POST /api/verifier/verify/batch...")
+    batch_res = requests.post(
+        f"{BASE_URL}/api/verifier/verify/batch",
+        files={"file": ("credentials_batch.zip", zip_bytes, "application/zip")}
+    )
+    assert_true(batch_res.status_code == 200, f"Batch verification succeeded: {batch_res.status_code}")
+    batch_data = batch_res.json()
+
+    log(f"Batch verification response: total={batch_data.get('total')}, valid={batch_data.get('valid')}, "
+        f"tampered={batch_data.get('tampered')}, revoked={batch_data.get('revoked')}, failed={batch_data.get('failed')}")
+
+    assert_true(batch_data.get("total") == 4, "Total batch count is 4")
+    assert_true(batch_data.get("processed") == 4, "Processed batch count is 4")
+    assert_true(batch_data.get("valid") == 1, "Exactly 1 valid credential in batch")
+    assert_true(batch_data.get("tampered") == 1, "Exactly 1 tampered credential in batch")
+    assert_true(batch_data.get("revoked") == 1, "Exactly 1 revoked credential in batch")
+    assert_true(batch_data.get("failed") == 1, "Exactly 1 failed/malformed credential in batch")
+
+    # Inspect individual results and checks
+    results_map = {r["fileName"]: r for r in batch_data.get("results", [])}
+    assert_true("credentials/01-valid.json" in results_map, "Valid item in results")
+    assert_true("credentials/02-tampered.json" in results_map, "Tampered item in results")
+    assert_true("credentials/03-revoked.json" in results_map, "Revoked item in results")
+    assert_true("credentials/04-malformed.json" in results_map, "Malformed item in results")
+
+    valid_item = results_map["credentials/01-valid.json"]
+    assert_true(valid_item["status"] == "VALID", "Valid item status is VALID")
+    assert_true(valid_item["checks"]["envelopeStructure"] is True, "Valid item envelopeStructure passed")
+    assert_true(valid_item["checks"]["schemaConformance"] is True, "Valid item schemaConformance passed")
+    assert_true(valid_item["checks"]["issuerSignature"] is True, "Valid item signature passed")
+    assert_true(valid_item["checks"]["revocationStatus"] is True, "Valid item revocation passed")
+
+    tampered_item = results_map["credentials/02-tampered.json"]
+    assert_true(tampered_item["status"] == "TAMPERED", "Tampered item status is TAMPERED")
+
+    revoked_item = results_map["credentials/03-revoked.json"]
+    assert_true(revoked_item["status"] == "REVOKED", "Revoked item status is REVOKED")
+    assert_true(revoked_item["checks"]["revocationStatus"] is False, "Revoked item revocation check failed")
+
+    malformed_item = results_map["credentials/04-malformed.json"]
+    assert_true(malformed_item["status"] == "FAILED", "Malformed item status is FAILED")
+    assert_true(malformed_item["checks"]["envelopeStructure"] is False, "Malformed item envelopeStructure failed")
+
+    # 12c. Test CSV Report Generation
+    log("Requesting CSV report from POST /api/verifier/verify/batch/csv...")
+    csv_res = requests.post(f"{BASE_URL}/api/verifier/verify/batch/csv", json=batch_data)
+    assert_true(csv_res.status_code == 200, "CSV report export succeeded")
+    csv_text = csv_res.text
+    log(f"CSV report preview:\n{csv_text[:200]}...")
+    assert_true(csv_text.startswith("credential_id,file_name,holder,issuer,status"), "CSV header is present and valid")
+    assert_true("credentials/01-valid.json" in csv_text, "Valid file present in CSV")
+    assert_true("VALID" in csv_text, "VALID status present in CSV")
+    assert_true("TAMPERED" in csv_text, "TAMPERED status present in CSV")
+    assert_true("REVOKED" in csv_text, "REVOKED status present in CSV")
+    assert_true("FAILED" in csv_text, "FAILED status present in CSV")
+
+    # 12d. Test Multi-file upload (files[] form data)
+    log("Testing multi-file upload (files[] list)...")
+    multi_res = requests.post(
+        f"{BASE_URL}/api/verifier/verify/batch",
+        files=[
+            ("files", ("f1.json", valid_cred2_bytes, "application/json")),
+            ("files", ("f2.json", tampered_cred2_bytes, "application/json")),
+        ]
+    )
+    assert_true(multi_res.status_code == 200, "Multi-file batch verification succeeded")
+    multi_data = multi_res.json()
+    assert_true(multi_data["total"] == 2, "Multi-file total is 2")
+    assert_true(multi_data["valid"] == 1 and multi_data["tampered"] == 1, "Multi-file counts match")
+
+    # 12e. Security: Zip Slip Path Traversal Protection
+    log("Testing Security: Zip Slip path traversal attempt...")
+    slip_buffer = io.BytesIO()
+    with zipfile.ZipFile(slip_buffer, "w") as zf:
+        zf.writestr("../../etc/evil.json", valid_cred2_bytes)
+    slip_res = requests.post(
+        f"{BASE_URL}/api/verifier/verify/batch",
+        files={"file": ("slip.zip", slip_buffer.getvalue(), "application/zip")}
+    )
+    assert_true(slip_res.status_code in [400, 403, 500], "Zip Slip exploit safely rejected")
+    log("Zip Slip exploit safely blocked.")
+
+    # 12f. Security: Unsupported File Type Rejection
+    log("Testing Security: Unsupported file type rejection...")
+    unsupported_res = requests.post(
+        f"{BASE_URL}/api/verifier/verify/batch",
+        files=[("files", ("bad.exe", b"\x4d\x5a\x90", "application/octet-stream"))]
+    )
+    assert_true(unsupported_res.status_code == 400, "Unsupported file rejected with 400 Bad Request")
+    log("Unsupported file type safely rejected.")
+
+    # 12g. Security: Empty batch rejection
+    log("Testing Security: Empty batch rejection...")
+    empty_multipart_res = requests.post(
+        f"{BASE_URL}/api/verifier/verify/batch",
+        files=[("files", ("", b"", "application/json"))]
+    )
+    assert_true(empty_multipart_res.status_code == 400, "Empty batch rejected with 400 Bad Request")
+
+    empty_res = requests.post(f"{BASE_URL}/api/verifier/verify/batch")
+    assert_true(empty_res.status_code in [400, 415], "Missing multipart body rejected with 4xx client error")
+    log("Empty and invalid batch requests safely rejected.")
 
     log("=== ALL END-TO-END TESTS PASSED SUCCESSFULLY ===", "SUCCESS")
 
