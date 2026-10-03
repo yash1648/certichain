@@ -1,10 +1,16 @@
 import React, { useState, useRef, useId } from 'react';
-import { UploadCloud, FileCheck2, AlertCircle } from 'lucide-react';
+import { UploadCloud, FileCheck2, AlertCircle, QrCode } from 'lucide-react';
 import { Button } from '../common/Button';
 
 const MAX_FILE_SIZE = 2 * 1024 * 1024;
 
-export function DropZone({ onFileSelected, onTrySample, loading = false, disabled = false }) {
+export function DropZone({
+  onFileSelected,
+  onTrySample,
+  onSwitchToQr,
+  loading = false,
+  disabled = false,
+}) {
   const [isDragOver, setIsDragOver] = useState(false);
   const [selectedFileName, setSelectedFileName] = useState(null);
   const [fileError, setFileError] = useState(null);
@@ -120,6 +126,17 @@ export function DropZone({ onFileSelected, onTrySample, loading = false, disable
               onClick={onTrySample}
             >
               Try sample credential
+            </Button>
+          )}
+
+          {onSwitchToQr && (
+            <Button
+              variant="ghost"
+              disabled={blocked}
+              icon={QrCode}
+              onClick={onSwitchToQr}
+            >
+              Scan QR code
             </Button>
           )}
         </div>

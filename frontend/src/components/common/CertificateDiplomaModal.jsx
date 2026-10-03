@@ -1,16 +1,39 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   X, 
   Printer, 
   Download, 
   ShieldCheck, 
   Award, 
-  Building2
+  Building2,
+  QrCode
 } from 'lucide-react';
 import { Button } from './Button';
 import { Badge } from './Badge';
+import { CredentialQrModal } from './CredentialQrModal';
+import { generateQrDataUrl, buildEnvelopeFromCredential } from '../../utils/qrUtils';
 
 export function CertificateDiplomaModal({ credential, issuerName: issuerNameProp, onClose, onDownload }) {
+  const [showQrModal, setShowQrModal] = useState(false);
+  const [qrDataUrl, setQrDataUrl] = useState(null);
+
+  useEffect(() => {
+    let mounted = true;
+    if (credential) {
+      const envelope = buildEnvelopeFromCredential(credential);
+      generateQrDataUrl(envelope, { width: 180, margin: 1 })
+        .then((url) => {
+          if (mounted) setQrDataUrl(url);
+        })
+        .catch(() => {
+          // ignore
+        });
+    }
+    return () => {
+      mounted = false;
+    };
+  }, [credential]);
+
   if (!credential) return null;
 
   const {
@@ -105,6 +128,16 @@ export function CertificateDiplomaModal({ credential, issuerName: issuerNameProp
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+            <Button
+              variant="outline"
+              size="sm"
+              icon={QrCode}
+              onClick={() => setShowQrModal(true)}
+              title="View verification QR code"
+            >
+              QR Code
+            </Button>
+
             <Button
               variant="outline"
               size="sm"
@@ -282,14 +315,36 @@ export function CertificateDiplomaModal({ credential, issuerName: issuerNameProp
                 </span>
               </div>
 
-              {/* Center: Tamper-Proof Digital Verification Stamp */}
-              <div style={{ textAlign: 'center', flex: '1 1 160px', padding: '0 4px' }}>
-                <div className="badge badge--ok" style={{ padding: '4px 12px', fontSize: 'var(--text-xs)' }}>
-                  <ShieldCheck size={14} aria-hidden="true" />
-                  <span>Blockchain Anchored & Sealed</span>
+              {/* Center: Tamper-Proof Digital Verification Stamp & QR Code */}
+              <div style={{ textAlign: 'center', flex: '0 0 auto', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', padding: '0 8px' }}>
+                {qrDataUrl && (
+                  <div
+                    onClick={() => setShowQrModal(true)}
+                    style={{
+                      cursor: 'pointer',
+                      padding: '3px',
+                      backgroundColor: '#ffffff',
+                      border: '1px solid var(--line-strong)',
+                      borderRadius: 'var(--radius-sm)',
+                      boxShadow: 'var(--shadow-sm)',
+                      display: 'inline-block',
+                      transition: 'transform 0.15s ease',
+                    }}
+                    title="Click to expand verification QR code"
+                  >
+                    <img
+                      src={qrDataUrl}
+                      alt="Verification QR Code"
+                      style={{ width: '64px', height: '64px', display: 'block' }}
+                    />
+                  </div>
+                )}
+                <div className="badge badge--ok" style={{ padding: '3px 10px', fontSize: '0.6875rem' }}>
+                  <ShieldCheck size={12} aria-hidden="true" />
+                  <span>Blockchain Sealed</span>
                 </div>
-                <div style={{ fontSize: '0.6875rem', color: 'var(--ink-muted)', marginTop: '4px' }}>
-                  CertiChain Cryptographic Verification
+                <div style={{ fontSize: '0.625rem', color: 'var(--ink-muted)' }}>
+                  Scan to Verify Envelope
                 </div>
               </div>
 
@@ -341,6 +396,13 @@ export function CertificateDiplomaModal({ credential, issuerName: issuerNameProp
           </div>
         </div>
       </div>
+
+      {showQrModal && (
+        <CredentialQrModal
+          credential={credential}
+          onClose={() => setShowQrModal(false)}
+        />
+      )}
     </div>
   );
 }
