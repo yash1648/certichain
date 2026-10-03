@@ -1,14 +1,16 @@
 import React, { useState } from 'react';
-import { FileCheck, Search } from 'lucide-react';
+import { FileCheck, Search, QrCode } from 'lucide-react';
 import { verifierService } from '../../services/verifierService';
 import { useAuth } from '../../context/AuthContext';
 import { DropZone } from './DropZone';
+import { QrScanner } from './QrScanner';
 import { ResultCard } from './ResultCard';
 import { AnchorLookup } from './AnchorLookup';
 import { ErrorState } from '../common/ErrorState';
 
 const MODES = [
   { id: 'file', label: 'Verify a document', Icon: FileCheck },
+  { id: 'qr', label: 'Scan QR code', Icon: QrCode },
   { id: 'anchor', label: 'Check an anchor record', Icon: Search },
 ];
 
@@ -157,10 +159,22 @@ export function PublicVerifierView() {
                   <DropZone
                     onFileSelected={handleVerifyFile}
                     onTrySample={handleVerifySample}
+                    onSwitchToQr={() => selectMode('qr')}
                     loading={loading}
                   />
                   <p className="section-note" style={{ marginTop: 'var(--space-4)' }}>
                     Requests are logged to your verification history when you are signed in.
+                  </p>
+                </>
+              ) : mode === 'qr' ? (
+                <>
+                  <QrScanner
+                    onScanComplete={handleVerifyFile}
+                    onTrySample={handleVerifySample}
+                    loading={loading}
+                  />
+                  <p className="section-note" style={{ marginTop: 'var(--space-4)' }}>
+                    Scanning a QR code extracts the complete signed credential envelope and performs full cryptographic and ledger verification.
                   </p>
                 </>
               ) : (

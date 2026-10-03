@@ -2225,3 +2225,105 @@ button {
     border-color: #ccc !important;
   }
 }
+
+/* ==========================================================================
+   QR Code Scanner & Viewfinder Component Styles
+   ========================================================================== */
+
+.qr-scanner-wrapper {
+  width: 100%;
+  animation: fadeIn 0.25s ease-out;
+}
+
+.qr-viewfinder-box {
+  user-select: none;
+  touch-action: none;
+}
+
+.qr-reticle {
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.qr-reticle.is-success .qr-corner {
+  border-color: var(--ok) !important;
+  box-shadow: 0 0 12px var(--ok) !important;
+}
+
+.qr-corner {
+  position: absolute;
+  width: 28px;
+  height: 28px;
+  border-color: var(--accent);
+  border-style: solid;
+  border-width: 0;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  filter: drop-shadow(0 0 6px rgba(37, 99, 235, 0.6));
+}
+
+.qr-corner--tl {
+  top: 0;
+  left: 0;
+  border-top-width: 4px;
+  border-left-width: 4px;
+  border-top-left-radius: 12px;
+}
+
+.qr-corner--tr {
+  top: 0;
+  right: 0;
+  border-top-width: 4px;
+  border-right-width: 4px;
+  border-top-right-radius: 12px;
+}
+
+.qr-corner--bl {
+  bottom: 0;
+  left: 0;
+  border-bottom-width: 4px;
+  border-left-width: 4px;
+  border-bottom-left-radius: 12px;
+}
+
+.qr-corner--br {
+  bottom: 0;
+  right: 0;
+  border-bottom-width: 4px;
+  border-right-width: 4px;
+  border-bottom-right-radius: 12px;
+}
+
+.qr-laser-beam {
+  position: absolute;
+  left: 6px;
+  right: 6px;
+  height: 3px;
+  background: linear-gradient(
+    90deg,
+    rgba(37, 99, 235, 0) 0%,
+    rgba(37, 99, 235, 0.9) 20%,
+    rgba(96, 165, 250, 1) 50%,
+    rgba(37, 99, 235, 0.9) 80%,
+    rgba(37, 99, 235, 0) 100%
+  );
+  box-shadow: 0 0 14px 2px rgba(37, 99, 235, 0.8), 0 0 4px 1px #ffffff;
+  border-radius: 2px;
+  animation: qrLaserScan 2.4s ease-in-out infinite alternate;
+}
+
+@keyframes qrLaserScan {
+  0% {
+    top: 8px;
+    opacity: 0.6;
+  }
+  20% {
+    opacity: 1;
+  }
+  80% {
+    opacity: 1;
+  }
+  100% {
+    top: calc(100% - 11px);
+    opacity: 0.6;
+  }
+}
+

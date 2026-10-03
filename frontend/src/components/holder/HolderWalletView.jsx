@@ -1,5 +1,5 @@
 import React, { Fragment, useState, useEffect, useCallback, useId } from 'react';
-import { Award, Plus, Download, RefreshCw, Eye, SlidersHorizontal, Search } from 'lucide-react';
+import { Award, Plus, Download, RefreshCw, Eye, SlidersHorizontal, Search, QrCode } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { holderService } from '../../services/holderService';
 import { Button } from '../common/Button';
@@ -7,6 +7,7 @@ import { Badge } from '../common/Badge';
 import { EmptyState } from '../common/EmptyState';
 import { ErrorState } from '../common/ErrorState';
 import { CertificateDiplomaModal } from '../common/CertificateDiplomaModal';
+import { CredentialQrModal } from '../common/CredentialQrModal';
 import DisclosurePanel from './DisclosurePanel';
 
 const formatDate = (iso) => {
@@ -114,6 +115,7 @@ export function HolderWalletView() {
   const [query, setQuery] = useState('');
   const [downloadingId, setDownloadingId] = useState(null);
   const [viewing, setViewing] = useState(null);
+  const [qrViewing, setQrViewing] = useState(null);
   const [openDisclosureId, setOpenDisclosureId] = useState(null);
 
   const claimId = useId();
@@ -449,6 +451,15 @@ export function HolderWalletView() {
                         <Button
                           variant="ghost"
                           size="sm"
+                          icon={QrCode}
+                          onClick={() => setQrViewing(item)}
+                          title="Show verification QR code"
+                        >
+                          QR
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
                           icon={SlidersHorizontal}
                           aria-expanded={openDisclosureId === item.credentialId}
                           aria-controls={disclosureId}
@@ -498,6 +509,13 @@ export function HolderWalletView() {
           credential={viewing}
           onClose={() => setViewing(null)}
           onDownload={() => handleDownload(viewing)}
+        />
+      )}
+
+      {qrViewing && (
+        <CredentialQrModal
+          credential={qrViewing}
+          onClose={() => setQrViewing(null)}
         />
       )}
     </div>
