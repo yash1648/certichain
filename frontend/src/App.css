@@ -58,30 +58,7 @@
   gap: var(--space-4);
 }
 
-.brand-group {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-}
 
-.brand-breadcrumb {
-  display: inline-flex;
-  align-items: center;
-  font-size: var(--text-xs);
-  color: var(--ink-muted);
-  background: var(--surface-sunken);
-  border: 1px solid var(--line);
-  padding: 0.125rem 0.45rem;
-  border-radius: var(--radius-sm);
-  font-weight: 500;
-  letter-spacing: -0.01em;
-}
-
-@media (max-width: 640px) {
-  .brand-breadcrumb {
-    display: none;
-  }
-}
 
 .brand {
   display: flex;
@@ -220,7 +197,7 @@
 .account-chip__name {
   font-size: var(--text-sm);
   font-weight: 600;
-  max-width: 15ch;
+  max-width: 24ch;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -259,9 +236,9 @@
 }
 
 /* -- Responsive Navigation ---------------------------------------------
-   Below 900px, navigation becomes a dedicated, responsive drawer */
+   Below 1024px, navigation becomes a dedicated, responsive drawer */
 
-@media (max-width: 900px) {
+@media (max-width: 1024px) {
   .site-header__bar {
     flex-wrap: wrap;
     padding: var(--space-2) var(--space-4);
